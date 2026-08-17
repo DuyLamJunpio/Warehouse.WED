@@ -26,21 +26,21 @@
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Categories</span>
+                                    aria-current="page">Danh mục</span>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL CATEGORIES</h1>
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">TẤT CẢ DANH MỤC</h1>
             </div>
             <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
                 <div class="flex items-center mb-4 sm:mb-0">
                     <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Search</label>
+                        <label for="products-search" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="email" id="search-categories"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for categories">
+                                placeholder="Tìm danh mục">
                         </div>
                     </form>
                     <div class="flex items-center w-full sm:justify-end">
@@ -102,31 +102,33 @@
                     <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
                         <thead class="bg-gray-100 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="p-4">
-                                    <div class="flex items-center">
-                                        <input id="checkbox-all" aria-describedby="checkbox-1" type="checkbox"
-                                            class="w-4 h-4 border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600">
-                                        <label for="checkbox-all" class="sr-only">checkbox</label>
-                                    </div>
+                                <th scope="col"
+                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                                    Ảnh
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    ID
+                                    Tên danh mục
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Category Name
+                                    Slug
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Status
+                                    Số SP
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Actions
+                                    Thứ tự
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                                    Trạng thái
+                                </th>
+                                <th scope="col"
+                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                                    Thao tác
                                 </th>
                             </tr>
                         </thead>
@@ -151,7 +153,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
+            Cập nhật sản phẩm</h5>
         <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
             aria-controls="drawer-update-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -161,21 +163,46 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
-        <form id="formEdit">
+        <form id="formEdit" enctype="multipart/form-data">
             @csrf
             <div class="space-y-4">
                 <div>
                     <label for="name_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên danh mục</label>
                     <input type="text" name="name" id="name_edit"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier name" required="">
+                        placeholder="Ví dụ: Áo thun" required="">
+                </div>
+                <div>
+                    <label for="parent_id_edit"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Danh mục cha</label>
+                    <select id="parent_id_edit" name="parent_id"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                        <option value="">— Danh mục gốc —</option>
+                        @foreach ($parentOptions as $parent)
+                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="description_edit"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mô tả</label>
+                    <textarea id="description_edit" name="description" rows="3"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="Mô tả ngắn"></textarea>
+                </div>
+                <div>
+                    <label for="image_edit"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ảnh danh mục</label>
+                    <input type="file" name="image" id="image_edit" accept="image/*"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Bỏ trống nếu giữ ảnh cũ. Tối đa 2MB.</p>
                 </div>
                 <div>
                     <label for="status_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái</label>
                     <select id="status_edit" name="status"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                         <option value="1">Sử dụng</option>
@@ -183,10 +210,10 @@
                     </select>
                 </div>
                 <div
-                    class="bottom-0 left-0 flex justify-center w-full pb-4 mt-4 space-x-4 sm:absolute sm:px-4 sm:mt-0">
+                    class="flex justify-center w-full pt-2 pb-4 mt-4 space-x-4 sm:px-4">
                     <button type="submit"
                         class="w-full justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Update
+                        Cập nhật
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-update-product-default"
                         aria-controls="drawer-update-product-default"
@@ -196,7 +223,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Cancel
+                        Huỷ
                     </button>
                 </div>
             </div>
@@ -210,7 +237,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete item</h5>
+            Xóa</h5>
         <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
             aria-controls="drawer-delete-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -220,7 +247,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -247,7 +274,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Category</h5>
+            Danh mục mới</h5>
         <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
             aria-controls="drawer-create-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -257,22 +284,56 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formAdd" enctype="multipart/form-data">
             @csrf
             <div class="space-y-4">
                 <div>
                     <label for="name"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên danh mục</label>
                     <input type="text" name="name" id="name"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Category name" required="">
+                        placeholder="Ví dụ: Áo thun" required="">
                 </div>
-                <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4 md:absolute">
+                <div>
+                    <label for="parent_id"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Danh mục cha</label>
+                    <select id="parent_id" name="parent_id"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                        <option value="">— Danh mục gốc —</option>
+                        @foreach ($parentOptions as $parent)
+                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="description"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mô tả</label>
+                    <textarea id="description" name="description" rows="3"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="Mô tả ngắn"></textarea>
+                </div>
+                <div>
+                    <label for="image"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ảnh danh mục</label>
+                    <input type="file" name="image" id="image" accept="image/*"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">JPG/PNG/WEBP, tối đa 2MB.</p>
+                </div>
+                <div>
+                    <label for="status_add"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái</label>
+                    <select id="status_add" name="status"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                        <option value="1">Sử dụng</option>
+                        <option value="0">Ngưng sử dụng</option>
+                    </select>
+                </div>
+                <div class="flex justify-center w-full pt-2 pb-4 space-x-4 md:px-4">
                     <button type="submit" id="addCategories"
                         class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Add category
+                        Thêm danh mục
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-create-product-default"
                         aria-controls="drawer-create-product-default"
@@ -282,7 +343,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Cancel
+                        Huỷ
                     </button>
                 </div>
             </div>
@@ -292,6 +353,27 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     {{-- add categories --}}
     <script>
+        // Hiển thị lỗi trả về từ server: lỗi validate (422) hoặc lỗi nghiệp vụ.
+        function showAjaxError(xhr) {
+            const res = xhr.responseJSON || {};
+            if (res.errors) {
+                alert(Object.keys(res.errors).map(k => res.errors[k].join('\n')).join('\n'));
+            } else {
+                alert(res.error || res.message || 'Lỗi: ' + xhr.statusText);
+            }
+        }
+
+        // Nạp lại bảng danh mục sau mỗi thao tác.
+        function reloadCategories() {
+            $.ajax({
+                url: '{{ route('categories.data') }}',
+                type: 'GET',
+                success: function(data) {
+                    $('#categoriesTable').html(data);
+                }
+            });
+        }
+
         $(document).ready(function() {
             $('#formAdd').submit(function(e) {
                 e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
@@ -299,29 +381,41 @@
                 $.ajax({
                     url: '{{ route('categories.add') }}', // URL được định nghĩa trong routes
                     type: 'POST',
-                    data: $(this).serialize(), // Serialize dữ liệu form
+                    // FormData thay cho serialize() vì form có ảnh danh mục.
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
                     success: function(response) {
-                        // Xử lý khi thêm thành công
                         alert(response.success);
-
                         $('#closeDrawerAdd').click();
+                        $('#formAdd')[0].reset();
 
-                        // Có thể làm mới danh sách categories hoặc reset form tại đây
-                        $('form').find('input[type=text], textarea').val('');
+                        // Danh mục gốc vừa tạo phải có mặt ngay trong ô chọn "danh mục cha".
+                        const created = response.category;
+                        if (created && !created.parent_id) {
+                            $('#parent_id, #parent_id_edit').append(
+                                $('<option>').val(created.id).text(created.name));
+                        }
 
-                        $.ajax({
-                            url: '{{ route('categories.data') }}', // Đường dẫn tới phương thức getcategories
-                            type: 'GET',
-                            success: function(data) {
-                                $('#categoriesTable').html(
-                                    data); // Cập nhật nội dung của bảng
-                            }
-                        });
+                        reloadCategories();
                     },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                    error: showAjaxError
+                });
+            });
+
+            // Đổi thứ tự hiển thị bằng nút lên/xuống.
+            $(document).on('click', '.reorderCategoriesButton', function() {
+                $.ajax({
+                    url: '/categories/reorder/' + $(this).data('id-categories'),
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        direction: $(this).data('direction')
+                    },
+                    success: reloadCategories,
+                    error: showAjaxError
                 });
             });
         });
@@ -346,26 +440,18 @@
 
                     $.ajax({
                         url: url, // Sử dụng nối chuỗi để thêm idCategories vào URL
-                        type: 'GET',
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
                         success: function(response) {
                             // Xử lý khi xóa thành công
                             alert(response.success);
-
                             $('#closeDrawerDelete').click();
-
-                            $.ajax({
-                                url: '{{ route('categories.data') }}', // Đường dẫn tới phương thức getSuppliers
-                                type: 'GET',
-                                success: function(data) {
-                                    $('#categoriesTable').html(
-                                        data); // Cập nhật nội dung của bảng
-                                }
-                            });
+                            reloadCategories();
                         },
-                        error: function(xhr) {
-                            // Xử lý lỗi
-                            alert('Error: ' + xhr.statusText);
-                        }
+                        // Server chặn xóa khi danh mục còn con hoặc còn sản phẩm (422).
+                        error: showAjaxError
                     });
                 });
 
@@ -410,21 +496,19 @@
                 const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
                 const drawerElement = $('#' + drawerId);
                 const idCategories = $(this).data('id-categories');
-                const nameCategories = $(this).data('name-categories');
-                const statusCategories = $(this).data('status-categories');
-                const url = '/categories/getCategories/' + idCategories;
                 id = idCategories;
 
-                $('form').find('input[type=text], textarea').val('');
+                $('#formEdit')[0].reset();
 
-                $('#name_edit').val(nameCategories);
+                $('#name_edit').val($(this).data('name-categories'));
+                $('#description_edit').val($(this).data('description-categories') || '');
+                // parent_id rỗng nghĩa là danh mục gốc.
+                $('#parent_id_edit').val($(this).data('parent-categories') || '');
+                $('#status_edit').val($(this).data('status-categories') == 1 ? '1' : '0');
 
-                // Gán giá trị cho select
-                if (statusCategories == "1") {
-                    $('#status_edit').val("1");
-                } else {
-                    $('#status_edit').val("0");
-                }
+                // Không cho chọn chính nó làm cha (server cũng chặn, đây chỉ là chặn sớm ở UI).
+                $('#parent_id_edit option').prop('disabled', false);
+                $('#parent_id_edit option[value="' + idCategories + '"]').prop('disabled', true);
 
                 // Sử dụng Tailwind CSS classes để hiển thị drawer
                 drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
@@ -461,29 +545,17 @@
                 $.ajax({
                     url: urlEdit, // URL được định nghĩa trong routes
                     type: 'POST',
-                    data: $(this).serialize(), // Serialize dữ liệu form
+                    // FormData thay cho serialize() vì form có ảnh danh mục.
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
                     success: function(response) {
-                        // Xử lý khi thêm thành công
                         alert(response.success);
-
                         $('#closeDrawerEdit').click();
-
-                        // Có thể làm mới danh sách suppliers hoặc reset form tại đây
-                        $('form').find('input[type=text], textarea').val('');
-
-                        $.ajax({
-                            url: '{{ route('categories.data') }}', // Đường dẫn tới phương thức getSuppliers
-                            type: 'GET',
-                            success: function(data) {
-                                $('#categoriesTable').html(
-                                    data); // Cập nhật nội dung của bảng
-                            }
-                        });
+                        $('#formEdit')[0].reset();
+                        reloadCategories();
                     },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                    error: showAjaxError
                 });
             });
         });
@@ -526,7 +598,7 @@
     <script>
         $(document).ready(function() {
             $('#closeDrawerAdd').click(function() {
-                $('form').find('input[type=text] ').val('');
+                $('#formAdd')[0].reset();
             })
         })
     </script>
