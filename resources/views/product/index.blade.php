@@ -71,22 +71,22 @@
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Products</span>
+                                    aria-current="page">Sản phẩm</span>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL PRODUCTS</h1>
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">TẤT CẢ SẢN PHẨM</h1>
             </div>
             <div class="sm:flex">
                 <div
                     class="items-center hidden mb-3 sm:flex sm:divide-x sm:divide-gray-100 sm:mb-0 dark:divide-gray-700">
                     <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Search</label>
+                        <label for="products-search" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="search" id="search-product"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for products">
+                                placeholder="Tìm sản phẩm">
                         </div>
                     </form>
                     <div class="flex pl-0 mt-3 space-x-1 sm:pl-2 sm:mt-0">
@@ -166,7 +166,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    PRODUCT NAME
+                                    TÊN SẢN PHẨM
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -174,7 +174,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    IMPORT PRICE
+                                    GIÁ NHẬP
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -182,7 +182,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    SUPPLIER
+                                    NHÀ CUNG CẤP
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -194,7 +194,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    STATUS
+                                    TRẠNG THÁI
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -218,7 +218,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Product</h5>
+            New Sản phẩm</h5>
         <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
             aria-controls="drawer-create-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -228,7 +228,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formAdd" enctype="multipart/form-data">
             @csrf
@@ -246,11 +246,12 @@
                                             d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                     </svg>
                                     <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                            class="font-semibold">Click to upload</span> or drag and drop</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                        800x400px)</p>
+                                            class="font-semibold">Bấm để tải lên</span> ảnh hoặc video</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">JPG, PNG, WEBP, GIF, MP4, MOV,
+                                        WEBM (tối đa 50MB mỗi file)</p>
                                 </div>
-                                <input id="dropzone-file" type="file" name="images[]" class="hidden" multiple />
+                                <input id="dropzone-file" type="file" name="media[]" class="hidden" multiple
+                                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm" />
                             </label>
                         </div>
                     </div>
@@ -279,15 +280,41 @@
                             min="0" placeholder="0" required>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
-                        <label for="unit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">UNIT</label>
-                        <input type="text" name="unit" id="unit"
+                        <label for="discount_price"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">GIÁ KHUYẾN MÃI</label>
+                        <input type="number" name="discount_price" id="discount_price"
                             class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            required>
+                            min="0" placeholder="Bỏ trống nếu không giảm giá">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="material"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">CHẤT LIỆU</label>
+                        <input type="text" name="material" id="material" placeholder="Cotton, kaki, lụa..."
+                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="brand"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">THƯƠNG HIỆU</label>
+                        <input type="text" name="brand" id="brand"
+                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                    </div>
+                    <input type="hidden" name="unit" value="cái">
+                    <div class="col-span-6">
+                        <label for="description"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">MÔ TẢ</label>
+                        <textarea name="description" id="description" rows="3"
+                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"></textarea>
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
+                            <input type="checkbox" name="is_featured" value="1"
+                                class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
+                            Sản phẩm nổi bật
+                        </label>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="supplier"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">SUPPLIER</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">NHÀ CUNG CẤP</label>
                         <select id="supplier" name="supplier_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             @foreach ($supplier as $item)
@@ -297,7 +324,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="categories"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">CATEGORY</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">DANH MỤC</label>
                         <select id="categories" name="categories_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             @foreach ($categories as $item)
@@ -307,8 +334,8 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="countries"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Product
-                            Location</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sản phẩm
+                            Vị trí</label>
                         <div class="flex divide-x">
                             <select id="zones" name="zone"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -329,12 +356,31 @@
                     free-mode="true">
                 </swiper-container>
                 <input id="choose-image" type="text" class="hidden" name="pin_image" />
+
+                {{-- Ma trận biến thể size/màu: nơi giữ tồn kho của sản phẩm --}}
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">BIẾN THỂ (SIZE / MÀU)</h4>
+                        <button type="button" data-target="#variants-add"
+                            class="addVariantRow px-3 py-1.5 text-xs font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
+                            + Thêm dòng
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" id="variant-generator-add"
+                            class="block w-full text-sm rounded-lg shadow-sm bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Tạo nhanh: S,M,L,XL | Đen,Trắng  →  Enter">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nhập danh sách size, dấu | rồi danh
+                            sách màu, nhấn Enter để sinh toàn bộ tổ hợp.</p>
+                    </div>
+                    <div id="variants-add" class="space-y-2"></div>
+                </div>
             </div>
             <!-- Modal footer -->
             <div class="items-center p-6 border-t border-gray-200 rounded-b dark:border-gray-700">
                 <button
                     class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                    type="submit">Add product</button>
+                    type="submit">Thêm sản phẩm</button>
             </div>
         </form>
     </div>
@@ -345,7 +391,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete item</h5>
+            Xóa</h5>
         <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
             aria-controls="drawer-delete-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -355,7 +401,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -380,7 +426,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
+            Cập nhật sản phẩm</h5>
         <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
             aria-controls="drawer-update-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -390,7 +436,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formEdit" method="POST" enctype="multipart/form-data">
             @csrf
@@ -408,12 +454,12 @@
                                             d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                     </svg>
                                     <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                            class="font-semibold">Click to upload</span> or drag and drop</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                        800x400px)</p>
+                                            class="font-semibold">Bấm để tải lên</span> ảnh hoặc video</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">JPG, PNG, WEBP, GIF, MP4, MOV,
+                                        WEBM (tối đa 50MB mỗi file)</p>
                                 </div>
-                                <input id="dropzone-file-edit" type="file" name="images[]" class="hidden"
-                                    multiple />
+                                <input id="dropzone-file-edit" type="file" name="media[]" class="hidden" multiple
+                                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm" />
                             </label>
                         </div>
                     </div>
@@ -442,15 +488,41 @@
                             min="0" placeholder="0" required>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
-                        <label for="unit_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">UNIT</label>
-                        <input type="text" name="unit" id="unit_edit"
+                        <label for="discount_price_edit"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">GIÁ KHUYẾN MÃI</label>
+                        <input type="number" name="discount_price" id="discount_price_edit"
                             class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            required>
+                            min="0" placeholder="Bỏ trống nếu không giảm giá">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="material_edit"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">CHẤT LIỆU</label>
+                        <input type="text" name="material" id="material_edit" placeholder="Cotton, kaki, lụa..."
+                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="brand_edit"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">THƯƠNG HIỆU</label>
+                        <input type="text" name="brand" id="brand_edit"
+                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                    </div>
+                    <input type="hidden" name="unit" id="unit_edit" value="cái">
+                    <div class="col-span-6">
+                        <label for="description_edit"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">MÔ TẢ</label>
+                        <textarea name="description" id="description_edit" rows="3"
+                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"></textarea>
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
+                            <input type="checkbox" name="is_featured" id="is_featured_edit" value="1"
+                                class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
+                            Sản phẩm nổi bật
+                        </label>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="supplier_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">SUPPLIER</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">NHÀ CUNG CẤP</label>
                         <select id="supplier_edit" name="supplier_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             @foreach ($supplier as $item)
@@ -462,7 +534,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="categories_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">CATEGORY</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">DANH MỤC</label>
                         <select id="categories_edit" name="categories_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             @foreach ($categories as $item)
@@ -473,17 +545,18 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="status_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">STATUS</label>
-                        <select id="status_edit" name="status"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">TRẠNG THÁI</label>
+                        {{-- Trạng thái do tổng tồn các biến thể quyết định, không sửa tay được. --}}
+                        <select id="status_edit" disabled
+                            class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg block w-full p-2.5 cursor-not-allowed dark:bg-gray-600 dark:border-gray-600 dark:text-gray-400">
                             <option value="2">Hết hàng</option>
                             <option value="1">Còn hàng</option>
-                            <option value="0">Ngưng nhập/xuất</option>
                         </select>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tự cập nhật theo tồn kho biến thể.</p>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="old_location"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Old Location</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Vị trí cũ</label>
                         <p id="old_location"
                             class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                         </p>
@@ -491,7 +564,7 @@
                     <div class="col-span-6 sm:col-span-3">
                         <label for="countries"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">New
-                            Location</label>
+                            Vị trí</label>
                         <div class="flex divide-x">
                             <select id="zones_edit" name="zone"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -516,12 +589,31 @@
                     id="image-preview-edit-new" free-mode="true">
                 </swiper-container>
                 <input id="choose-image-edit" type="text" class="hidden" name="pin_image" />
+
+                {{-- Ma trận biến thể size/màu: nơi giữ tồn kho của sản phẩm --}}
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">BIẾN THỂ (SIZE / MÀU)</h4>
+                        <button type="button" data-target="#variants-edit"
+                            class="addVariantRow px-3 py-1.5 text-xs font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
+                            + Thêm dòng
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" id="variant-generator-edit"
+                            class="block w-full text-sm rounded-lg shadow-sm bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Tạo nhanh: S,M,L,XL | Đen,Trắng  →  Enter">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Xóa hết dòng rồi lưu sẽ xóa toàn bộ
+                            biến thể và tồn kho của sản phẩm.</p>
+                    </div>
+                    <div id="variants-edit" class="space-y-2"></div>
+                </div>
             </div>
             <!-- Modal footer -->
             <div class="items-center p-6 border-t border-gray-200 rounded-b dark:border-gray-700">
                 <button
                     class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                    type="submit">Update Product</button>
+                    type="submit">Cập nhật sản phẩm</button>
             </div>
         </form>
     </div>
@@ -544,23 +636,33 @@
                 });
             }
 
+            // Xem trước media vừa chọn. File video render bằng <video>, ảnh render bằng <img>.
             const uploadImages = (preview, pinImage, files) => {
                 $.each(files, function(index, file) {
+                    var isVideo = file.type.indexOf('video/') === 0;
                     var reader = new FileReader();
                     reader.onload = function(e) {
-                        var imageUrl = e.target.result;
+                        var mediaUrl = e.target.result;
                         var imgContainer = $('<swiper-slide>').addClass(
                             'slide relative border border-gray-300'
                         );
-                        var img = $('<img>').attr('src', imageUrl);
+
+                        var media = isVideo ?
+                            $('<video>').attr({
+                                src: mediaUrl,
+                                controls: true,
+                                preload: 'metadata'
+                            }).addClass('w-full') :
+                            $('<img>').attr('src', mediaUrl);
 
                         var deleteBtn = $('<img>').addClass(
-                                'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer')
+                                'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer z-10')
                             .attr('src',
                                 'https://static.vecteezy.com/system/resources/previews/018/887/462/original/signs-close-icon-png.png'
                             );
 
-                        deleteBtn.click(function() {
+                        deleteBtn.click(function(ev) {
+                            ev.stopPropagation();
                             var parentSlide = $(this).parent();
                             var isSelected = parentSlide.hasClass(
                                 'selected'
@@ -573,23 +675,110 @@
                             }
                         });
 
-                        imgContainer.click(function() {
-                            preview.find('swiper-slide').removeClass('selected');
-                            $(this).addClass('selected');
-                            preview.prepend($(this));
-                            pinImage.empty();
-                            pinImage.val(file.name);
-                            $('.download').each(function() {
-                                $(this).removeClass('selected');
+                        // Chỉ ảnh mới được chọn làm ảnh đại diện; video thì bỏ qua.
+                        if (!isVideo) {
+                            imgContainer.click(function() {
+                                preview.find('swiper-slide').removeClass('selected');
+                                $(this).addClass('selected');
+                                preview.prepend($(this));
+                                pinImage.val(file.name);
+                                $('.download').each(function() {
+                                    $(this).removeClass('selected');
+                                });
                             });
-                        });
+                        } else {
+                            imgContainer.append($('<span>')
+                                .addClass(
+                                    'absolute bottom-0 left-0 px-1 text-xs text-white bg-black/60')
+                                .text('VIDEO'));
+                        }
 
-                        imgContainer.append(img).append(deleteBtn);
+                        imgContainer.append(media).append(deleteBtn);
                         preview.append(imgContainer);
                     };
                     reader.readAsDataURL(file);
                 });
             }
+
+            // ----- Ma trận biến thể size/màu -----
+            let variantRowIndex = 0;
+
+            const variantRow = (data) => {
+                data = data || {};
+                const i = variantRowIndex++;
+                return $(`
+                    <div class="variant-row grid grid-cols-12 gap-2 items-center">
+                        <input type="text" name="variants[${i}][size]" value="${data.size || ''}" placeholder="Size"
+                            class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="text" name="variants[${i}][color]" value="${data.color || ''}" placeholder="Màu"
+                            class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="number" min="0" name="variants[${i}][quantity]" value="${data.quantity || 0}" placeholder="SL"
+                            class="col-span-2 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="number" min="0" name="variants[${i}][price_override]" value="${data.price_override || ''}" placeholder="Giá riêng"
+                            class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <button type="button"
+                            class="removeVariantRow col-span-1 px-2 py-2 text-sm text-white bg-red-700 rounded-lg hover:bg-red-800">×</button>
+                    </div>
+                `);
+            };
+
+            $(document).on('click', '.addVariantRow', function() {
+                $($(this).data('target')).append(variantRow());
+            });
+
+            $(document).on('click', '.removeVariantRow', function() {
+                $(this).closest('.variant-row').remove();
+            });
+
+            // "S,M,L | Đen,Trắng" -> sinh toàn bộ tổ hợp size x màu
+            const bindVariantGenerator = (inputId, containerId) => {
+                $(inputId).on('keydown', function(e) {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+
+                    const parts = $(this).val().split('|');
+                    const split = (s) => (s || '').split(',').map(v => v.trim()).filter(Boolean);
+                    const sizes = split(parts[0]);
+                    const colors = split(parts[1]);
+
+                    if (!sizes.length && !colors.length) return;
+
+                    const container = $(containerId);
+                    // Giữ lại các dòng đã có, chỉ thêm tổ hợp chưa tồn tại.
+                    const existing = new Set();
+                    container.find('.variant-row').each(function() {
+                        const s = $(this).find('input[name$="[size]"]').val().trim();
+                        const c = $(this).find('input[name$="[color]"]').val().trim();
+                        existing.add(s + '||' + c);
+                    });
+
+                    (sizes.length ? sizes : ['']).forEach(function(s) {
+                        (colors.length ? colors : ['']).forEach(function(c) {
+                            if (existing.has(s + '||' + c)) return;
+                            container.append(variantRow({
+                                size: s,
+                                color: c,
+                                quantity: 0
+                            }));
+                        });
+                    });
+
+                    $(this).val('');
+                });
+            };
+
+            bindVariantGenerator('#variant-generator-add', '#variants-add');
+            bindVariantGenerator('#variant-generator-edit', '#variants-edit');
+
+            // Hiển thị lỗi validate (422) hoặc lỗi nghiệp vụ từ server.
+            const showAjaxError = (xhr) => {
+                const res = xhr.responseJSON || {};
+                if (res.errors) {
+                    alert(Object.keys(res.errors).map(k => res.errors[k].join('\n')).join('\n'));
+                } else {
+                    alert(res.error || res.message || 'Lỗi: ' + xhr.statusText);
+                }
+            };
 
             var inputFile = $('#dropzone-file');
             var preview = $('#image-preview');
@@ -624,19 +813,40 @@
 
                         $('#closeDrawerAdd').click();
 
-                        $('form').trigger('reset');
+                        $('#formAdd').trigger('reset');
+                        $('#image-preview').empty();
+                        $('#variants-add').empty();
 
                         reloadDataTable();
 
                     },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                    error: showAjaxError
                 });
             });
 
             //edit product
+            let editingProductId = null;
+
+            $('#formEdit').submit(function(e) {
+                e.preventDefault();
+                if (!editingProductId) return;
+
+                $.ajax({
+                    url: '/product/edit/' + editingProductId,
+                    type: 'POST',
+                    data: new FormData(this),
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        alert(response.success);
+                        $('#closeDrawerEdit').click();
+                        $('#image-preview-edit-new').empty();
+                        reloadDataTable();
+                    },
+                    error: showAjaxError
+                });
+            });
+
             $(document).on('click', '.editProductButton', function() {
                 // Mở drawer
                 $('.download').remove();
@@ -656,13 +866,24 @@
                     type: 'GET',
                     success: function(response) {
                         $('#product_name_edit').val(response[0].product_name);
-                        $('#inventory_edit').val(response[0].total_quantity);
+                        $('#inventory_edit').val(response[0].variants_sum_quantity);
                         $('#import_price_edit').val(response[0].import_price);
                         $('#export_price_edit').val(response[0].sell_price);
-                        $('#unit_edit').val(response[0].unit);
-                        $('#categories_edit').val(response[0].category.id);
-                        $('#supplier_edit').val(response[0].supplier.id);
+                        $('#discount_price_edit').val(response[0].discount_price);
+                        $('#material_edit').val(response[0].material);
+                        $('#brand_edit').val(response[0].brand);
+                        $('#description_edit').val(response[0].description);
+                        $('#is_featured_edit').prop('checked', !!response[0].is_featured);
+                        $('#categories_edit').val(response[0].categories_id);
+                        $('#supplier_edit').val(response[0].supplier_id);
                         $('#status_edit').val(response[0].status);
+
+                        // Nạp biến thể hiện có vào ma trận size/màu.
+                        const variantsBox = $('#variants-edit').empty();
+                        $.each(response[0].variants || [], function(i, v) {
+                            variantsBox.append(variantRow(v));
+                        });
+
                         if (response[0].location && response[0].location.code) {
                             $('#old_location').text(response[0].location.code);
                         } else {
@@ -689,11 +910,18 @@
                                 );
                             }
 
-                            var img = $('<img>').attr('src', image.path.replace(
-                                'public', 'storage'));
+                            var mediaSrc = image.path.replace('public', 'storage');
+                            // Media đã lưu có thể là video: render <video> thay cho <img>.
+                            var img = image.media_type === 'video' ?
+                                $('<video>').attr({
+                                    src: mediaSrc,
+                                    controls: true,
+                                    preload: 'metadata'
+                                }).addClass('w-full') :
+                                $('<img>').attr('src', mediaSrc);
 
                             var deleteBtn = $('<img>').addClass(
-                                    'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer'
+                                    'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer z-10'
                                 )
                                 .attr('src',
                                     'https://static.vecteezy.com/system/resources/previews/018/887/462/original/signs-close-icon-png.png'
@@ -703,7 +931,12 @@
                                 $.ajax({
                                     url: '/delete-image/' + image
                                         .id,
-                                    type: 'GET',
+                                    type: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': $(
+                                                'meta[name="csrf-token"]')
+                                            .attr('content')
+                                    },
                                     success: function(response) {
                                         // alert(response.success);
                                         reloadDataTable();
@@ -729,17 +962,23 @@
                                 }
                             });
 
-                            imgContainer.click(function() {
-                                preview_edit.find('swiper-slide')
-                                    .removeClass('selected');
-                                $(this).addClass('selected');
-                                preview_edit.prepend($(this));
-                                pinImage_edit.empty();
-                                pinImage_edit.val(image.name);
-                                $('.slide').each(function() {
-                                    $(this).removeClass('selected');
+                            // Chỉ ảnh mới được chọn làm ảnh đại diện; video thì bỏ qua.
+                            if (image.media_type !== 'video') {
+                                imgContainer.click(function() {
+                                    preview_edit.find('swiper-slide')
+                                        .removeClass('selected');
+                                    $(this).addClass('selected');
+                                    preview_edit.prepend($(this));
+                                    pinImage_edit.val(image.name);
+                                    $('.slide').each(function() {
+                                        $(this).removeClass('selected');
+                                    });
                                 });
-                            });
+                            } else {
+                                imgContainer.append($('<span>').addClass(
+                                        'absolute bottom-0 left-0 px-1 text-xs text-white bg-black/60')
+                                    .text('VIDEO'));
+                            }
 
                             imgContainer.append(img).append(deleteBtn);
                             preview_edit.append(imgContainer);
@@ -753,16 +992,9 @@
                 });
 
 
-                $('#formEdit').submit(function(event) {
-                    // Ngăn chặn hành động mặc định của form
-                    event.preventDefault();
-                    const urlEdit = '/product/edit/' + product_id;
-                    // Thay đổi action của form
-                    $(this).attr('action', urlEdit);
-
-                    // Submit form
-                    this.submit();
-                });
+                // Ghi lại sản phẩm đang sửa; handler submit được gắn một lần ở ngoài
+                // để tránh chồng handler mỗi lần mở drawer.
+                editingProductId = product_id;
 
                 // Sử dụng Tailwind CSS classes để hiển thị drawer
                 drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
@@ -815,8 +1047,11 @@
                         const url = '/product/delete/' + idProduct;
 
                         $.ajax({
-                            url: url, // Sử dụng nối chuỗi để thêm idSupplier vào URL
-                            type: 'GET',
+                            url: url, // Sử dụng nối chuỗi để thêm idProduct vào URL
+                            type: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
                             success: function(response) {
                                 // Xử lý khi xóa thành công
                                 alert(response.success);
