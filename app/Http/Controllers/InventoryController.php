@@ -48,8 +48,8 @@ class InventoryController extends Controller
 
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
-                $q->where('sku', 'like', "%{$keyword}%")
-                    ->orWhereHas('product', fn($p) => $p->where('product_name', 'like', "%{$keyword}%"));
+                $q->where('sku', 'ilike', "%{$keyword}%")
+                    ->orWhereHas('product', fn($p) => $p->where('product_name', 'ilike', "%{$keyword}%"));
             });
         }
 

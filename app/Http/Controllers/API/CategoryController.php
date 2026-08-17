@@ -73,7 +73,7 @@ class CategoryController extends Controller
         if (!empty($keyword)) {
             $key = "search_categories_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             $categories = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Categories::where('name', 'like', "%{$keyword}%")
+                return Categories::where('name', 'ilike', "%{$keyword}%")
                                  ->withCount('products')
                                  ->get();
             });

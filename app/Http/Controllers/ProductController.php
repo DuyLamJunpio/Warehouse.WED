@@ -54,7 +54,7 @@ class ProductController extends Controller
         // Không cache kết quả tìm kiếm: dữ liệu sản phẩm thay đổi liên tục,
         // cache theo từ khóa sẽ trả về tồn kho/giá đã cũ.
         if (!empty($keyword)) {
-            $products = $query->where('product_name', 'like', "%{$keyword}%")->get();
+            $products = $query->where('product_name', 'ilike', "%{$keyword}%")->get();
         } else {
             $perPage = 15;
             $products = $query->paginate($perPage);

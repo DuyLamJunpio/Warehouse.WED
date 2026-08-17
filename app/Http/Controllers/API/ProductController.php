@@ -48,7 +48,7 @@ class ProductController extends Controller
                 ->withSum('variants', 'quantity');
 
             if (!empty ($keyword)) {
-                $query->where('product_name', 'like', "%{$keyword}%");
+                $query->where('product_name', 'ilike', "%{$keyword}%");
             }
 
             if (!empty ($supplierId)) {
@@ -183,7 +183,7 @@ class ProductController extends Controller
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
                 return Product::with(['supplier', 'category', 'productImage', 'location'])
                     ->withSum('variants', 'quantity')
-                    ->where('products.product_name', 'like', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
+                    ->where('products.product_name', 'ilike', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
                     ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                     ->get();
             });
@@ -206,7 +206,7 @@ class ProductController extends Controller
                 return Product::with(['supplier', 'category', 'productImage', 'location'])
                     ->withSum('variants', 'quantity')
                     ->whereHas('supplier', function ($query) use ($keyword) {
-                        $query->where('supplier_name', 'like', "%{$keyword}%");
+                        $query->where('supplier_name', 'ilike', "%{$keyword}%");
                     })
                     ->whereIn('products.status', [1, 2])
                     ->get();

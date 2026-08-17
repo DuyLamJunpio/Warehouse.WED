@@ -39,8 +39,8 @@ class categoryController extends Controller
         if (!empty($keyword)) {
             // Khớp tên danh mục gốc hoặc tên danh mục con, để tìm "Áo thun" vẫn ra nhánh "Áo".
             $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                    ->orWhereHas('children', fn($c) => $c->where('name', 'like', "%{$keyword}%"));
+                $q->where('name', 'ilike', "%{$keyword}%")
+                    ->orWhereHas('children', fn($c) => $c->where('name', 'ilike', "%{$keyword}%"));
             });
         }
 

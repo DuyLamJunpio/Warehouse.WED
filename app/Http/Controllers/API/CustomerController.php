@@ -77,9 +77,9 @@ class CustomerController extends Controller
         if ($keyword > 0) {
             $key = "search_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             $Customer = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Customer::where('Customer_name', 'like', "%{$keyword}%")
-                    ->orWhere('Customer_phone', 'like', "%{$keyword}%")
-                    ->orWhere('address', 'like', "%{$keyword}%")
+                return Customer::where('Customer_name', 'ilike', "%{$keyword}%")
+                    ->orWhere('Customer_phone', 'ilike', "%{$keyword}%")
+                    ->orWhere('address', 'ilike', "%{$keyword}%")
                     ->get();
             });
         }

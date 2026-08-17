@@ -119,7 +119,7 @@ class InvoiceController extends Controller
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
                 return Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
-                    ->where('products.product_name', 'like', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
+                    ->where('products.product_name', 'ilike', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
                     ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                     ->get();
             });
@@ -141,7 +141,7 @@ class InvoiceController extends Controller
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
                 return Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
                     ->whereHas('supplier', function ($query) use ($keyword) {
-                        $query->where('supplier_name', 'like', "%{$keyword}%");
+                        $query->where('supplier_name', 'ilike', "%{$keyword}%");
                     })
                     ->whereIn('products.status', [1, 2])
                     ->get();

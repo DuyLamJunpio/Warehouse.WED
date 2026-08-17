@@ -6,6 +6,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatisticalController;
@@ -47,6 +48,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/delete-image/{id}', [ProductController::class, 'deleteImageUrl']);
     Route::delete('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');
     Route::get('/search-products', [ProductController::class, 'search'])->name('product.search');
+
+    // Bán tại quầy: lập đơn cho khách mua trực tiếp ở cửa hàng
+    Route::get('/pos', [PosController::class, 'index'])->name('pos');
+    Route::get('/pos/search', [PosController::class, 'search'])->name('pos.search');
+    Route::post('/pos/store', [PosController::class, 'store'])->name('pos.store');
 
     // Quản lý đơn hàng bán (invoices có invoice_type = 1)
     Route::get('/order', [OrderController::class, 'index'])->name('order');

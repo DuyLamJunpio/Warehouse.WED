@@ -44,11 +44,11 @@ class CustomerController extends Controller
 
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
-                $q->where('customer_name', 'like', "%{$keyword}%")
-                    ->orWhere('customer_phone', 'like', "%{$keyword}%")
-                    ->orWhere('customer_email', 'like', "%{$keyword}%")
-                    ->orWhere('address', 'like', "%{$keyword}%")
-                    ->orWhere('province', 'like', "%{$keyword}%");
+                $q->where('customer_name', 'ilike', "%{$keyword}%")
+                    ->orWhere('customer_phone', 'ilike', "%{$keyword}%")
+                    ->orWhere('customer_email', 'ilike', "%{$keyword}%")
+                    ->orWhere('address', 'ilike', "%{$keyword}%")
+                    ->orWhere('province', 'ilike', "%{$keyword}%");
             });
         }
 

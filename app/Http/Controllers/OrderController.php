@@ -45,10 +45,10 @@ class OrderController extends Controller
 
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
-                $q->where('order_code', 'like', "%{$keyword}%")
-                    ->orWhere('shipping_name', 'like', "%{$keyword}%")
-                    ->orWhere('shipping_phone', 'like', "%{$keyword}%")
-                    ->orWhereHas('customer', fn($c) => $c->where('customer_name', 'like', "%{$keyword}%"));
+                $q->where('order_code', 'ilike', "%{$keyword}%")
+                    ->orWhere('shipping_name', 'ilike', "%{$keyword}%")
+                    ->orWhere('shipping_phone', 'ilike', "%{$keyword}%")
+                    ->orWhereHas('customer', fn($c) => $c->where('customer_name', 'ilike', "%{$keyword}%"));
             });
         }
 
