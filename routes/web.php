@@ -105,11 +105,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/search-account', [SupplierController::class, 'search'])->name('account.search');
     });
 
-    Route::get('/product-location', [LocationController::class, 'index'])->name('location');
-    Route::get('/auto-add-new-location', [LocationController::class, 'addNewLocationAutomatically'])->name('location.create');
-    Route::get('location/get-shelf', [LocationController::class, 'getShelf'])->name('location.getShelf');
-    Route::get('location/get-level', [LocationController::class, 'getLevel'])->name('location.getLevel');
-    Route::get('/location/filter', [LocationController::class, 'getData'])->name('location.getData');
+    // Quản lý vị trí trong kho đã bỏ: shop quần áo không xếp hàng theo kệ/tầng.
+    // Controller, model và bảng product_locations vẫn giữ nguyên, chưa xoá dữ liệu.
 
     //thống kê hóa đơn xuất
     Route::get('statistical/import-invoice',[StatisticalController::class, "showInventoryStats"])->name('statistical.import');

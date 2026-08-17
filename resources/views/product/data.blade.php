@@ -18,7 +18,7 @@
             <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
                 <div class="text-base font-semibold text-gray-9000 dark:text-white">{{ $item->product_name }}</div>
                 <div class="text-xs font-normal text-gray-500 dark:text-gray-400">
-                    {{ $item->location ? $item->location->code : 'Không có vị trí' }}</div>
+                    {{ $item->category->name ?? 'Chưa có danh mục' }}</div>
             </div>
         </td>
         <td class="sell_price p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">

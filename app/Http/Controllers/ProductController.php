@@ -6,7 +6,6 @@ use App\Models\Categories;
 use App\Models\ProductVariant;
 use App\Models\ImageModel;
 use App\Models\Product;
-use App\Models\ProductLocation;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,22 +29,16 @@ class ProductController extends Controller
         $perPage = 10;
         $categories = Categories::where('status', 1)->get();
         $supplier = Supplier::where('status', 1)->get();
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $products = Product::with(['supplier', 'category', 'productImage'])
             ->withSum('variants', 'quantity')->paginate($perPage);
 
-        $zones = ProductLocation::whereNull('product_id')
-            ->select('zone')
-            ->distinct()
-            ->orderBy('zone')
-            ->get();
-
-        return view("product.index", compact("products", "categories", "supplier", "zones"));
+        return view("product.index", compact("products", "categories", "supplier"));
     }
 
     public function getData()
     {
         $perPage = 10;
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $products = Product::with(['supplier', 'category', 'productImage'])
             ->withSum('variants', 'quantity')->paginate($perPage);
 
         return view("product.data", compact("products"));
@@ -55,7 +48,7 @@ class ProductController extends Controller
     {
         $keyword = trim($request->input('keyword')); // Lấy từ khóa từ request và loại bỏ khoảng trắng thừa
 
-        $query = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $query = Product::with(['supplier', 'category', 'productImage'])
             ->withSum('variants', 'quantity');
 
         // Không cache kết quả tìm kiếm: dữ liệu sản phẩm thay đổi liên tục,
@@ -72,7 +65,7 @@ class ProductController extends Controller
 
     public function getProductById(string $id)
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'location', 'variants'])
+        $products = Product::with(['supplier', 'category', 'productImage', 'variants'])
             ->withSum('variants', 'quantity')
             ->where('products.id', $id)
             ->get();
@@ -214,12 +207,6 @@ class ProductController extends Controller
             $this->syncVariants($product, $request->input('variants', []));
             $this->syncProductStatus($product);
 
-            $locationError = $this->assignLocation($product, $request);
-            if ($locationError) {
-                DB::rollBack();
-                return response()->json(['error' => $locationError], 422);
-            }
-
             DB::commit();
             return response()->json(['success' => 'Sản phẩm đã được thêm thành công!']);
         } catch (\Throwable $e) {
@@ -305,14 +292,6 @@ class ProductController extends Controller
             $this->storeMedia($product, $request);
             $this->syncVariants($product, $request->input('variants', []));
             $this->syncProductStatus($product);
-
-            // Vị trí kho là tùy chọn với shop quần áo: không có vị trí thì bỏ qua,
-            // không chặn việc sửa sản phẩm như bản kho cũ.
-            $locationError = $this->assignLocation($product, $request);
-            if ($locationError) {
-                DB::rollBack();
-                return response()->json(['error' => $locationError], 422);
-            }
 
             DB::commit();
             // Trả JSON vì form sửa gửi bằng AJAX; bản cũ redirect()->back() khiến JS không đọc được kết quả.
@@ -462,36 +441,6 @@ class ProductController extends Controller
         $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
         $product->status = $total > 0 ? 1 : 2;
         $product->save();
-    }
-
-    /**
-     * Gán vị trí kho nếu người dùng có chọn. Trả về thông báo lỗi, hoặc null nếu ổn.
-     */
-    private function assignLocation(Product $product, Request $request): ?string
-    {
-        if (!$request->filled('zone') || !$request->filled('shelf') || !$request->filled('level')) {
-            return null;
-        }
-
-        ProductLocation::where('product_id', $product->id)->update(['product_id' => null]);
-
-        $location = ProductLocation::where('zone', $request->zone)
-            ->where('shelf', $request->shelf)
-            ->where('level', $request->level)
-            ->first();
-
-        if (!$location) {
-            return 'Không tìm thấy vị trí phù hợp.';
-        }
-
-        if ($location->product_id !== null && $location->product_id !== $product->id) {
-            return 'Vị trí này đã có sản phẩm khác.';
-        }
-
-        $location->product_id = $product->id;
-        $location->save();
-
-        return null;
     }
 
     private function uniqueSlug(string $name, ?int $ignoreId = null): string

@@ -59,7 +59,7 @@
                                         d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
                                     </path>
                                 </svg>
-                                Home
+                                Trang chủ
                             </a>
                         </li>
                         <li>
@@ -134,7 +134,7 @@
                         type="button" data-drawer-target="drawer-create-product-default"
                         data-drawer-show="drawer-create-product-default" aria-controls="drawer-create-product-default"
                         data-drawer-placement="right">
-                        Add new product
+                        Thêm sản phẩm
                     </button>
                     <a href="#"
                         class="inline-flex items-center justify-center w-1/2 px-3 py-2 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 sm:w-auto dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
@@ -144,7 +144,7 @@
                                 d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
                                 clip-rule="evenodd"></path>
                         </svg>
-                        Export
+                        Xuất file
                     </a>
                 </div>
             </div>
@@ -170,7 +170,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    PRICE
+                                    GIÁ
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -178,7 +178,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    INVENTORY
+                                    TỒN KHO
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -186,11 +186,11 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    CATEGORIES
+                                    DANH MỤC
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    UNIT
+                                    ĐƠN VỊ
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -198,7 +198,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    ACTIONS
+                                    THAO TÁC
                                 </th>
                             </tr>
                         </thead>
@@ -342,25 +342,6 @@
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="countries"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sản phẩm
-                            Vị trí</label>
-                        <div class="flex divide-x">
-                            <select id="zones" name="zone"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                @foreach ($zones as $item)
-                                    <option value="{{ $item->zone }}">Kho {{ $item->zone }}</option>
-                                @endforeach
-                            </select>
-                            <select id="shelves" name="shelf"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            </select>
-                            <select id="levels" name="level"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            </select>
-                        </div>
                     </div>
                 </div>
                 <swiper-container class="mySwiper" slides-per-view="5" space-between="10" id="image-preview"
@@ -575,32 +556,6 @@
                             <option value="1">Còn hàng</option>
                         </select>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tự cập nhật theo tồn kho biến thể.</p>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="old_location"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Vị trí cũ</label>
-                        <p id="old_location"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        </p>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="countries"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">New
-                            Vị trí</label>
-                        <div class="flex divide-x">
-                            <select id="zones_edit" name="zone"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                @foreach ($zones as $item)
-                                    <option value="{{ $item->zone }}">Kho {{ $item->zone }}</option>
-                                @endforeach
-                            </select>
-                            <select id="shelves_edit" name="shelf"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            </select>
-                            <select id="levels_edit" name="level"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            </select>
-                        </div>
                     </div>
                 </div>
                 <swiper-container class="mySwiper" slides-per-view="5" space-between="10" id="image-preview-edit"
@@ -907,11 +862,6 @@
                             variantsBox.append(variantRow(v));
                         });
 
-                        if (response[0].location && response[0].location.code) {
-                            $('#old_location').text(response[0].location.code);
-                        } else {
-                            $('#old_location').text(
-                                'Không có vị trí'); // Hoặc bất kỳ giá trị mặc định nào phù hợp
                         }
                         $.each(response[0].product_image, function(index, image) {
                             if (image.is_pined) {
@@ -1159,101 +1109,6 @@
             });
 
         })
-    </script>
-    {{-- location add --}}
-    <script>
-        $(document).ready(function() {
-            filterZone($('#zones').val(), $('#shelves'));
-            filterZone($('#zones_edit').val(), $('#shelves_edit'));
-            $(document).on('click', '#createProductButton', function() {
-                filterShelf($('#shelves').val(), $('#levels'));
-            });
-
-            $(document).on('click', '.editProductButton', function() {
-                filterShelf($('#shelves_edit').val(), $('#levels_edit'));
-            });
-
-            $('#createLocation').click(function() {
-                $.ajax({
-                    url: '{{ route('location.create') }}',
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function(response) {
-                        alert(response.message);
-                        filterZone(response.location.zone);
-                        filterShelf(response.location.shelf);
-                        $('#zones').val(response.location.zone);
-                        $('#shelves').val(response.location.shelf);
-                    },
-                    error: function(response) {
-                        alert(response.message); // Hiển thị thông báo lỗi
-                    }
-                });
-            });
-
-            function filterZone(val, shelveSelect) {
-                $.ajax({
-                    url: '{{ route('location.getShelf') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        zone: val
-                    },
-                    success: function(data) {
-                        shelveSelect
-                            .empty(); // Giả sử bạn muốn cập nhật một element với id `someElement`
-                        data.shelves.forEach(function(shelves) {
-                            shelveSelect.append($('<option>', {
-                                value: shelves.shelf,
-                                text: 'Giá ' + shelves.shelf
-                            }));
-                        });
-                    }
-                });
-            }
-
-            function filterShelf(val, levelSelect) {
-                $.ajax({
-                    url: '{{ route('location.getLevel') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        shelf: val
-                    },
-                    success: function(data) {
-                        if (levelSelect.length) { // Kiểm tra xem phần tử có tồn tại không
-                            levelSelect.empty();
-                        } else {
-                            console.log('Phần tử #levels không tồn tại.');
-                        }
-                        data.levels.forEach(function(levels) {
-                            levelSelect.append($('<option>', {
-                                value: levels.level,
-                                text: 'Tầng ' + levels.level
-                            }));
-                        });
-                    }
-                });
-            }
-
-            $('#zones').on('change', function() {
-                var val = $(this).val();
-                filterZone(val, $('#shelves'))
-            });
-
-            $('#shelves').on('change', function() {
-                var val = $(this).val();
-                filterShelf(val, $('#levels'))
-            });
-
-            $('#zones_edit').on('change', function() {
-                var val = $(this).val();
-                filterZone(val, $('#shelves_edit'))
-            });
-
-            $('#shelves_edit').on('change', function() {
-                var val = $(this).val();
-                filterShelf(val, $('#levels_edit'))
-            });
-        });
     </script>
 
 
