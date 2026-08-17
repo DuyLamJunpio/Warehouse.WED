@@ -39,8 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/get-product-by-supplier', [ProductController::class, 'getProductsBySupplier']);
     Route::get('/products/filter-category', [ProductController::class, 'filterByCategory']);
     Route::get('/products/filter-status', [ProductController::class, 'filterByStatus']);
-    Route::get('/products/getBatch/{id}', [ProductController::class, 'getProductExpiries']);
-    Route::delete('/products/deleteBatch/{productId}/{expiryId}', [ProductController::class, 'updateOrDeleteExpiry']);
+    Route::get('/products/variants/{id}', [ProductController::class, 'getProductVariants']);
+    Route::delete('/products/variants/{productId}/{variantId}', [ProductController::class, 'updateOrDeleteVariant']);
 
     //supplier
     Route::get('/suppliers', [SupplierController::class, 'index']);
@@ -107,12 +107,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('statistical/export-invoice/last-month', [StatisticalController::class, "statsExportLastMonth"]);
 
     //số lượng tồn kho cuối ngày
-    Route::get('statistical/inventory/end-of-day', [StatisticalController::class, "inventoryStatsByExpiry"]);
+    Route::get('statistical/inventory/end-of-day', [StatisticalController::class, "inventoryStatsByVariant"]);
 
     //register
     Route::post('/register', [AuthController::class, 'register']);
+
+    //upload hàng loạt + đồng bộ trạng thái sản phẩm
+    Route::post('/upload-images', [ProductController::class, 'uploadBatchImages']);
+    Route::get('/update_product_status', [ProductController::class, 'updateProductStatus']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/upload-images', [ProductController::class, 'uploadBatchImages']);
-Route::get('/update_product_status', [ProductController::class, 'updateProductStatus']);
