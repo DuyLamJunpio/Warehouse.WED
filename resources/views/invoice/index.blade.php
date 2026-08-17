@@ -26,23 +26,23 @@
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Invoice</span>
+                                    aria-current="page">Hóa đơn</span>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL INVOICES</h1>
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">TẤT CẢ HÓA ĐƠN</h1>
             </div>
             <div class="sm:flex">
                 <div
                     class="items-center hidden mb-3 sm:flex sm:divide-x sm:divide-gray-100 sm:mb-0 dark:divide-gray-700">
 
                     <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Search</label>
+                        <label for="products-search" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 sm:w-64 xl:w-96">
                             <input type="text" name="search" id="search-invoice"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for products">
+                                placeholder="Tìm sản phẩm">
                         </div>
                     </form>
 
@@ -121,7 +121,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    STATUS
+                                    TRẠNG THÁI
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -155,7 +155,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formAdd" enctype="multipart/form-data">
             @csrf
@@ -163,7 +163,7 @@
                 <div class="grid grid-cols-6 gap-6">
                     <div class="col-span-6 sm:col-span-3">
                         <label for="invoice_type"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Invoice Type</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Loại phiếu</label>
                         <select id="invoice_type" name="invoice_type"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option value="0">Hóa đơn nhập</option>
@@ -172,7 +172,7 @@
                     </div>
                     <div id="supplierSelect" class="col-span-6 sm:col-span-3">
                         <label for="supplier"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Supplier Name</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên nhà cung cấp</label>
                         @php
                             $supplierList = $supplier->where('status', 1)->all();
                         @endphp
@@ -186,7 +186,7 @@
                     </div>
                     <div id="customerSelect" class="col-span-6 sm:col-span-3" hidden>
                         <label for="customer"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Customer Name</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên khách hàng</label>
                         @php $customerList = $customer->where('status', 0)->all(); @endphp
                         <select id="customer" name="customer_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
@@ -197,7 +197,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="invoice_creator"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Invoice
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Hóa đơn
                             Creator</label>
                         <input type="text" id="user_id" name="user_id" hidden value="{{ Auth::user()->id }}">
                         <input type="text" id="invoice_creator"
@@ -206,14 +206,14 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="discount"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Discount(%)</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Chiết khấu(%)</label>
                         <input type="number" name="discount" id="discount" inputmode="numeric" pattern="[0-9]*"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="0" min="0">
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="pay_status"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Payment Status</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái thanh toán</label>
                         <select id="pay_status" name="pay_status"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option value="0">Chưa thanh toán</option>
@@ -232,7 +232,7 @@
                     <div class="col-span-6 sm:col-full">
                         {{-- <input type="text" name="products" id="jsonProducts" hidden> --}}
                         <label for="product_list"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Products List</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Danh sách sản phẩm</label>
                         <!-- Products table or list here -->
                         <div class="overflow-hidden shadow">
                             <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
@@ -240,22 +240,22 @@
                                     <tr>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Product</th>
+                                            Sản phẩm</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Price</th>
+                                            Giá</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Quantity</th>
-                                        <th id="expiry_th" scope="col"
+                                            Số lượng</th>
+                                        <th id="variant_th" scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Expiry</th>
+                                            Biến thể</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Amount</th>
+                                            Thành tiền</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Action</th>
+                                            Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="productTableAdd"
@@ -265,7 +265,7 @@
                                             <button id="modalProduct" type="button"
                                                 data-modal-target="default-modal" data-modal-toggle="default-modal"
                                                 class="w-full text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Choose
-                                                Products</button>
+                                                Sản phẩm</button>
                                         </th>
                                     </tr>
                                 </tbody>
@@ -275,10 +275,10 @@
                     <div class="col-span-6 sm:col-span-3">
                         <div class="col-span-6 sm:col-full mb-5">
                             <label for="notes"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Notes</label>
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi chú</label>
                             <textarea id="notes" rows="4" name="note"
                                 class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Enter note here"></textarea>
+                                placeholder="Nhập ghi chú"></textarea>
                         </div>
                         <div class="col-span-6 sm:col-full">
                             <label for="terms_and_conditions"
@@ -286,7 +286,7 @@
                                 Conditions</label>
                             <textarea id="terms_and_conditions" rows="4" name="term"
                                 class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Enter terms and conditions here"></textarea>
+                                placeholder="Nhập điều khoản"></textarea>
                         </div>
                     </div>
                     <div
@@ -295,7 +295,7 @@
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3 flex items-center">
                                     <label class="block text-sm font-medium text-gray-900 dark:text-white">Taxable
-                                        Amount</label>
+                                        Thành tiền</label>
                                 </div>
                                 <div class="col-span-6 sm:col-span-3 flex items-center justify-end">
                                     <p id="taxable_amount"
@@ -307,7 +307,7 @@
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3 flex items-center">
                                     <label
-                                        class="block text-sm font-medium text-gray-900 dark:text-white">Discount</label>
+                                        class="block text-sm font-medium text-gray-900 dark:text-white">Chiết khấu</label>
                                 </div>
                                 <div class="col-span-6 sm:col-span-3 flex items-center justify-end">
                                     <p id="discountNumber"
@@ -330,7 +330,7 @@
                                 <div class="col-span-6 sm:col-span-3 flex items-center">
                                     <label
                                         class="block text-lg leading-relaxed font-bold text-gray-900 dark:text-white">Total
-                                        Amount</label>
+                                        Thành tiền</label>
                                 </div>
                                 <div class="col-span-6 sm:col-span-3 flex items-center justify-end">
                                     <input type="number" hidden id="total_amount_input" name="total_amount"
@@ -343,10 +343,10 @@
                         <div class="col-span-6 sm:col-full mb-2 mt-5">
                             <label for="signature_name"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Signature
-                                Name</label>
+                                Tên</label>
                             <input type="text" name="signature_name" id="signature_name"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Type signature name" required="">
+                                placeholder="Nhập tên người ký" required="">
                         </div>
 
                         <div class="col-span-6 sm:col-full">
@@ -367,7 +367,7 @@
                                                 d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                         </svg>
                                         <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                                class="font-semibold">Click to upload signature</span></p>
+                                                class="font-semibold">Bấm để tải lên signature</span></p>
                                     </div>
                                 </label>
                                 <input id="signature" type="file" name="signature" class="hidden" />
@@ -378,7 +378,7 @@
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="submit"
                         class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                        <span>Save & Send</span>
+                        <span>Lưu &amp; gửi</span>
                     </button>
                 </div>
             </div>
@@ -391,7 +391,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete Invoice</h5>
+            Xóa Hóa đơn</h5>
         <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
             aria-controls="drawer-delete-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -401,7 +401,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -426,7 +426,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
+            Cập nhật sản phẩm</h5>
         <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
             aria-controls="drawer-update-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -436,7 +436,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formEdit" enctype="multipart/form-data">
             @csrf
@@ -444,7 +444,7 @@
                 <div class="grid grid-cols-6 gap-6">
                     <div class="col-span-6 sm:col-span-3">
                         <label for="invoice_type_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Invoice Type</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Loại phiếu</label>
                         <select id="invoice_type_edit" name="invoice_type"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option value="0">Hóa đơn nhập</option>
@@ -453,7 +453,7 @@
                     </div>
                     <div id="supplierSelectEdit" class="col-span-6 sm:col-span-3">
                         <label for="supplier_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Supplier Name</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên nhà cung cấp</label>
                         <select id="supplier_edit" name="supplier_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             @foreach ($supplierList as $item)
@@ -463,7 +463,7 @@
                     </div>
                     <div id="customerSelectEdit" class="col-span-6 sm:col-span-3" hidden>
                         <label for="customer_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Customer Name</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên khách hàng</label>
 
                         <select id="customer_edit" name="customer_id"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
@@ -474,7 +474,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="invoice_creator_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Invoice
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Hóa đơn
                             Creator</label>
                         <input type="text" name="user_id" id="user_id_edit" hidden>
                         <input type="text" id="invoice_creator_edit"
@@ -483,7 +483,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="discount_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Discount(%)</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Chiết khấu(%)</label>
                         <input type="number" name="discount" id="discount_edit" inputmode="numeric"
                             pattern="[0-9]*"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
@@ -491,7 +491,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="pay_status_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Payment Status</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái thanh toán</label>
                         <select id="pay_status_edit" name="pay_status"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option value="0">Chưa thanh toán</option>
@@ -506,7 +506,7 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                     </div>
                     <div class="col-span-6 sm:col-full">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Products
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sản phẩm
                             List</label>
                         <!-- Products table or list here -->
                         <div class="overflow-hidden shadow">
@@ -515,19 +515,19 @@
                                     <tr>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Product</th>
+                                            Sản phẩm</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Price</th>
+                                            Giá</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Quantity</th>
+                                            Số lượng</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Amount</th>
+                                            Thành tiền</th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                            Action</th>
+                                            Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="productTableEdit"
@@ -537,7 +537,7 @@
                                             <button id="modalProductEdit" type="button"
                                                 data-modal-target="default-modal" data-modal-toggle="default-modal"
                                                 class="w-full text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Choose
-                                                Products</button>
+                                                Sản phẩm</button>
                                         </th>
                                     </tr>
                                 </tbody>
@@ -547,10 +547,10 @@
                     <div class="col-span-6 sm:col-span-3">
                         <div class="col-span-6 sm:col-full mb-5">
                             <label for="notes_edit"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Notes</label>
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi chú</label>
                             <textarea id="notes_edit" rows="4" name="note"
                                 class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Enter note here"></textarea>
+                                placeholder="Nhập ghi chú"></textarea>
                         </div>
                         <div class="col-span-6 sm:col-full">
                             <label for="terms_and_conditions_edit"
@@ -558,7 +558,7 @@
                                 Conditions</label>
                             <textarea id="terms_and_conditions_edit" rows="4" name="term"
                                 class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Enter terms and conditions here"></textarea>
+                                placeholder="Nhập điều khoản"></textarea>
                         </div>
                     </div>
                     <div
@@ -567,7 +567,7 @@
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3 flex items-center">
                                     <label class="block text-sm font-medium text-gray-900 dark:text-white">Taxable
-                                        Amount</label>
+                                        Thành tiền</label>
                                 </div>
                                 <div class="col-span-6 sm:col-span-3 flex items-center justify-end">
                                     <p id="taxable_amount_edit"
@@ -579,7 +579,7 @@
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3 flex items-center">
                                     <label
-                                        class="block text-sm font-medium text-gray-900 dark:text-white">Discount</label>
+                                        class="block text-sm font-medium text-gray-900 dark:text-white">Chiết khấu</label>
                                 </div>
                                 <div class="col-span-6 sm:col-span-3 flex items-center justify-end">
                                     <p id="discountNumberEdit"
@@ -602,7 +602,7 @@
                                 <div class="col-span-6 sm:col-span-3 flex items-center">
                                     <label
                                         class="block text-lg leading-relaxed font-bold text-gray-900 dark:text-white">Total
-                                        Amount</label>
+                                        Thành tiền</label>
                                 </div>
                                 <div class="col-span-6 sm:col-span-3 flex items-center justify-end">
                                     <input type="number" hidden id="total_amount_input_edit" name="total_amount"
@@ -615,10 +615,10 @@
                         <div class="col-span-6 sm:col-full mb-2 mt-5">
                             <label for="signature_name_edit"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Signature
-                                Name</label>
+                                Tên</label>
                             <input type="text" name="signature_name" id="signature_name_edit"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Type signature name" required="">
+                                placeholder="Nhập tên người ký" required="">
                         </div>
 
                         <div class="col-span-6 sm:col-full">
@@ -640,7 +640,7 @@
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="submit"
                         class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                        <span>Update</span>
+                        <span>Cập nhật</span>
                     </button>
                 </div>
             </div>
@@ -657,22 +657,22 @@
                 <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                        Product List
+                        Sản phẩm List
                     </h3>
                     <form id="formSearchProduct" class="sm:pr-3" action="#" method="GET" hidden>
-                        <label for="products-search" class="sr-only">Search</label>
+                        <label for="products-search" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="search" id="search-product"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for products">
+                                placeholder="Tìm sản phẩm">
                         </div>
                     </form>
                     <form id="formSearchSupplier" class="sm:pr-3" action="#" method="GET">
-                        <label for="products-supplier" class="sr-only">Search</label>
+                        <label for="products-supplier" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="search" id="search-supplier"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for suppliers">
+                                placeholder="Tìm nhà cung cấp">
                         </div>
                     </form>
                     <div>
@@ -692,7 +692,7 @@
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                 stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
                         </svg>
-                        <span class="sr-only">Close modal</span>
+                        <span class="sr-only">Đóng</span>
                     </button>
                 </div>
                 <!-- Modal body -->
@@ -704,7 +704,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    PRODUCT NAME
+                                    TÊN SẢN PHẨM
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -712,7 +712,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    IMPORT PRICE
+                                    GIÁ NHẬP
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -720,7 +720,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    SUPPLIER
+                                    NHÀ CUNG CẤP
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -1026,20 +1026,13 @@
                 $('#productTableAdd tr').slice(0, -1).each(function(index) {
                     var productId = $(this).find('.delete-product-button').data('productId');
                     var quantity = $(this).find('.quantity').val();
-                    var expiry = $(this).find('.expiry').val();
+                    // Biến thể size/màu - bắt buộc cho cả phiếu nhập lẫn đơn bán.
+                    var variantId = $(this).find('.variant').val();
 
-                    if ($('#invoice_type').val() == 0) {
-                        if (productId && quantity !== undefined && quantity !== '' && expiry !==
-                            undefined && expiry !== '') {
-                            formData.append('products[' + index + '][product_id]', productId);
-                            formData.append('products[' + index + '][quantity]', quantity);
-                            formData.append('products[' + index + '][expiry]', expiry);
-                        }
-                    } else {
-                        if (productId && quantity !== undefined && quantity !== '') {
-                            formData.append('products[' + index + '][product_id]', productId);
-                            formData.append('products[' + index + '][quantity]', quantity);
-                        }
+                    if (productId && quantity !== undefined && quantity !== '' && variantId) {
+                        formData.append('products[' + index + '][product_id]', productId);
+                        formData.append('products[' + index + '][quantity]', quantity);
+                        formData.append('products[' + index + '][variant_id]', variantId);
                     }
                 });
 
@@ -1377,7 +1370,7 @@
                                     placeholder="0" required min="0" value="${element.quantity}">
                                     <span
                                     class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
-                                    <span style="margin-right: 5px;">Tồn kho:</span><strong class="inventory">${element.product.expiries_sum_quantity_exp ?? 0}</strong>
+                                    <span style="margin-right: 5px;">Tồn kho:</span><strong class="inventory">${element.product.variants_sum_quantity ?? 0}</strong>
                                     </span>
                                 </div>
                             </td>
@@ -1497,8 +1490,11 @@
                     const url = '/invoice/delete/' + idInvoice;
 
                     $.ajax({
-                        url: url, // Sử dụng nối chuỗi để thêm idSupplier vào URL
-                        type: 'GET',
+                        url: url, // Sử dụng nối chuỗi để thêm idInvoice vào URL
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
                         success: function(response) {
                             // Xử lý khi xóa thành công
                             alert(response.success);

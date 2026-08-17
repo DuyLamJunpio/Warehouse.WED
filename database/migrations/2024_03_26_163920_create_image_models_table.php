@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('image_models', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
-            $table->integer('product_id');
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->string('path');
             $table->string('name');
-            $table->boolean('is_pined')->default(false);
+            $table->string('media_type')->default('image'); // 'image' hoặc 'video'
+            $table->integer('sort_order')->default(0);
+            $table->boolean('is_pined')->default(false);    // ảnh đại diện sản phẩm
+            $table->timestamps();
         });
     }
 

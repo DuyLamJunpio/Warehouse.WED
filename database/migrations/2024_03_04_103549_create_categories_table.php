@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -10,15 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-
-    use SoftDeletes;
-
     public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
+            // Danh mục cha - con (Áo -> Áo thun). null = danh mục gốc.
+            $table->foreignId('parent_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->string('name');
-            $table->integer('status');
+            $table->string('slug')->unique();
+            $table->string('image')->nullable();
+            $table->text('description')->nullable();
+            $table->integer('sort_order')->default(0);
+            $table->integer('status')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });

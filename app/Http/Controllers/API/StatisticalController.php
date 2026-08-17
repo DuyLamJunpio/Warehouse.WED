@@ -335,12 +335,12 @@ use Carbon\Carbon;
 
 //     public function inventoryStatsByExpiry(Request $request)
 //     {
-//         $products = Product::with(['expiries'])
+//         $products = Product::with(['variants'])
 //             ->get()
 //             ->groupBy('category_id')
 //             ->map(function ($productsInCategory) {
 //                 return $productsInCategory->map(function ($product) {
-//                     if ($product->expiries->isEmpty()) {
+//                     if ($product->variants->isEmpty()) {
 //                         return [
 //                             'product_id' => $product->id,
 //                             'message' => 'Hết hàng'
@@ -348,10 +348,10 @@ use Carbon\Carbon;
 //                     } else {
 //                         return [
 //                             'product_id' => $product->id,
-//                             'expiries' => $product->expiries->map(function ($expiry) {
+//                             'variants' => $product->variants->map(function ($expiry) {
 //                                 return [
 //                                     'expiry_date' => $expiry->expiry_date,
-//                                     'total_quantity' => $expiry->quantity_exp
+//                                     'total_quantity' => $expiry->quantity
 //                                 ];
 //                             })
 //                         ];
@@ -734,13 +734,16 @@ class StatisticalController extends Controller
         ]);
     }
 
-    public function inventoryStatsByExpiry(Request $request)
+    /**
+     * Tồn kho theo biến thể size/màu (thay cho thống kê theo lô hạn dùng).
+     */
+    public function inventoryStatsByVariant(Request $request)
     {
         // Lấy categories_id từ request nếu có
         $categoryId = $request->input('categories_id');
 
-        // Lấy tất cả các sản phẩm cùng với thông tin ngày hết hạn của chúng, bao gồm cả các sản phẩm đã bị xóa mềm (soft deleted)
-        $query = Product::with(['expiries', 'category', 'location'])->withTrashed();
+        // Lấy tất cả sản phẩm kèm biến thể, bao gồm cả sản phẩm đã bị xóa mềm (soft deleted)
+        $query = Product::with(['variants', 'category', 'location'])->withTrashed();
 
         // Nếu có categories_id trong request, thêm điều kiện lọc
         if ($categoryId) {
@@ -750,8 +753,8 @@ class StatisticalController extends Controller
         $products = $query->get()
             // Ánh xạ qua từng sản phẩm
             ->map(function ($product) {
-                // Nếu sản phẩm không có thông tin ngày hết hạn
-                if ($product->expiries->isEmpty()) {
+                // Sản phẩm chưa khai báo biến thể nào
+                if ($product->variants->isEmpty()) {
                     return [
                         'product_id' => $product->id,
                         'product_name' => $product->product_name ?? 'N/A',
@@ -759,19 +762,22 @@ class StatisticalController extends Controller
                         'location' => $product->location->code ?? 'N/A',
                     ];
                 } else {
-                    // Nếu sản phẩm có thông tin ngày hết hạn
+                    // Sản phẩm có biến thể: liệt kê tồn theo từng size/màu
                     return [
                         'product_id' => $product->id,
                         'product_name' => $product->product_name ?? 'N/A',
                         'category' => $product->category->name ?? 'N/A', // Lấy tên danh mục
                         'location' => $product->location->code ?? 'N/A',
-                        'expiries' => $product->expiries->map(function ($expiry) {
+                        'variants' => $product->variants->map(function ($variant) {
                             return [
-                                'expiry_date' => $expiry->expiry_date, // Ngày hết hạn
-                                'total_quantity' => $expiry->quantity_exp // Tổng số lượng
+                                'variant_id' => $variant->id,
+                                'size' => $variant->size,
+                                'color' => $variant->color,
+                                'sku' => $variant->sku,
+                                'total_quantity' => $variant->quantity
                             ];
                         }),
-                        'total_quantity' => $product->expiries->sum('quantity_exp') // Tổng số lượng tồn kho của sản phẩm
+                        'total_quantity' => $product->variants->sum('quantity') // Tổng số lượng tồn kho của sản phẩm
                     ];
                 }
             });

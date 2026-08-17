@@ -15,11 +15,24 @@ class Product extends Model
         'supplier_id',
         'categories_id',
         'product_name',
+        'slug',
         'barcode',
+        'description',
+        'material',
+        'brand',
         'unit',
         'import_price',
         'sell_price',
+        'discount_price',
+        'is_featured',
         'status',
+    ];
+
+    protected $casts = [
+        'is_featured' => 'boolean',
+        'import_price' => 'integer',
+        'sell_price' => 'integer',
+        'discount_price' => 'integer',
     ];
 
     protected $dates = ['deleted_at'];
@@ -41,19 +54,35 @@ class Product extends Model
 
     public function productImage()
     {
-        return $this->hasMany(ImageModel::class, 'product_id', 'id');
+        return $this->hasMany(ImageModel::class, 'product_id', 'id')->orderBy('sort_order');
     }
 
     public function imageModel()
     {
         return $this->hasMany(ImageModel::class);
     }
+
     public function location()
     {
         return $this->hasOne(ProductLocation::class);
     }
-    public function expiries()
+
+    /**
+     * Biến thể size/màu - nơi giữ tồn kho.
+     * Thay cho quan hệ expiries() của hệ thống kho cũ.
+     */
+    public function variants()
     {
-        return $this->hasMany(Expiry::class, 'product_id', 'id');
+        return $this->hasMany(ProductVariant::class, 'product_id', 'id')->orderBy('sort_order');
+    }
+
+    /**
+     * Ảnh đại diện: ảnh được ghim, nếu không có thì lấy ảnh đầu tiên.
+     */
+    public function getThumbnailAttribute(): ?ImageModel
+    {
+        return $this->productImage->firstWhere('is_pined', true)
+            ?? $this->productImage->firstWhere('media_type', 'image')
+            ?? $this->productImage->first();
     }
 }

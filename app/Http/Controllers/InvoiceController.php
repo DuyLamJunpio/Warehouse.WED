@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Expiry;
+use App\Models\ProductVariant;
 use App\Models\Invoice;
 use App\Models\ImageModel;
 use App\Models\Product;
@@ -36,7 +36,7 @@ class InvoiceController extends Controller
         $user = User::all();
         $supplier = Supplier::where('status', 1)->withTrashed()->get();
         $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')
+            ->withSum('variants', 'quantity')
             ->whereIn('products.status', [1, 2])
             ->whereHas('supplier', function ($query) {
                 $query->whereNull('deleted_at');
@@ -63,7 +63,7 @@ class InvoiceController extends Controller
         $customer = Customer::where('status', 0)->get();
         $user = User::all();
         $supplier = Supplier::where('status', 1)->get();
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')->whereIn('products.status', [1, 2])->get();
+        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')->whereIn('products.status', [1, 2])->get();
 
         return view("invoice.data", compact("invoices", "customer", "products", "supplier", "user"));
     }
@@ -84,14 +84,14 @@ class InvoiceController extends Controller
         $customer = Customer::where('status', 0)->get();
         $user = User::all();
         $supplier = Supplier::where('status', 1)->get();
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')->get();
+        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')->get();
 
         return view("invoice.data", compact("invoices", "customer", "products", "supplier", "user"));
     }
 
     public function getProductSupplier(string $id = null)
     {
-        $query = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp');
+        $query = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity');
 
         // Thêm điều kiện truy vấn chỉ khi $id được cung cấp
         if (isset($id)) {
@@ -105,7 +105,7 @@ class InvoiceController extends Controller
 
     public function getProduct()
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')->whereIn('products.status', [1, 2])->get();
+        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')->whereIn('products.status', [1, 2])->get();
         return view("invoice.list_product", compact("products"));
     }
 
@@ -117,13 +117,13 @@ class InvoiceController extends Controller
             $key = "search_invoice_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')
+                return Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
                     ->where('products.product_name', 'like', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
                     ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                     ->get();
             });
         } else {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')
+            $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
                 ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                 ->get();
         }
@@ -138,7 +138,7 @@ class InvoiceController extends Controller
             $key = "search_supplier_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')
+                return Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
                     ->whereHas('supplier', function ($query) use ($keyword) {
                         $query->where('supplier_name', 'like', "%{$keyword}%");
                     })
@@ -146,7 +146,7 @@ class InvoiceController extends Controller
                     ->get();
             });
         } else {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')
+            $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
                 ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                 ->get();
         }
@@ -155,7 +155,7 @@ class InvoiceController extends Controller
 
     public function getProductById(string $id)
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')
+        $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('variants', 'quantity')
             ->where('products.id', $id)
             ->get();
 
@@ -170,7 +170,7 @@ class InvoiceController extends Controller
             'productInvoices.product.category', // Tải danh mục của sản phẩm
             'productInvoices.product.imageModel', // Tải mô hình hình ảnh của sản phẩm
             'productInvoices.product.location' // Tải vị trí của sản phẩm
-        ])->withSum('expiries', 'quantity_exp')->find($id);
+        ])->withSum('variants', 'quantity')->find($id);
 
         if (!$invoice) {
             return response()->json(['error' => 'Hóa đơn không tồn tại.'], 404);
@@ -223,54 +223,63 @@ class InvoiceController extends Controller
                 }
 
                 foreach ($products as $product) {
-                    DB::table('product_invoices')->insert([
-                        'invoice_id' => $invoice->id,
-                        'product_id' => $product['product_id'],
-                        'quantity' => $product['quantity'],
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-
                     $productModel = Product::find($product['product_id']);
                     if (!$productModel) {
                         throw new Exception('Sản phẩm không tồn tại.');
                     }
 
-                    if ($request->invoice_type == 0) { // Nhập hàng
-                        $expiry = Expiry::firstOrNew(
-                            ['product_id' => $product['product_id'], 'expiry_date' => $product['expiry']],
-                            ['quantity_exp' => 0]
-                        );
-                        $expiry->quantity_exp += $product['quantity'];
-                        $result = $expiry->save();
-                        if ($result) {
-                            $productModel->status = 1;
-                        }
-                    } else { // Xuất hàng
-                        $expiries = Expiry::where('product_id', $product['product_id'])
-                            ->orderBy('expiry_date', 'asc')
-                            ->get();
+                    // Chốt đơn giá tại thời điểm lập chứng từ: nhập theo giá nhập,
+                    // bán theo giá bán (ưu tiên giá khuyến mãi).
+                    $unitPrice = $request->invoice_type == 0
+                        ? (int) $productModel->import_price
+                        : (int) ($productModel->discount_price ?? $productModel->sell_price);
+
+                    DB::table('product_invoices')->insert([
+                        'invoice_id' => $invoice->id,
+                        'product_id' => $product['product_id'],
+                        'variant_id' => $product['variant_id'] ?? null,
+                        'quantity' => $product['quantity'],
+                        'unit_price' => $unitPrice,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    if ($request->invoice_type == 0) { // Nhập hàng: cộng tồn vào biến thể
+                        $variant = $this->resolveVariant($productModel, $product);
+                        $variant->quantity += $product['quantity'];
+                        $variant->save();
+                    } else { // Xuất hàng: trừ tồn khỏi biến thể
+                        // Nếu đơn chỉ rõ biến thể thì chỉ trừ đúng biến thể đó,
+                        // ngược lại trừ lần lượt theo thứ tự hiển thị.
+                        $variants = isset($product['variant_id'])
+                            ? ProductVariant::where('id', $product['variant_id'])->get()
+                            : ProductVariant::where('product_id', $product['product_id'])
+                                ->orderBy('sort_order')
+                                ->get();
+
                         $remainingQuantity = $product['quantity'];
 
-                        foreach ($expiries as $expiry) {
-                            if ($remainingQuantity <= 0)
+                        foreach ($variants as $variant) {
+                            if ($remainingQuantity <= 0) {
                                 break;
-
-                            $deductQuantity = min($expiry->quantity_exp, $remainingQuantity);
-                            $expiry->quantity_exp -= $deductQuantity;
-                            $remainingQuantity -= $deductQuantity;
-
-                            if ($expiry->quantity_exp == 0) {
-                                $expiry->delete(); // Xóa bản ghi nếu số lượng bằng 0
-                            } else {
-                                $result = $expiry->save();
-                                if ($result) {
-                                    $productModel->status = 2;
-                                }
                             }
+
+                            $deductQuantity = min($variant->quantity, $remainingQuantity);
+                            $variant->quantity -= $deductQuantity;
+                            $remainingQuantity -= $deductQuantity;
+                            // Khác với lô hạn dùng: biến thể hết hàng vẫn giữ lại
+                            // vì nó là một mục trong danh mục sản phẩm.
+                            $variant->save();
+                        }
+
+                        if ($remainingQuantity > 0) {
+                            throw new Exception(
+                                'Không đủ tồn kho cho sản phẩm "' . $productModel->product_name . '".'
+                            );
                         }
                     }
-                    $productModel->save();
+
+                    $this->syncProductStatus($productModel);
                 }
 
                 DB::commit();
@@ -367,6 +376,49 @@ class InvoiceController extends Controller
         }
     }
 
+
+    /**
+     * Tìm biến thể để cộng tồn khi nhập hàng.
+     *
+     * Ưu tiên variant_id gửi lên; nếu không có thì dùng cặp size/màu;
+     * nếu sản phẩm chưa có biến thể nào thì tạo biến thể mặc định.
+     */
+    private function resolveVariant(Product $product, array $line): ProductVariant
+    {
+        if (!empty($line['variant_id'])) {
+            $variant = ProductVariant::find($line['variant_id']);
+            if ($variant) {
+                return $variant;
+            }
+        }
+
+        $size = $line['size'] ?? null;
+        $color = $line['color'] ?? null;
+
+        $variant = ProductVariant::firstOrNew([
+            'product_id' => $product->id,
+            'size' => $size,
+            'color' => $color,
+        ]);
+
+        if (!$variant->exists) {
+            $variant->sku = $product->barcode . '-' . strtoupper(Str::random(5));
+            $variant->quantity = 0;
+        }
+
+        return $variant;
+    }
+
+    /**
+     * Đồng bộ trạng thái sản phẩm theo tổng tồn của các biến thể.
+     * 1 = còn hàng, 2 = hết hàng.
+     */
+    private function syncProductStatus(Product $product): void
+    {
+        $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
+        $product->status = $total > 0 ? 1 : 2;
+        $product->save();
+    }
 
     public function destroy(string $id)
     {

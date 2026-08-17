@@ -13,8 +13,13 @@ return new class extends Migration {
         Schema::create('product_invoices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
-            $table->integer('product_id');
+            $table->foreignId('product_id')->constrained('products');
+            // Biến thể được đặt/nhập. Null với dữ liệu cũ hoặc sản phẩm không có biến thể.
+            $table->foreignId('variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->integer('quantity');
+            // Chốt giá tại thời điểm lập đơn: giá sản phẩm có thể đổi về sau,
+            // nếu tính lại từ products.sell_price thì doanh thu lịch sử sẽ sai.
+            $table->bigInteger('unit_price')->default(0);
             $table->timestamps();
         });
     }

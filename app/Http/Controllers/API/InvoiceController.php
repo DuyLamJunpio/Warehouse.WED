@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\Expiry;
+use App\Models\ProductVariant;
 use App\Models\Invoice;
 use App\Models\ImageModel;
 use App\Models\Product;
@@ -17,10 +17,46 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class InvoiceController extends Controller
 {
+    /**
+     * Tìm biến thể theo id, hoặc tạo mới theo cặp size/màu khi nhập hàng.
+     */
+    private function resolveVariant(Product $product, array $line): ProductVariant
+    {
+        if (!empty($line['variant_id'])) {
+            $variant = ProductVariant::find($line['variant_id']);
+            if ($variant) {
+                return $variant;
+            }
+        }
+
+        $variant = ProductVariant::firstOrNew([
+            'product_id' => $product->id,
+            'size' => $line['size'] ?? null,
+            'color' => $line['color'] ?? null,
+        ]);
+
+        if (!$variant->exists) {
+            $variant->sku = $product->barcode . '-' . strtoupper(Str::random(5));
+            $variant->quantity = 0;
+        }
+
+        return $variant;
+    }
+
+    /**
+     * Đồng bộ trạng thái còn/hết hàng của sản phẩm theo tổng tồn các biến thể.
+     */
+    private function syncProductStatus(Product $product): void
+    {
+        $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
+        $product->status = $total > 0 ? 1 : 2;
+        $product->save();
+    }
 
     public function index()
     {
@@ -188,54 +224,57 @@ class InvoiceController extends Controller
                 }
 
                 foreach ($products as $product) {
-                    DB::table('product_invoices')->insert([
-                        'invoice_id' => $invoice->id,
-                        'product_id' => $product['product_id'],
-                        'quantity' => $product['quantity'],
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-
                     $productModel = Product::find($product['product_id']);
                     if (!$productModel) {
                         throw new Exception('Sản phẩm không tồn tại.');
                     }
 
-                    if ($request->invoice_type == 0) { // Nhập hàng
-                        $expiry = Expiry::firstOrNew(
-                            ['product_id' => $product['product_id'], 'expiry_date' => $product['expiry']],
-                            ['quantity_exp' => 0]
-                        );
-                        $expiry->quantity_exp += $product['quantity'];
-                        $result = $expiry->save();
-                        if ($result) {
-                            $productModel->status = 1;
-                        }
-                    } else { // Xuất hàng
-                        $expiries = Expiry::where('product_id', $product['product_id'])
-                            ->orderBy('expiry_date', 'asc')
-                            ->get();
+                    // Chốt giá tại thời điểm lập chứng từ: giá sản phẩm có thể đổi về sau,
+                    // nếu tính lại từ products thì doanh thu lịch sử sẽ sai.
+                    $unitPrice = $request->invoice_type == 0
+                        ? (int) $productModel->import_price
+                        : (int) ($productModel->discount_price ?? $productModel->sell_price);
+
+                    DB::table('product_invoices')->insert([
+                        'invoice_id' => $invoice->id,
+                        'product_id' => $product['product_id'],
+                        'variant_id' => $product['variant_id'] ?? null,
+                        'quantity' => $product['quantity'],
+                        'unit_price' => $unitPrice,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    if ($request->invoice_type == 0) { // Nhập hàng: cộng tồn vào biến thể
+                        $variant = $this->resolveVariant($productModel, $product);
+                        $variant->quantity += $product['quantity'];
+                        $variant->save();
+                    } else { // Xuất hàng: trừ tồn khỏi biến thể
+                        $variants = !empty($product['variant_id'])
+                            ? ProductVariant::where('id', $product['variant_id'])->get()
+                            : ProductVariant::where('product_id', $product['product_id'])
+                                ->orderBy('sort_order')->get();
                         $remainingQuantity = $product['quantity'];
 
-                        foreach ($expiries as $expiry) {
-                            if ($remainingQuantity <= 0)
+                        foreach ($variants as $variant) {
+                            if ($remainingQuantity <= 0) {
                                 break;
-
-                            $deductQuantity = min($expiry->quantity_exp, $remainingQuantity);
-                            $expiry->quantity_exp -= $deductQuantity;
-                            $remainingQuantity -= $deductQuantity;
-
-                            if ($expiry->quantity_exp == 0) {
-                                $expiry->delete(); // Xóa bản ghi nếu số lượng bằng 0
-                            } else {
-                                $result = $expiry->save();
-                                if ($result) {
-                                    $productModel->status = 2;
-                                }
                             }
+
+                            $deductQuantity = min($variant->quantity, $remainingQuantity);
+                            $variant->quantity -= $deductQuantity;
+                            $remainingQuantity -= $deductQuantity;
+                            // Khác với lô hạn dùng: biến thể hết hàng vẫn giữ lại
+                            // vì nó là một mục trong danh mục sản phẩm.
+                            $variant->save();
+                        }
+
+                        if ($remainingQuantity > 0) {
+                            throw new Exception('Không đủ tồn kho cho sản phẩm "' . $productModel->product_name . '".');
                         }
                     }
-                    $productModel->save();
+
+                    $this->syncProductStatus($productModel);
                 }
 
                 DB::commit();
