@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
@@ -209,6 +210,9 @@ class InvoiceController extends Controller
                     $params['customer_id'] = null;
                 } else {
                     $params['supplier_id'] = null;
+                    // Đơn bán luôn bắt đầu ở trạng thái chờ xác nhận và có mã đơn riêng.
+                    $params['order_code'] = $this->generateOrderCode();
+                    $params['order_status'] = Invoice::STATUS_PENDING;
                 }
 
                 if ($request->hasFile('signature')) {
@@ -383,6 +387,18 @@ class InvoiceController extends Controller
      * Ưu tiên variant_id gửi lên; nếu không có thì dùng cặp size/màu;
      * nếu sản phẩm chưa có biến thể nào thì tạo biến thể mặc định.
      */
+    /**
+     * Mã đơn hàng dạng DH + ngày + 4 ký tự ngẫu nhiên, ví dụ DH2608170A3F.
+     */
+    private function generateOrderCode(): string
+    {
+        do {
+            $code = 'DH' . now()->format('ymd') . strtoupper(Str::random(4));
+        } while (Invoice::withTrashed()->where('order_code', $code)->exists());
+
+        return $code;
+    }
+
     private function resolveVariant(Product $product, array $line): ProductVariant
     {
         if (!empty($line['variant_id'])) {

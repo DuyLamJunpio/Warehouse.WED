@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatisticalController;
@@ -46,6 +47,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/delete-image/{id}', [ProductController::class, 'deleteImageUrl']);
     Route::delete('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');
     Route::get('/search-products', [ProductController::class, 'search'])->name('product.search');
+
+    // Quản lý đơn hàng bán (invoices có invoice_type = 1)
+    Route::get('/order', [OrderController::class, 'index'])->name('order');
+    Route::get('/order/data', [OrderController::class, 'getData'])->name('order.data');
+    Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
+    Route::post('/order/{id}/status', [OrderController::class, 'updateStatus'])->name('order.status');
+    Route::get('/order/{id}/print', [OrderController::class, 'print'])->name('order.print');
 
     // Quản lý tồn kho theo biến thể size/màu
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');

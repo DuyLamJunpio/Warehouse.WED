@@ -34,6 +34,24 @@ class Invoice extends Model
         self::STATUS_RETURNED  => 'Hoàn hàng',
     ];
 
+    /**
+     * Luồng trạng thái đơn hàng: từ trạng thái này được chuyển sang những trạng thái nào.
+     * Đã hủy và hoàn hàng là điểm cuối, không quay ngược lại được - nhờ vậy
+     * hàng chỉ được cộng trả về kho đúng một lần.
+     */
+    public const STATUS_TRANSITIONS = [
+        self::STATUS_PENDING   => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
+        self::STATUS_CONFIRMED => [self::STATUS_PACKING, self::STATUS_CANCELLED],
+        self::STATUS_PACKING   => [self::STATUS_SHIPPING, self::STATUS_CANCELLED],
+        self::STATUS_SHIPPING  => [self::STATUS_COMPLETED, self::STATUS_RETURNED],
+        self::STATUS_COMPLETED => [self::STATUS_RETURNED],
+        self::STATUS_CANCELLED => [],
+        self::STATUS_RETURNED  => [],
+    ];
+
+    /** Chuyển sang các trạng thái này thì phải cộng trả hàng về kho. */
+    public const STATUS_RESTOCK = [self::STATUS_CANCELLED, self::STATUS_RETURNED];
+
     protected $fillable = [
         'user_id',
         'total_amount',
@@ -93,6 +111,23 @@ class Invoice extends Model
     public function getOrderStatusLabelAttribute(): ?string
     {
         return self::ORDER_STATUSES[$this->order_status] ?? null;
+    }
+
+    /** Các trạng thái kế tiếp hợp lệ của đơn này. */
+    public function getNextStatusesAttribute(): array
+    {
+        return self::STATUS_TRANSITIONS[$this->order_status] ?? [];
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, $this->next_statuses, true);
+    }
+
+    /** Tổng tiền hàng chưa tính phí ship và chiết khấu. */
+    public function getSubtotalAttribute(): int
+    {
+        return (int) $this->productInvoices->sum(fn($line) => $line->line_total);
     }
 
     public static function searchByInvoiceId($invoiceId)
