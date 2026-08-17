@@ -24,12 +24,12 @@
                                     clip-rule="evenodd"></path>
                             </svg>
                             <a href="{{ route('profile.edit') }}"
-                                class="ml-1 text-gray-700 hover:text-primary-600 md:ml-2 dark:text-gray-300 dark:hover:text-white">Profile</a>
+                                class="ml-1 text-gray-700 hover:text-primary-600 md:ml-2 dark:text-gray-300 dark:hover:text-white">Tài khoản</a>
                         </div>
                     </li>
                 </ol>
             </nav>
-            <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Admin profile</h1>
+            <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Hồ sơ quản trị</h1>
         </div>
         <!-- Right Content -->
         <div class="col-span-full xl:col-auto">
@@ -59,7 +59,7 @@
                                             </path>
                                             <path d="M9 13h2v5a1 1 0 11-2 0v-5z"></path>
                                         </svg>
-                                        Upload picture
+                                        Tải lên picture
                                     </button>
                                 </div>
                                 <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
@@ -77,7 +77,7 @@
             <div
                 class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
                 <div class="flow-root">
-                    <h3 class="mb-4 text-xl font-semibold dark:text-white">Password information</h3>
+                    <h3 class="mb-4 text-xl font-semibold dark:text-white">Đổi mật khẩu</h3>
                     <form method="post" action="{{ route('password.update') }}">
                         @csrf
                         @method('put')
@@ -116,7 +116,7 @@
         <div class="col-span-2">
             <div
                 class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
-                <h3 class="mb-4 text-xl font-semibold dark:text-white">Admin information</h3>
+                <h3 class="mb-4 text-xl font-semibold dark:text-white">Thông tin quản trị</h3>
                 <form method="post" action="{{ route('profile.update') }}">
                     @csrf
                     @method('patch')
@@ -124,13 +124,13 @@
                         <div class="col-span-6 sm:col-span-3">
                             <x-input-label for="firstname" :value="__('Firstname')" />
                             <x-text-input id="firstname" name="firstname" type="text" :value="old('firstname', $firstName)"
-                                placeholder="Type your firstname" autofocus autocomplete="firstname" />
+                                placeholder="Nhập tên" autofocus autocomplete="firstname" />
                             <x-input-error class="mt-2" :messages="$errors->get('firstname')" />
                         </div>
                         <div class="col-span-6 sm:col-span-3">
                             <x-input-label for="lastname" :value="__('Lastname')" />
                             <x-text-input id="lastname" name="lastname" type="text" :value="old('lastname', $lastName)"
-                                placeholder="Type your lastname" autofocus autocomplete="lastname" />
+                                placeholder="Nhập họ" autofocus autocomplete="lastname" />
                             <x-input-error class="mt-2" :messages="$errors->get('lastname')" />
                         </div>
                         <div class="col-span-6 sm:col-span-3">
@@ -142,13 +142,13 @@
                         <div class="col-span-6 sm:col-span-3">
                             <x-input-label for="address" :value="__('Address')" />
                             <x-text-input id="address" name="address" type="text" :value="old('address', $user->address)"
-                                placeholder="Type your address" autofocus autocomplete="address" />
+                                placeholder="Nhập địa chỉ" autofocus autocomplete="address" />
                             <x-input-error class="mt-2" :messages="$errors->get('address')" />
                         </div>
                         <div class="col-span-6 sm:col-span-3">
                             <x-input-label for="phone_number" :value="__('Phone Number')" />
                             <x-text-input id="phone_number" name="phone_number" type="text" :value="old('phone_number', $user->phone_number)"
-                                placeholder="Type your phone number" autofocus autocomplete="phone_number" />
+                                placeholder="Nhập số điện thoại" autofocus autocomplete="phone_number" />
                             <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
                         </div>
                         <div class="col-span-6 sm:col-span-3">
@@ -176,7 +176,7 @@
             <div
                 class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
                 <div class="flow-root">
-                    <h3 class="text-xl font-semibold dark:text-white">Sessions</h3>
+                    <h3 class="text-xl font-semibold dark:text-white">Phiên đăng nhập</h3>
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                         <li class="py-4">
                             <div class="flex items-center space-x-4">
@@ -198,7 +198,7 @@
                                 </div>
                                 <div class="inline-flex items-center">
                                     <a href="#"
-                                        class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Revoke</a>
+                                        class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Thu hồi</a>
                                 </div>
                             </div>
                         </li>
@@ -222,7 +222,7 @@
                                 </div>
                                 <div class="inline-flex items-center">
                                     <a href="#"
-                                        class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Revoke</a>
+                                        class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Thu hồi</a>
                                 </div>
                             </div>
                         </li>

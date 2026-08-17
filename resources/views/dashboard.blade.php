@@ -8,7 +8,7 @@
                     <div class="flex-shrink-0">
                         <span
                             class="text-xl font-bold leading-none text-gray-900 sm:text-2xl dark:text-white">$45,385</span>
-                        <h3 class="text-base font-light text-gray-500 dark:text-gray-400">Sales this week</h3>
+                        <h3 class="text-base font-light text-gray-500 dark:text-gray-400">Doanh thu tuần này</h3>
                     </div>
                     <div
                         class="flex items-center justify-end flex-1 text-base font-medium text-green-500 dark:text-green-400">
@@ -27,7 +27,7 @@
                     <div>
                         <button
                             class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 rounded-lg hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                            type="button" data-dropdown-toggle="weekly-sales-dropdown">Last 7 days <svg
+                            type="button" data-dropdown-toggle="weekly-sales-dropdown">7 ngày qua <svg
                                 class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -45,27 +45,27 @@
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Yesterday</a>
+                                        role="menuitem">Hôm qua</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Today</a>
+                                        role="menuitem">Hôm nay</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Last 7 days</a>
+                                        role="menuitem"> 7 ngày qua</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Last 30 days</a>
+                                        role="menuitem"> 30 ngày qua</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Last 90 days</a>
+                                        role="menuitem"> 90 ngày qua</a>
                                 </li>
                             </ul>
                             <div class="py-1" role="none">
@@ -78,7 +78,7 @@
                     <div class="flex-shrink-0">
                         <a href="#"
                             class="inline-flex items-center p-2 text-xs font-medium uppercase rounded-lg text-primary-700 sm:text-sm hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
-                            Sales Report
+                            Doanh thu Report
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
@@ -91,7 +91,7 @@
             <!--Tabs widget -->
             <div
                 class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
-                <h3 class="flex items-center mb-4 text-lg font-semibold text-gray-900 dark:text-white">Statistics this
+                <h3 class="flex items-center mb-4 text-lg font-semibold text-gray-900 dark:text-white">Thống kê this
                     month
                     <button data-popover-target="popover-description" data-popover-placement="bottom-end"
                         type="button"><svg class="w-4 h-4 ml-2 text-gray-400 hover:text-gray-500" aria-hidden="true"
@@ -99,13 +99,13 @@
                             <path fill-rule="evenodd"
                                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
                                 clip-rule="evenodd"></path>
-                        </svg><span class="sr-only">Show information</span></button>
+                        </svg><span class="sr-only">Xem thông tin</span></button>
                 </h3>
                 <div data-popover id="popover-description" role="tooltip"
                     class="absolute z-10 invisible inline-block text-sm font-light text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-sm opacity-0 w-72 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400">
                     <div class="p-3 space-y-2">
-                        <h3 class="font-semibold text-gray-900 dark:text-white">Statistics</h3>
-                        <p>Statistics is a branch of applied mathematics that involves the collection, description,
+                        <h3 class="font-semibold text-gray-900 dark:text-white">Thống kê</h3>
+                        <p>Thống kê is a branch of applied mathematics that involves the collection, description,
                             analysis, and inference of conclusions from quantitative data.</p>
                         <a href="#"
                             class="flex items-center font-medium text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700">Read
@@ -119,10 +119,10 @@
                     <div data-popper-arrow></div>
                 </div>
                 <div class="sm:hidden">
-                    <label for="tabs" class="sr-only">Select tab</label>
+                    <label for="tabs" class="sr-only">Chọn tab</label>
                     <select id="tabs"
                         class="bg-gray-50 border-0 border-b border-gray-200 text-gray-900 text-sm rounded-t-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        <option>Statistics</option>
+                        <option>Thống kê</option>
                         <option>Services</option>
                         <option>FAQ</option>
                     </select>
@@ -139,7 +139,7 @@
                         <button id="about-tab" data-tabs-target="#about" type="button" role="tab"
                             aria-controls="about" aria-selected="false"
                             class="inline-block w-full p-4 rounded-tr-lg bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">Top
-                            Customers</button>
+                            Khách hàng</button>
                     </li>
                 </ul>
                 <div id="fullWidthTabContent" class="border-t border-gray-200 dark:border-gray-600">
@@ -164,7 +164,7 @@
                                                     </path>
                                                 </svg>
                                                 2.5%
-                                                <span class="ml-2 text-gray-500">vs last month</span>
+                                                <span class="ml-2 text-gray-500">so với tháng trước</span>
                                             </div>
                                         </div>
                                     </div>
@@ -193,7 +193,7 @@
                                                     </path>
                                                 </svg>
                                                 12.5%
-                                                <span class="ml-2 text-gray-500">vs last month</span>
+                                                <span class="ml-2 text-gray-500">so với tháng trước</span>
                                             </div>
                                         </div>
                                     </div>
@@ -222,7 +222,7 @@
                                                     </path>
                                                 </svg>
                                                 1.35%
-                                                <span class="ml-2 text-gray-500">vs last month</span>
+                                                <span class="ml-2 text-gray-500">so với tháng trước</span>
                                             </div>
                                         </div>
                                     </div>
@@ -251,7 +251,7 @@
                                                     </path>
                                                 </svg>
                                                 12.5%
-                                                <span class="ml-2 text-gray-500">vs last month</span>
+                                                <span class="ml-2 text-gray-500">so với tháng trước</span>
                                             </div>
                                         </div>
                                     </div>
@@ -280,7 +280,7 @@
                                                     </path>
                                                 </svg>
                                                 2%
-                                                <span class="ml-2 text-gray-500">vs last month</span>
+                                                <span class="ml-2 text-gray-500">so với tháng trước</span>
                                             </div>
                                         </div>
                                     </div>
@@ -408,7 +408,7 @@
                     <div>
                         <button
                             class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 rounded-lg hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                            type="button" data-dropdown-toggle="stats-dropdown">Last 7 days <svg
+                            type="button" data-dropdown-toggle="stats-dropdown">7 ngày qua <svg
                                 class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -426,27 +426,27 @@
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Yesterday</a>
+                                        role="menuitem">Hôm qua</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Today</a>
+                                        role="menuitem">Hôm nay</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Last 7 days</a>
+                                        role="menuitem"> 7 ngày qua</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Last 30 days</a>
+                                        role="menuitem"> 30 ngày qua</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Last 90 days</a>
+                                        role="menuitem"> 90 ngày qua</a>
                                 </li>
                             </ul>
                             <div class="py-1" role="none">
@@ -474,7 +474,7 @@
             <div
                 class="items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm sm:flex dark:border-gray-700 sm:p-6 dark:bg-gray-800">
                 <div class="w-full">
-                    <h3 class="text-base font-normal text-gray-500 dark:text-gray-400">New products</h3>
+                    <h3 class="text-base font-normal text-gray-500 dark:text-gray-400">Sản phẩm mới</h3>
                     <span
                         class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl dark:text-white">2,340</span>
                     <p class="flex items-center text-base font-normal text-gray-500 dark:text-gray-400">
@@ -495,7 +495,7 @@
             <div
                 class="items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm sm:flex dark:border-gray-700 sm:p-6 dark:bg-gray-800">
                 <div class="w-full">
-                    <h3 class="text-base font-normal text-gray-500 dark:text-gray-400">Users</h3>
+                    <h3 class="text-base font-normal text-gray-500 dark:text-gray-400">Người dùng</h3>
                     <span
                         class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl dark:text-white">2,340</span>
                     <p class="flex items-center text-base font-normal text-gray-500 dark:text-gray-400">
@@ -519,7 +519,7 @@
             <!-- Card header -->
             <div class="items-center justify-between lg:flex">
                 <div class="mb-4 lg:mb-0">
-                    <h3 class="mb-2 text-xl font-bold text-gray-900 dark:text-white">Transactions</h3>
+                    <h3 class="mb-2 text-xl font-bold text-gray-900 dark:text-white">Giao dịch</h3>
                     <span class="text-base font-normal text-gray-500 dark:text-gray-400">This is a list of latest
                         transactions</span>
                 </div>
@@ -539,7 +539,7 @@
                         <div id="dropdown"
                             class="z-10 hidden w-56 p-3 bg-white rounded-lg shadow dark:bg-gray-700">
                             <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
-                                Category
+                                Danh mục
                             </h6>
                             <ul class="space-y-2 text-sm" aria-labelledby="dropdownDefault">
                                 <li class="flex items-center">
@@ -548,7 +548,7 @@
 
                                     <label for="apple"
                                         class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        Completed (56)
+                                        Hoàn thành (56)
                                     </label>
                                 </li>
 
@@ -638,7 +638,7 @@
                                         </th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-white">
-                                            Amount
+                                            Thành tiền
                                         </th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-white">
@@ -650,7 +650,7 @@
                                         </th>
                                         <th scope="col"
                                             class="p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-white">
-                                            Status
+                                            Trạng thái
                                         </th>
                                     </tr>
                                 </thead>
@@ -698,7 +698,7 @@
                                         </td>
                                         <td class="p-4 whitespace-nowrap">
                                             <span
-                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Completed</span>
+                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Hoàn thành</span>
                                         </td>
                                     </tr>
                                     <tr class="bg-gray-50 dark:bg-gray-700">
@@ -738,7 +738,7 @@
                                         </td>
                                         <td class="p-4 whitespace-nowrap">
                                             <span
-                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Completed</span>
+                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Hoàn thành</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -778,7 +778,7 @@
                                         </td>
                                         <td class="p-4 whitespace-nowrap">
                                             <span
-                                                class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md border border-red-100 dark:border-red-400 dark:bg-gray-700 dark:text-red-400">Cancelled</span>
+                                                class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md border border-red-100 dark:border-red-400 dark:bg-gray-700 dark:text-red-400">Đã huỷ</span>
                                         </td>
                                     </tr>
                                     <tr class="bg-gray-50 dark:bg-gray-700">
@@ -865,7 +865,7 @@
                                         </td>
                                         <td class="p-4 whitespace-nowrap">
                                             <span
-                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Completed</span>
+                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Hoàn thành</span>
                                         </td>
                                     </tr>
                                     <tr class="bg-gray-50 dark:bg-gray-700">
@@ -1000,7 +1000,7 @@
                                         </td>
                                         <td class="p-4 whitespace-nowrap">
                                             <span
-                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Completed</span>
+                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Hoàn thành</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -1093,7 +1093,7 @@
                                         </td>
                                         <td class="p-4 whitespace-nowrap">
                                             <span
-                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Completed</span>
+                                                class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 border border-green-100 dark:border-green-500">Hoàn thành</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1107,7 +1107,7 @@
                 <div>
                     <button
                         class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 rounded-lg hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                        type="button" data-dropdown-toggle="transactions-dropdown">Last 7 days <svg
+                        type="button" data-dropdown-toggle="transactions-dropdown">7 ngày qua <svg
                             class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1125,27 +1125,27 @@
                             <li>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                    role="menuitem">Yesterday</a>
+                                    role="menuitem">Hôm qua</a>
                             </li>
                             <li>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                    role="menuitem">Today</a>
+                                    role="menuitem">Hôm nay</a>
                             </li>
                             <li>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                    role="menuitem">Last 7 days</a>
+                                    role="menuitem"> 7 ngày qua</a>
                             </li>
                             <li>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                    role="menuitem">Last 30 days</a>
+                                    role="menuitem"> 30 ngày qua</a>
                             </li>
                             <li>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
-                                    role="menuitem">Last 90 days</a>
+                                    role="menuitem"> 90 ngày qua</a>
                             </li>
                         </ul>
                         <div class="py-1" role="none">
@@ -1158,7 +1158,7 @@
                 <div class="flex-shrink-0">
                     <a href="#"
                         class="inline-flex items-center p-2 text-xs font-medium uppercase rounded-lg text-primary-700 sm:text-sm hover:bg-gray-100 dark:text-primary-500 dark:hover:bg-gray-700">
-                        Transactions Report
+                        Giao dịch Report
                         <svg class="w-4 h-4 ml-1 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

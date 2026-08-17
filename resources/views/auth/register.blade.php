@@ -24,7 +24,7 @@
             <select id="role" name="role"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 dark:bg-gray-900 dark:border-gray-700 dark:placeholder-gray-400 dark:text-gray-300 dark:focus:ring-indigo-600 dark:focus:border-indigo-600">
                 <option value="1">Admin</option>
-                <option value="0">Staff</option>
+                <option value="0">Nhân viên</option>
             </select>
         </div>
 

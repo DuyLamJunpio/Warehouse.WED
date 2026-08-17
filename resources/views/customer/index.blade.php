@@ -26,21 +26,21 @@
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Customer</span>
+                                    aria-current="page">Khách hàng</span>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL CUSTOMERS</h1>
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">TẤT CẢ KHÁCH HÀNG</h1>
             </div>
             <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
                 <div class="flex items-center mb-4 sm:mb-0">
                     <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Search</label>
+                        <label for="products-search" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="search" id="search-supplier"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for suppliers">
+                                placeholder="Tìm nhà cung cấp">
                         </div>
                     </form>
                     <div class="flex items-center w-full sm:justify-end">
@@ -94,11 +94,11 @@
                             <tr>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Name
+                                    Tên
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Phone
+                                    Điện thoại
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -106,7 +106,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Invoice Quantity
+                                    Hóa đơn Số lượng
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -118,11 +118,11 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Status
+                                    Trạng thái
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Actions
+                                    Thao tác
                                 </th>
                             </tr>
                         </thead>
@@ -144,7 +144,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
+            Cập nhật sản phẩm</h5>
         <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
             aria-controls="drawer-update-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -154,7 +154,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formEdit" enctype="multipart/form-data">
             @csrf
@@ -177,7 +177,7 @@
                                             d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                     </svg>
                                     <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                            class="font-semibold">Click to upload</span> or drag and drop</p>
+                                            class="font-semibold">Bấm để tải lên</span> hoặc kéo thả vào đây</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
                                         800x400px)</p>
                                 </div>
@@ -187,41 +187,41 @@
                     </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="customer_name_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên</label>
                         <input type="text" name="customer_name" id="customer_name_edit"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Type customer name" required="">
+                            placeholder="Nhập tên khách hàng" required="">
                     </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="customer_phone_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Điện thoại</label>
                         <input type="text" name="customer_phone" id="customer_phone_edit"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Type customer phone" required="">
+                            placeholder="Nhập số điện thoại khách hàng" required="">
                     </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="customer_email_edit"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
                         <input type="email" name="customer_email" id="customer_email_edit"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Type customer email" required="">
+                            placeholder="Nhập email khách hàng" required="">
                     </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="status_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái</label>
                         <select id="status_edit" name="status"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            <option value="0">Normal</option>
+                            <option value="0">Thường</option>
                             <option value="1">VIP</option>
-                            <option value="1">Blocked</option>
+                            <option value="1">Đã khoá</option>
                         </select>
                     </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="address_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ</label>
                         <textarea id="address_edit" rows="4" name="address"
                             class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Enter address here"></textarea>
+                            placeholder="Nhập địa chỉ"></textarea>
                     </div>
                 </div>
             </div>
@@ -229,7 +229,7 @@
                 <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4">
                     <button type="submit"
                         class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Update
+                        Cập nhật
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-create-product-default"
                         aria-controls="drawer-create-product-default"
@@ -239,7 +239,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Cancel
+                        Huỷ
                     </button>
                 </div>
             </div>
@@ -253,7 +253,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete item</h5>
+            Xóa</h5>
         <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
             aria-controls="drawer-delete-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -263,7 +263,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -288,7 +288,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Customer</h5>
+            New Khách hàng</h5>
         <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
             aria-controls="drawer-create-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -298,7 +298,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formAdd" enctype="multipart/form-data">
             @csrf
@@ -320,7 +320,7 @@
                                         d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                 </svg>
                                 <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                        class="font-semibold">Click to upload</span> or drag and drop</p>
+                                        class="font-semibold">Bấm để tải lên</span> hoặc kéo thả vào đây</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
                                     800x400px)</p>
                             </div>
@@ -330,36 +330,36 @@
                 </div>
                 <div>
                     <label for="customer_name"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên</label>
                     <input type="text" name="customer_name" id="customer_name"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type customer name" required="">
+                        placeholder="Nhập tên khách hàng" required="">
                 </div>
                 <div>
                     <label for="customer_phone"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Điện thoại</label>
                     <input type="text" name="customer_phone" id="customer_phone"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type customer phone" required="">
+                        placeholder="Nhập số điện thoại khách hàng" required="">
                 </div>
                 <div>
                     <label for="customer_email"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
                     <input type="email" name="customer_email" id="customer_email"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type customer email" required="">
+                        placeholder="Nhập email khách hàng" required="">
                 </div>
                 <div>
                     <label for="address"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ</label>
                     <textarea id="address" rows="4" name="address"
                         class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Enter address here"></textarea>
+                        placeholder="Nhập địa chỉ"></textarea>
                 </div>
                 <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4 md:absolute">
                     <button type="submit"
                         class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Add Customer
+                        Add Khách hàng
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-create-product-default"
                         aria-controls="drawer-create-product-default"
@@ -369,7 +369,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Cancel
+                        Huỷ
                     </button>
                 </div>
         </form>
@@ -434,8 +434,11 @@
                     const url = '/customer/delete/' + idCustomer;
 
                     $.ajax({
-                        url: url, // Sử dụng nối chuỗi để thêm idSupplier vào URL
-                        type: 'GET',
+                        url: url, // Sử dụng nối chuỗi để thêm idCustomer vào URL
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
                         success: function(response) {
                             // Xử lý khi xóa thành công
                             alert(response.success);

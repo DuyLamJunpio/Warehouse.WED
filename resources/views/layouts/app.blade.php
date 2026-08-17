@@ -9,8 +9,9 @@
         content="Get started with a free and open-source admin dashboard layout built with Tailwind CSS and Flowbite featuring charts, widgets, CRUD layouts, authentication pages, and more">
     <meta name="author" content="Themesberg">
     <meta name="generator" content="Hugo 0.123.6">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Warehouse</title>
+    <title>Kho</title>
 
 
 
@@ -86,7 +87,7 @@
                             LÝ KHO HÀNG</span>
                     </a>
                     <form action="#" method="GET" class="hidden lg:block lg:pl-3.5">
-                        <label for="topbar-search" class="sr-only">Search</label>
+                        <label for="topbar-search" class="sr-only">Tìm kiếm</label>
                         <div class="relative mt-1 lg:w-96">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor"
@@ -98,7 +99,7 @@
                             </div>
                             <input type="text" name="email" id="topbar-search"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search">
+                                placeholder="Tìm kiếm">
                         </div>
                     </form>
                 </div>
@@ -112,7 +113,7 @@
 
                     <button id="toggleSidebarMobileSearch" type="button"
                         class="p-2 text-gray-500 rounded-lg lg:hidden hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                        <span class="sr-only">Search</span>
+                        <span class="sr-only">Tìm kiếm</span>
 
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
@@ -124,7 +125,7 @@
 
                     <button type="button" data-dropdown-toggle="notification-dropdown"
                         class="p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700">
-                        <span class="sr-only">View notifications</span>
+                        <span class="sr-only">Xem thông báo</span>
 
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
@@ -187,7 +188,7 @@
 
                     <button type="button" data-dropdown-toggle="apps-dropdown"
                         class="hidden p-2 text-gray-500 rounded-lg sm:flex hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700">
-                        <span class="sr-only">View notifications</span>
+                        <span class="sr-only">Xem thông báo</span>
 
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
@@ -213,7 +214,7 @@
                                         d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Sales</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Doanh thu</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -223,7 +224,7 @@
                                         d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z">
                                     </path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Users</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Người dùng</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -233,7 +234,7 @@
                                         d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1 2H8l-1-2H5V5z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Inbox</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Hộp thư</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -243,7 +244,7 @@
                                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Profile</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Tài khoản</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -253,7 +254,7 @@
                                         d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Settings</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Cài đặt</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -264,7 +265,7 @@
                                         d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Products</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Sản phẩm</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -287,7 +288,7 @@
                                         d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Billing</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Thanh toán</div>
                             </a>
                             <a href="#"
                                 class="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">
@@ -297,7 +298,7 @@
                                         d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1">
                                     </path>
                                 </svg>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Logout</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Đăng xuất</div>
                             </a>
                         </div>
                     </div>
@@ -328,7 +329,7 @@
                             <button type="button"
                                 class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
                                 id="user-menu-button-2" aria-expanded="false" data-dropdown-toggle="dropdown-2">
-                                <span class="sr-only">Open user menu</span>
+                                <span class="sr-only">Mở menu người dùng</span>
                                 <img class="w-8 h-8 rounded-full"
                                     src="{{ Auth::user()->avatar == '' ? 'https://www.androidponsel.com/wp-content/uploads/2023/04/profil-kosong-bulat-dua.jpg' : Storage::url(Auth::user()->avatar) }}"
                                     alt="user photo">
@@ -350,17 +351,17 @@
                                 <li>
                                     <a href="{{ route('dashboard') }}"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Dashboard</a>
+                                        role="menuitem">Tổng quan</a>
                                 </li>
                                 <li>
                                     <a href="{{ route('profile.edit') }}"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Profile</a>
+                                        role="menuitem">Tài khoản</a>
                                 </li>
                                 <li>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Earnings</a>
+                                        role="menuitem">Doanh thu</a>
                                 </li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
@@ -393,7 +394,7 @@
                         <ul class="pb-2 space-y-2">
                             <li>
                                 <form action="#" method="GET" class="lg:hidden">
-                                    <label for="mobile-search" class="sr-only">Search</label>
+                                    <label for="mobile-search" class="sr-only">Tìm kiếm</label>
                                     <div class="relative">
                                         <div
                                             class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -406,7 +407,7 @@
                                         </div>
                                         <input type="text" name="email" id="mobile-search"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                            placeholder="Search">
+                                            placeholder="Tìm kiếm">
                                     </div>
                                 </form>
                             </li>
@@ -418,7 +419,7 @@
                                         <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
                                         <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Dashboard</span>
+                                    <span class="ml-3" sidebar-toggle-item>Tổng quan</span>
                                 </a>
                             </li>
                             <li>
@@ -437,7 +438,19 @@
                                             </g>
                                         </g>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Product</span>
+                                    <span class="ml-3" sidebar-toggle-item>Sản phẩm</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('inventory') }}"
+                                    class="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700 ">
+                                    <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                                        fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2H5z">
+                                        </path>
+                                    </svg>
+                                    <span class="ml-3" sidebar-toggle-item>Tồn kho</span>
                                 </a>
                             </li>
                             <li>
@@ -455,7 +468,7 @@
                                             </path>
                                         </g>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Location</span>
+                                    <span class="ml-3" sidebar-toggle-item>Vị trí</span>
                                 </a>
                             </li>
                             <li>
@@ -468,7 +481,7 @@
                                             d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
                                             clip-rule="evenodd"></path>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Invoice</span>
+                                    <span class="ml-3" sidebar-toggle-item>Hóa đơn</span>
                                 </a>
                             </li>
                             <li>
@@ -487,7 +500,7 @@
                                             </path>
                                         </g>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Supplier</span>
+                                    <span class="ml-3" sidebar-toggle-item>Nhà cung cấp</span>
                                 </a>
                             </li>
                             <li>
@@ -499,7 +512,7 @@
                                             d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
                                             clip-rule="evenodd"></path>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Customer</span>
+                                    <span class="ml-3" sidebar-toggle-item>Khách hàng</span>
                                 </a>
                             </li>
                             <li>
@@ -530,7 +543,7 @@
                                             </g>
                                         </g>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Category</span>
+                                    <span class="ml-3" sidebar-toggle-item>Danh mục</span>
                                 </a>
                             </li>
                             <li>
@@ -553,7 +566,7 @@
                                                 fill="currentColor"></path>
                                         </g>
                                     </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Staff</span>
+                                    <span class="ml-3" sidebar-toggle-item>Nhân viên</span>
                                 </a>
                             </li>
                         </ul>
@@ -587,7 +600,7 @@
                                         d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z">
                                     </path>
                                 </svg>
-                                <span class="ml-3" sidebar-toggle-item>Uploads Images</span>
+                                <span class="ml-3" sidebar-toggle-item>Tải ảnh hàng loạt</span>
                             </a>
                             <a href="https://docs.google.com/document/d/1-CvlrUf2TwZy29F9R4zRmMajQfQEFul4mc6JhZldeVQ/edit?usp=sharing"
                                 target="_blank"
@@ -598,7 +611,7 @@
                                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-2 0c0 .993-.241 1.929-.668 2.754l-1.524-1.525a3.997 3.997 0 00.078-2.183l1.562-1.562C15.802 8.249 16 9.1 16 10zm-5.165 3.913l1.58 1.58A5.98 5.98 0 0110 16a5.976 5.976 0 01-2.516-.552l1.562-1.562a4.006 4.006 0 001.789.027zm-4.677-2.796a4.002 4.002 0 01-.041-2.08l-.08.08-1.53-1.533A5.98 5.98 0 004 10c0 .954.223 1.856.619 2.657l1.54-1.54zm1.088-6.45A5.974 5.974 0 0110 4c.954 0 1.856.223 2.657.619l-1.54 1.54a4.002 4.002 0 00-2.346.033L7.246 4.668zM12 10a2 2 0 11-4 0 2 2 0 014 0z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="ml-3" sidebar-toggle-item>Link API</span>
+                                <span class="ml-3" sidebar-toggle-item>Liên kết API</span>
                             </a>
                         </div>
                     </div>
@@ -625,7 +638,7 @@
                     </a>
                     <div id="tooltip-settings" role="tooltip"
                         class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
-                        Settings page
+                        Cài đặt page
                         <div class="tooltip-arrow" data-popper-arrow></div>
                     </div>
                     <button type="button" data-dropdown-toggle="language-dropdown"

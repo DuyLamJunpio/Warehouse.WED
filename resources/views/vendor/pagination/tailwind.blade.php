@@ -2,7 +2,7 @@
     <div
         class="sticky bottom-0 right-0 items-center w-full p-4 bg-white border-t border-gray-200 sm:flex sm:justify-between dark:bg-gray-800 dark:border-gray-700">
         <div class="flex items-center mb-4 sm:mb-0">
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">Showing <span
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">Hiển thị <span
                     class="font-semibold text-gray-900 dark:text-white">{{ $paginator->firstItem() }}</span> to <span
                     class="font-semibold text-gray-900 dark:text-white">{{ $paginator->lastItem() }}</span>
                 of <span class="font-semibold text-gray-900 dark:text-white">{{ $paginator->total() }}</span></span>
