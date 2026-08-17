@@ -14,7 +14,7 @@
                                         d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
                                     </path>
                                 </svg>
-                                Home
+                                Trang chủ
                             </a>
                         </li>
                         <li>
@@ -40,7 +40,7 @@
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="search" id="search-supplier"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Tìm nhà cung cấp">
+                                placeholder="Tìm theo tên, số điện thoại, địa chỉ">
                         </div>
                     </form>
                     <div class="flex items-center w-full sm:justify-end">
@@ -80,7 +80,7 @@
                     type="button" data-drawer-target="drawer-create-product-default"
                     data-drawer-show="drawer-create-product-default" aria-controls="drawer-create-product-default"
                     data-drawer-placement="right">
-                    Add new customer
+                    Thêm khách hàng
                 </button>
             </div>
         </div>
@@ -102,23 +102,19 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Email
+                                    Địa chỉ giao hàng
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Hóa đơn Số lượng
+                                    Số đơn
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Total Debt
+                                    Tổng chi tiêu
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Total Payment
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Trạng thái
+                                    Hạng
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -204,7 +200,7 @@
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
                         <input type="email" name="customer_email" id="customer_email_edit"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Nhập email khách hàng" required="">
+                            placeholder="Nhập email khách hàng">
                     </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="status_edit"
@@ -216,12 +212,32 @@
                             <option value="1">Đã khoá</option>
                         </select>
                     </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="province_edit"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tỉnh / Thành phố</label>
+                        <input type="text" name="province" id="province_edit" placeholder="TP. Hồ Chí Minh"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="ward_edit"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phường / Xã</label>
+                        <input type="text" name="ward" id="ward_edit" placeholder="Phường Bến Nghé"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
                     <div class="col-span-6 sm:col-full">
                         <label for="address_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ</label>
-                        <textarea id="address_edit" rows="4" name="address"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ (số nhà, tên
+                            đường)</label>
+                        <textarea id="address_edit" rows="2" name="address"
                             class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Nhập địa chỉ"></textarea>
+                            placeholder="Số nhà, tên đường"></textarea>
+                    </div>
+                    <div class="col-span-6 sm:col-full">
+                        <label for="note_edit" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi
+                            chú chăm sóc khách hàng</label>
+                        <textarea id="note_edit" rows="3" name="note"
+                            class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Khách thích màu trung tính, hay đổi size..."></textarea>
                     </div>
                 </div>
             </div>
@@ -347,19 +363,37 @@
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
                     <input type="email" name="customer_email" id="customer_email"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Nhập email khách hàng" required="">
+                        placeholder="Nhập email khách hàng">
                 </div>
                 <div>
-                    <label for="address"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ</label>
-                    <textarea id="address" rows="4" name="address"
+                    <label for="province"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tỉnh / Thành phố</label>
+                    <input type="text" name="province" id="province" placeholder="TP. Hồ Chí Minh"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <div>
+                    <label for="ward" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phường /
+                        Xã</label>
+                    <input type="text" name="ward" id="ward" placeholder="Phường Bến Nghé"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <div>
+                    <label for="address" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ
+                        (số nhà, tên đường)</label>
+                    <textarea id="address" rows="2" name="address"
                         class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Nhập địa chỉ"></textarea>
+                        placeholder="Số nhà, tên đường"></textarea>
+                </div>
+                <div>
+                    <label for="note" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi chú chăm
+                        sóc khách hàng</label>
+                    <textarea id="note" rows="3" name="note"
+                        class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                 </div>
                 <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4 md:absolute">
                     <button type="submit"
                         class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Add Khách hàng
+                        Thêm khách hàng
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-create-product-default"
                         aria-controls="drawer-create-product-default"
@@ -518,6 +552,9 @@
                 $('#customer_phone_edit').val(customerData.customer_phone);
                 $('#customer_email_edit').val(customerData.customer_email);
                 $('#address_edit').val(customerData.address);
+                $('#province_edit').val(customerData.province);
+                $('#ward_edit').val(customerData.ward);
+                $('#note_edit').val(customerData.note);
 
                 if (customerData.status == "1") {
                     $('#status_edit').val("1");
@@ -690,6 +727,119 @@
                     };
                     reader.readAsDataURL(file); // Đọc file dưới dạng URL Data
                 }
+            });
+        });
+    </script>
+
+    {{-- Hồ sơ khách hàng: lịch sử mua và ghi chú chăm sóc --}}
+    <div id="drawer-customer-profile"
+        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-lg p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
+        tabindex="-1" aria-hidden="true">
+        <h5 class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
+            Hồ sơ khách hàng</h5>
+        <button type="button" id="closeDrawerProfile"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Đóng</span>
+        </button>
+
+        <div id="profile-body"></div>
+
+        <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+            <label for="profile-note" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi chú
+                chăm sóc khách hàng</label>
+            <textarea id="profile-note" rows="3"
+                class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Khách thích màu trung tính, hay đổi size..."></textarea>
+            <button type="button" id="btn-save-note"
+                class="w-full mt-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
+                Lưu ghi chú
+            </button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let profileCustomerId = null;
+            const money = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
+
+            const closeProfile = () => $('#drawer-customer-profile').addClass('translate-x-full').attr(
+                'aria-hidden', 'true');
+            $('#closeDrawerProfile').click(closeProfile);
+
+            $(document).on('click', '.viewCustomerButton', function() {
+                profileCustomerId = $(this).data('id-customer');
+                $('#profile-body').html(
+                    '<p class="text-sm text-gray-500 dark:text-gray-400">Đang tải...</p>');
+                $('#drawer-customer-profile').removeClass('translate-x-full').attr('aria-hidden', 'false');
+
+                $.ajax({
+                    url: '/customer/' + profileCustomerId + '/profile',
+                    type: 'GET',
+                    success: function(c) {
+                        const rows = c.orders.length ? c.orders.map(o => `
+                            <div class="flex items-center justify-between py-2 text-sm border-b dark:border-gray-700">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">${o.order_code}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">${o.created_at} · ${o.status}</div>
+                                </div>
+                                <div class="font-medium text-gray-900 dark:text-white">${money(o.total_amount)}</div>
+                            </div>`).join('') :
+                            '<p class="text-sm text-gray-500 dark:text-gray-400">Khách chưa có đơn nào.</p>';
+
+                        $('#profile-body').html(`
+                            <div class="mb-4">
+                                <div class="text-lg font-bold text-gray-900 dark:text-white">${c.customer_name}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${c.customer_phone} · ${c.customer_email || 'Chưa có email'}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${c.full_address}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Hạng</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">${c.tier}</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Số đơn</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">${c.order_count}</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Đã chi</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">${money(c.total_spent)}</div>
+                                </div>
+                            </div>
+                            <h6 class="mb-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Lịch sử mua</h6>
+                            ${rows}
+                        `);
+                        $('#profile-note').val(c.note || '');
+                    },
+                    error: function(xhr) {
+                        alert((xhr.responseJSON || {}).error || 'Không tải được hồ sơ khách hàng.');
+                    }
+                });
+            });
+
+            $('#btn-save-note').click(function() {
+                if (!profileCustomerId) return;
+                $.ajax({
+                    url: '/customer/' + profileCustomerId + '/note',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        note: $('#profile-note').val()
+                    },
+                    success: function(r) {
+                        alert(r.success);
+                    },
+                    error: function(xhr) {
+                        alert((xhr.responseJSON || {}).error || 'Không lưu được ghi chú.');
+                    }
+                });
             });
         });
     </script>

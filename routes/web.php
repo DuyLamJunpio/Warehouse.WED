@@ -74,6 +74,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/customer/edit/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
     Route::delete('/customer/delete/{id}', [CustomerController::class, 'destroy'])->name('customer.delete');
     Route::get('/search-customer', [CustomerController::class, 'search'])->name('customer.search');
+    Route::get('/customer/{id}/profile', [CustomerController::class, 'show'])->name('customer.show');
+    Route::post('/customer/{id}/note', [CustomerController::class, 'updateNote'])->name('customer.note');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

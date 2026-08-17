@@ -7,6 +7,7 @@ use App\Http\Controllers\API\SupplierController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\CheckoutController;
 use App\Http\Controllers\API\CustomerController;
 use App\Http\Controllers\API\InvoiceController;
 use App\Http\Controllers\API\LocationController;
@@ -118,3 +119,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/login', [AuthController::class, 'login']);
+
+/*
+ * Đặt hàng từ web bán hàng - công khai vì khách không có tài khoản.
+ * Giới hạn số lần gọi để tránh bị spam đơn rác; mọi số tiền do server tự tính.
+ */
+Route::middleware('throttle:20,1')->group(function () {
+    Route::post('/checkout', [CheckoutController::class, 'store']);
+    Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
+});
