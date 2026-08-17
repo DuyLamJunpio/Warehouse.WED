@@ -337,6 +337,8 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:5000',
             'material' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:255',
+            // Khớp đúng 4 giá trị bộ lọc "đối tượng" của web bán hàng.
+            'audience' => 'nullable|in:Nam,Nữ,Trẻ em,Unisex',
             'unit' => 'nullable|max:30',
             'import_price' => 'required|integer|min:0',
             'sell_price' => 'required|integer|min:0',

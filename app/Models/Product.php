@@ -20,6 +20,7 @@ class Product extends Model
         'description',
         'material',
         'brand',
+        'audience',
         'unit',
         'import_price',
         'sell_price',

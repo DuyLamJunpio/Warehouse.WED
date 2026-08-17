@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CheckoutController;
+use App\Http\Controllers\API\StorefrontController;
 use App\Http\Controllers\API\CustomerController;
 use App\Http\Controllers\API\InvoiceController;
 use App\Http\Controllers\API\LocationController;
@@ -127,4 +128,15 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('throttle:20,1')->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store']);
     Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
+    Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid']);
+});
+
+/*
+ * Catalogue công khai cho web bán hàng đọc. Chỉ đọc, và chỉ những trường
+ * hiển thị ngoài cửa hàng - không có giá nhập hay nhà cung cấp.
+ */
+Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
+    Route::get('/products', [StorefrontController::class, 'products']);
+    Route::get('/products/{slug}', [StorefrontController::class, 'product']);
+    Route::get('/categories', [StorefrontController::class, 'categoriesIndex']);
 });

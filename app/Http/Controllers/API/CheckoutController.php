@@ -161,6 +161,32 @@ class CheckoutController extends Controller
     }
 
     /**
+     * Web bán hàng báo đã nhận được tiền của đơn.
+     *
+     * Chỉ đánh dấu đã thanh toán, KHÔNG tự xác nhận đơn: việc xác nhận vẫn do
+     * nhân viên bấm sau khi đối chiếu, để một lời gọi API không thể tự đẩy đơn
+     * vào dây chuyền giao hàng.
+     */
+    public function markPaid(string $orderCode)
+    {
+        $order = Invoice::orders()->where('order_code', $orderCode)->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+        }
+
+        if ((int) $order->pay_status === 1) {
+            // Cổng thanh toán có thể gọi lại nhiều lần cho cùng một đơn.
+            return response()->json(['success' => true, 'message' => 'Đơn đã được ghi nhận thanh toán trước đó.']);
+        }
+
+        $order->pay_status = 1;
+        $order->save();
+
+        return response()->json(['success' => true, 'message' => 'Đã ghi nhận thanh toán.']);
+    }
+
+    /**
      * Kiểm tra tồn trước khi khách bấm thanh toán.
      */
     public function checkStock(Request $request)
