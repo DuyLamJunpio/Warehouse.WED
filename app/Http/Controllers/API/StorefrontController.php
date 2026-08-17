@@ -140,10 +140,14 @@ class StorefrontController extends Controller
     }
 
     /**
-     * Đường dẫn ảnh đầy đủ để web bán hàng ở tên miền khác vẫn tải được.
+     * Đường dẫn ảnh tính từ gốc site, ví dụ "/storage/images/abc.jpg".
+     *
+     * Cố ý KHÔNG dùng url() để ghép sẵn tên miền: url() lấy APP_URL, mà biến đó
+     * hay bị để nguyên "http://localhost", khiến web bán hàng tải ảnh sai địa chỉ.
+     * Bên web tự ghép với WAREHOUSE_API_URL - nó luôn biết mình gọi máy chủ nào.
      */
     private function url(string $path): string
     {
-        return url(Storage::url($path));
+        return Storage::url($path);
     }
 }
