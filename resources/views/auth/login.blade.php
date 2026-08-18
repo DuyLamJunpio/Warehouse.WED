@@ -51,9 +51,11 @@
         <div class="border-t border-gray-300 w-full"></div>
     </div>
 
-    <div class="flex items-center justify-center mt-6">
-        <span class="text-gray-600">Vẫn chưa có tài khoản?</span>
-        <a href="{{ route('register') }}" class="ml-1 text-indigo-600 hover:underline">Đăng ký</a>
-    </div>
+    @if (Route::has('register'))
+        <div class="flex items-center justify-center mt-6">
+            <span class="text-gray-600">Vẫn chưa có tài khoản?</span>
+            <a href="{{ route('register') }}" class="ml-1 text-indigo-600 hover:underline">Đăng ký</a>
+        </div>
+    @endif
 
 </x-guest-layout>

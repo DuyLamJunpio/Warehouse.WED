@@ -605,7 +605,6 @@
              * Gõ số dài mà không có dấu chấm rất dễ thừa hoặc thiếu một số 0.
              */
             const nhomNghin = (v) => String(v).replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            const boCham = (v) => String(v).replace(/\./g, '');
 
             $(document).on('input', '.o-tien', function() {
                 const cu = $(this).val();
@@ -617,28 +616,6 @@
             $('.o-tien').each(function() {
                 if ($(this).val()) $(this).val(nhomNghin($(this).val()));
             });
-
-            /**
-             * Máy chủ chỉ nhận số nguyên nên phải bỏ dấu chấm trước khi gửi.
-             * Bỏ ngay trên phần tử rồi trả lại sau: nếu chỉ sửa trong FormData thì
-             * các ô giá của biến thể sinh động sẽ không đi qua đường đó.
-             */
-            const layFormDataTien = (form) => {
-                const o = $(form).find('.o-tien');
-                const giuLai = o.map(function() {
-                    return $(this).val();
-                }).get();
-
-                o.each(function() {
-                    $(this).val(boCham($(this).val()));
-                });
-                const fd = new FormData(form);
-                o.each(function(i) {
-                    $(this).val(giuLai[i]);
-                });
-
-                return fd;
-            };
 
             const reloadDataTable = () => {
                 $.ajax({
@@ -774,9 +751,9 @@
                     type: 'GET',
                     success: function(response) {
                         $('#product_name_edit').val(response[0].product_name);
-                        $('#import_price_edit').val(response[0].import_price);
-                        $('#export_price_edit').val(response[0].sell_price);
-                        $('#discount_price_edit').val(response[0].discount_price);
+                        $('#import_price_edit').val(nhomNghin(response[0].import_price ?? ''));
+                        $('#export_price_edit').val(nhomNghin(response[0].sell_price ?? ''));
+                        $('#discount_price_edit').val(nhomNghin(response[0].discount_price ?? ''));
                         $('#material_edit').val(response[0].material);
                         $('#brand_edit').val(response[0].brand);
                         $('#audience_edit').val(response[0].audience || 'Unisex');

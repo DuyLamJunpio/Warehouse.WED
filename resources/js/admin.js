@@ -189,10 +189,27 @@ function setupAdminHelpers($) {
         const originalLabel = button.html();
         form.data('submitting', true);
 
+        /**
+         * Ô tiền hiện dấu chấm phân cách nghìn nhưng máy chủ chỉ nhận số nguyên.
+         * Bỏ dấu ngay trên phần tử rồi trả lại: các ô giá của biến thể do JS sinh
+         * ra động nên sửa trong FormData sau khi dựng là không đủ.
+         */
+        const oTien = form.find('.o-tien');
+        const giuLai = oTien.map(function () {
+            return $(this).val();
+        }).get();
+        oTien.each(function () {
+            $(this).val(String($(this).val()).replace(/\./g, ''));
+        });
+        const formData = new FormData(form[0]);
+        oTien.each(function (i) {
+            $(this).val(giuLai[i]);
+        });
+
         $.ajax({
             url: url,
             type: settings.method || 'POST',
-            data: new FormData(form[0]),
+            data: formData,
             contentType: false,
             processData: false,
             xhr: function () {

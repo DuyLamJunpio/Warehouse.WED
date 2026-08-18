@@ -116,4 +116,18 @@ return [
 
     'password_timeout' => 10800,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cho phép tự đăng ký tài khoản
+    |--------------------------------------------------------------------------
+    |
+    | Đây là trang quản trị kho, không phải trang cho khách: ai vào được /register
+    | là tự tạo được tài khoản có toàn quyền. Nên mặc định TẮT ở môi trường thật.
+    | Cần mở lại (ví dụ khi lập tài khoản đầu tiên) thì đặt ALLOW_REGISTRATION=true
+    | trong .env, xong việc nhớ tắt đi.
+    |
+    */
+
+    'allow_registration' => (bool) env('ALLOW_REGISTRATION', false),
+
 ];
