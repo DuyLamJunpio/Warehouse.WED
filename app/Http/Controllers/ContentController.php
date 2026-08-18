@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Banner;
+use App\Models\Collection;
+use App\Models\Product;
 use App\Models\SiteText;
 use App\Services\StorefrontNotifier;
 use Illuminate\Http\Request;
@@ -36,6 +38,12 @@ class ContentController extends Controller
             'banners' => Banner::orderBy('sort_order')->get(),
             'marquees' => SiteText::marquee()->orderBy('sort_order')->get(),
             'announcements' => SiteText::announcement()->orderBy('sort_order')->get(),
+            'collections' => Collection::with('products:id,product_name')->orderBy('sort_order')->get(),
+            // Danh sách để tích chọn. Chỉ sản phẩm còn kinh doanh.
+            'allProducts' => Product::where('status', '!=', 0)
+                ->with('category:id,name')
+                ->orderBy('product_name')
+                ->get(['id', 'product_name', 'categories_id']),
             'headings' => $this->headingValues(),
             'headingLabels' => SiteText::HEADINGS,
             'limits' => [
@@ -271,5 +279,72 @@ class ContentController extends Controller
         $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã lưu tiêu đề.']);
+    }
+
+    // ── Bộ sưu tập ───────────────────────────────────────────────────
+
+    /**
+     * Lưu một bộ sưu tập kèm danh sách sản phẩm chủ shop đã tích.
+     *
+     * Thứ tự sản phẩm lấy theo đúng thứ tự tích trên màn hình, để chủ shop xếp
+     * món muốn khoe lên trước.
+     */
+    public function saveCollection(Request $request, ?string $id = null)
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'subtitle' => ['nullable', 'string', 'max:500'],
+            'cta_label' => ['nullable', 'string', 'max:60'],
+            'cta_link' => ['nullable', 'string', 'max:255'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'product_ids' => ['present', 'array'],
+            'product_ids.*' => ['integer', 'exists:products,id'],
+        ], [
+            'title.required' => 'Bộ sưu tập cần có tên, ví dụ "Bộ sưu tập mùa đông".',
+            'ends_at.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu.',
+        ]);
+
+        $collection = $id ? Collection::findOrFail($id) : new Collection();
+        $collection->fill([
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'cta_label' => $data['cta_label'] ?? null,
+            'cta_link' => $data['cta_link'] ?? null,
+            'starts_at' => $data['starts_at'] ?? null,
+            'ends_at' => $data['ends_at'] ?? null,
+            'status' => $request->boolean('status', true),
+        ]);
+
+        if (!$collection->exists) {
+            $collection->sort_order = (int) Collection::max('sort_order') + 1;
+        }
+        $collection->save();
+
+        // Giữ đúng thứ tự tích: sync với sort_order theo vị trí trong mảng.
+        $collection->products()->sync(
+            collect($data['product_ids'])
+                ->values()
+                ->mapWithKeys(fn($pid, $i) => [$pid => ['sort_order' => $i]])
+                ->all()
+        );
+
+        $this->notifier->markDirty();
+
+        return response()->json([
+            'success' => 'Đã lưu bộ sưu tập "' . $collection->title . '" với '
+                . count($data['product_ids']) . ' sản phẩm.',
+        ]);
+    }
+
+    public function destroyCollection(string $id)
+    {
+        $collection = Collection::findOrFail($id);
+        $ten = $collection->title;
+        // Bảng nối khai cascade nên sản phẩm trong bộ sưu tập tự rời theo.
+        $collection->delete();
+        $this->notifier->markDirty();
+
+        return response()->json(['success' => 'Đã xoá bộ sưu tập "' . $ten . '".']);
     }
 }

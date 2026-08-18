@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use App\Models\Categories;
+use App\Models\Collection;
 use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\SiteText;
@@ -93,8 +94,18 @@ class StorefrontController extends Controller
             'cta_link' => $b->cta_link,
         ])->values();
 
+        // Khối bộ sưu tập trên trang chủ chỉ có một chỗ, lấy cái đang hiện đầu tiên.
+        $collection = Collection::live()->with(['products' => fn($q) => $q->where('status', '!=', 0)])->first();
+
         return response()->json([
             'banners' => $banners,
+            'collection' => $collection ? [
+                'title' => $collection->title,
+                'subtitle' => $collection->subtitle,
+                'cta_label' => $collection->cta_label,
+                'cta_link' => $collection->cta_link,
+                'product_slugs' => $collection->products->pluck('slug')->values(),
+            ] : null,
             'marquee' => SiteText::marquee()->live()->pluck('value')->values(),
             'announcement' => SiteText::announcement()->live()->pluck('value')->values(),
             'headings' => SiteText::heading()->live()->pluck('value', 'key'),

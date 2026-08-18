@@ -1,8 +1,8 @@
 <x-app-layout>
     <div class="p-4 bg-white border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Nội dung trang chủ</h1>
+        <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Quản lý web bán hàng</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Slide ảnh, chữ chạy và tiêu đề các khối trên web bán hàng. Lưu xong web tự cập nhật, không cần làm gì thêm.
+            Slide ảnh, chữ quảng cáo, tiêu đề và bộ sưu tập trên web bán hàng. Lưu xong web tự cập nhật, không cần làm gì thêm.
         </p>
     </div>
 
@@ -176,7 +176,54 @@
             </button>
         </div>
 
-        {{-- ══ 4. Tiêu đề các khối ════════════════════════════════════ --}}
+        {{-- ══ 4. Bộ sưu tập ══════════════════════════════════════════ --}}
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-1">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bộ sưu tập</h2>
+                <button type="button" id="btn-them-bst"
+                    class="px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
+                    + Tạo bộ sưu tập
+                </button>
+            </div>
+            <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+                Tự đặt tên và tích những sản phẩm muốn đưa vào — mùa đông tích đồ đông, hè tích đồ hè.
+                Trang chủ hiện bộ sưu tập <strong>đang trong thời gian hiển thị</strong> đầu tiên.
+            </p>
+
+            <div class="space-y-3">
+                @forelse ($collections as $bst)
+                    <div class="flex items-center gap-4 p-3 border rounded-lg dark:border-gray-700">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-gray-900 dark:text-white">{{ $bst->title }}</div>
+                            <div class="text-sm text-gray-500 truncate dark:text-gray-400">{{ $bst->subtitle ?: '—' }}</div>
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {{ $bst->products->count() }} sản phẩm
+                                @if ($bst->starts_at || $bst->ends_at)
+                                    · {{ $bst->starts_at?->format('d/m/Y') ?: 'ngay' }}
+                                    → {{ $bst->ends_at?->format('d/m/Y') ?: 'khi tắt' }}
+                                @endif
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded whitespace-nowrap {{ $bst->is_live ? 'text-green-800 bg-green-100 dark:bg-green-900 dark:text-green-300' : 'text-gray-700 bg-gray-100 dark:bg-gray-700 dark:text-gray-300' }}">
+                            {{ $bst->is_live ? 'Đang hiện' : 'Đang ẩn' }}
+                        </span>
+                        <div class="flex gap-1 shrink-0">
+                            <button type="button"
+                                data-bst="{{ $bst->only(['id','title','subtitle','cta_label','cta_link','status']) ? json_encode(array_merge($bst->only(['id','title','subtitle','cta_label','cta_link','status']), ['starts_at'=>$bst->starts_at?->format('Y-m-d\TH:i'),'ends_at'=>$bst->ends_at?->format('Y-m-d\TH:i'),'product_ids'=>$bst->products->pluck('id')]), JSON_UNESCAPED_UNICODE) : '{}' }}"
+                                class="sua-bst px-3 py-1.5 text-sm text-white rounded bg-primary-700 hover:bg-primary-800">Sửa</button>
+                            <button type="button" data-id="{{ $bst->id }}" data-name="{{ $bst->title }}"
+                                class="xoa-bst px-3 py-1.5 text-sm text-white bg-red-700 rounded hover:bg-red-800">Xoá</button>
+                        </div>
+                    </div>
+                @empty
+                    <p class="py-8 text-sm text-center text-gray-500 dark:text-gray-400">
+                        Chưa có bộ sưu tập nào. Khối này trên web đang ẩn.
+                    </p>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- ══ 5. Tiêu đề các khối ════════════════════════════════════ --}}
         <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tiêu đề các khối</h2>
             <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
@@ -303,6 +350,99 @@
             <button type="submit"
                 class="w-full px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
                 Lưu slide
+            </button>
+        </form>
+    </div>
+
+    {{-- Ngan tao/sua bo suu tap --}}
+    <div id="drawer-bst"
+        class="fixed top-0 right-0 z-40 w-full h-screen max-w-lg p-4 overflow-y-auto transition-transform translate-x-full bg-white drawer dark:bg-gray-800"
+        tabindex="-1" aria-hidden="true">
+        <h5 id="tieu-de-bst"
+            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
+            Tao bo suu tap</h5>
+        <button type="button" id="dong-drawer-bst"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Dong</span>
+        </button>
+
+        <form id="form-bst" class="space-y-4">
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Ten bo suu tap *</label>
+                <input type="text" name="title" maxlength="255" required
+                    placeholder="Vi du: Bo suu tap mua dong / di bien / Tet"
+                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            </div>
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Dong mo ta</label>
+                <textarea name="subtitle" rows="2" maxlength="500"
+                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Chu tren nut</label>
+                    <input type="text" name="cta_label" maxlength="60" placeholder="Mua ngay"
+                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Nut dan toi</label>
+                    <input type="text" name="cta_link" maxlength="255" placeholder="/shop"
+                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Bat dau hien</label>
+                    <input type="datetime-local" name="starts_at"
+                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Ngung hien</label>
+                    <input type="datetime-local" name="ends_at"
+                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                De trong ca hai thi bo suu tap hien cho toi khi anh tat. Dat truoc ngay de chuan bi bo suu tap Tet.
+            </p>
+            <label class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
+                <input type="checkbox" name="status" checked
+                    class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+                Bat bo suu tap nay
+            </label>
+
+            <div class="pt-3 border-t dark:border-gray-700">
+                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Chon san pham (<span id="so-da-chon">0</span> da chon)
+                </label>
+                <input type="text" id="loc-sp" placeholder="Loc theo ten san pham hoac danh muc"
+                    class="block w-full mb-2 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <div class="p-2 overflow-y-auto border rounded-lg max-h-72 dark:border-gray-600">
+                    @forelse ($allProducts as $sp)
+                        <label
+                            class="flex items-center gap-2 p-2 rounded cursor-pointer dong-sp hover:bg-gray-100 dark:hover:bg-gray-700"
+                            data-ten="{{ mb_strtolower($sp->product_name . ' ' . ($sp->category->name ?? '')) }}">
+                            <input type="checkbox"
+                                class="w-4 h-4 border-gray-300 rounded chon-sp bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                                value="{{ $sp->id }}">
+                            <span class="text-sm text-gray-900 dark:text-white">{{ $sp->product_name }}</span>
+                            <span
+                                class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{ $sp->category->name ?? '-' }}</span>
+                        </label>
+                    @empty
+                        <p class="p-3 text-sm text-gray-500 dark:text-gray-400">Chua co san pham nao de chon.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
+                Luu bo suu tap
             </button>
         </form>
     </div>
@@ -526,6 +666,101 @@
                     headers: csrf(),
                     data: { items: items, group: 'announcement' },
                     success: function(r) { alert(r.success); location.reload(); },
+                    error: baoLoi
+                });
+            });
+
+            // -- Bo suu tap --------------------------------------------
+            let idBst = null;
+
+            const demDaChon = () => $('#so-da-chon').text($('.chon-sp:checked').length);
+            const moBst = () => $('#drawer-bst').removeClass('translate-x-full').attr('aria-hidden', 'false');
+            $('#dong-drawer-bst').click(() => $('#drawer-bst').addClass('translate-x-full').attr('aria-hidden', 'true'));
+            $(document).on('change', '.chon-sp', demDaChon);
+
+            $('#loc-sp').on('input', function() {
+                const tu = $(this).val().trim().toLowerCase();
+                $('.dong-sp').each(function() {
+                    $(this).toggle(!tu || String($(this).data('ten')).includes(tu));
+                });
+            });
+
+            $('#btn-them-bst').click(function() {
+                idBst = null;
+                $('#tieu-de-bst').text('Tao bo suu tap');
+                $('#form-bst')[0].reset();
+                $('.chon-sp').prop('checked', false);
+                $('#loc-sp').val('').trigger('input');
+                demDaChon();
+                moBst();
+            });
+
+            $(document).on('click', '.sua-bst', function() {
+                const b = $(this).data('bst');
+                idBst = b.id;
+                $('#tieu-de-bst').text('Sua bo suu tap');
+                $('#form-bst')[0].reset();
+
+                const f = $('#form-bst');
+                f.find('[name=title]').val(b.title || '');
+                f.find('[name=subtitle]').val(b.subtitle || '');
+                f.find('[name=cta_label]').val(b.cta_label || '');
+                f.find('[name=cta_link]').val(b.cta_link || '');
+                f.find('[name=starts_at]').val(b.starts_at || '');
+                f.find('[name=ends_at]').val(b.ends_at || '');
+                f.find('[name=status]').prop('checked', !!b.status);
+
+                const daChon = (b.product_ids || []).map(String);
+                $('.chon-sp').each(function() {
+                    $(this).prop('checked', daChon.includes(String($(this).val())));
+                });
+                $('#loc-sp').val('').trigger('input');
+                demDaChon();
+                moBst();
+            });
+
+            $('#form-bst').submit(function(e) {
+                e.preventDefault();
+                const ids = $('.chon-sp:checked').map(function() {
+                    return $(this).val();
+                }).get();
+
+                // Bo suu tap rong thi web an khoi do, canh bao truoc cho khoi ngo ngang.
+                if (ids.length === 0 &&
+                    !confirm('Chua tich san pham nao. Bo suu tap rong se khong hien tren web. Van luu?')) return;
+
+                $.ajax({
+                    url: '/content/collection' + (idBst ? '/' + idBst : ''),
+                    type: 'POST',
+                    headers: csrf(),
+                    data: {
+                        title: $('#form-bst [name=title]').val(),
+                        subtitle: $('#form-bst [name=subtitle]').val(),
+                        cta_label: $('#form-bst [name=cta_label]').val(),
+                        cta_link: $('#form-bst [name=cta_link]').val(),
+                        starts_at: $('#form-bst [name=starts_at]').val() || null,
+                        ends_at: $('#form-bst [name=ends_at]').val() || null,
+                        status: $('#form-bst [name=status]').is(':checked') ? 1 : 0,
+                        product_ids: ids
+                    },
+                    success: function(r) {
+                        alert(r.success);
+                        location.reload();
+                    },
+                    error: baoLoi
+                });
+            });
+
+            $(document).on('click', '.xoa-bst', function() {
+                if (!confirm('Xoa bo suu tap "' + $(this).data('name') + '"?')) return;
+                $.ajax({
+                    url: '/content/collection/' + $(this).data('id'),
+                    type: 'DELETE',
+                    headers: csrf(),
+                    success: function(r) {
+                        alert(r.success);
+                        location.reload();
+                    },
                     error: baoLoi
                 });
             });

@@ -67,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/content/banner/{id}/reorder', [ContentController::class, 'reorderBanner'])->name('content.banner.reorder');
     Route::post('/content/marquee', [ContentController::class, 'saveMarquee'])->name('content.marquee');
     Route::post('/content/headings', [ContentController::class, 'saveHeadings'])->name('content.headings');
+    Route::post('/content/collection/{id?}', [ContentController::class, 'saveCollection'])->name('content.collection');
+    Route::delete('/content/collection/{id}', [ContentController::class, 'destroyCollection'])->name('content.collection.destroy');
 
     // Quản lý tồn kho theo biến thể size/màu
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
