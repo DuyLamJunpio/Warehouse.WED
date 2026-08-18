@@ -354,13 +354,13 @@
         </form>
     </div>
 
-    {{-- Ngan tao/sua bo suu tap --}}
+    {{-- Ngăn tạo/sửa bộ sưu tập --}}
     <div id="drawer-bst"
         class="fixed top-0 right-0 z-40 w-full h-screen max-w-lg p-4 overflow-y-auto transition-transform translate-x-full bg-white drawer dark:bg-gray-800"
         tabindex="-1" aria-hidden="true">
         <h5 id="tieu-de-bst"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Tao bo suu tap</h5>
+            Tạo bộ sưu tập</h5>
         <button type="button" id="dong-drawer-bst"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -368,59 +368,59 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Dong</span>
+            <span class="sr-only">Đóng</span>
         </button>
 
         <form id="form-bst" class="space-y-4">
             <div>
-                <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Ten bo suu tap *</label>
+                <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Tên bộ sưu tập *</label>
                 <input type="text" name="title" maxlength="255" required
-                    placeholder="Vi du: Bo suu tap mua dong / di bien / Tet"
+                    placeholder="Ví dụ: Bộ sưu tập mùa đông / đi biển / Tết"
                     class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             </div>
             <div>
-                <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Dong mo ta</label>
+                <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Dòng mô tả</label>
                 <textarea name="subtitle" rows="2" maxlength="500"
                     class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Chu tren nut</label>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Chữ trên nút</label>
                     <input type="text" name="cta_label" maxlength="60" placeholder="Mua ngay"
                         class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Nut dan toi</label>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Nút dẫn tới</label>
                     <input type="text" name="cta_link" maxlength="255" placeholder="/shop"
                         class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Bat dau hien</label>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Bắt đầu hiện</label>
                     <input type="datetime-local" name="starts_at"
                         class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Ngung hien</label>
+                    <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Ngừng hiện</label>
                     <input type="datetime-local" name="ends_at"
                         class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                De trong ca hai thi bo suu tap hien cho toi khi anh tat. Dat truoc ngay de chuan bi bo suu tap Tet.
+                Để trống cả hai thì bộ sưu tập hiện cho tới khi anh tắt. Đặt trước ngày để chuẩn bị bộ sưu tập Tết.
             </p>
             <label class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
                 <input type="checkbox" name="status" checked
                     class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                Bat bo suu tap nay
+                Bật bộ sưu tập này
             </label>
 
             <div class="pt-3 border-t dark:border-gray-700">
                 <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                    Chon san pham (<span id="so-da-chon">0</span> da chon)
+                    Chọn sản phẩm (<span id="so-da-chon">0</span> đã chọn)
                 </label>
-                <input type="text" id="loc-sp" placeholder="Loc theo ten san pham hoac danh muc"
+                <input type="text" id="loc-sp" placeholder="Lọc theo tên sản phẩm hoặc danh mục"
                     class="block w-full mb-2 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 <div class="p-2 overflow-y-auto border rounded-lg max-h-72 dark:border-gray-600">
                     @forelse ($allProducts as $sp)
@@ -435,14 +435,14 @@
                                 class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{ $sp->category->name ?? '-' }}</span>
                         </label>
                     @empty
-                        <p class="p-3 text-sm text-gray-500 dark:text-gray-400">Chua co san pham nao de chon.</p>
+                        <p class="p-3 text-sm text-gray-500 dark:text-gray-400">Chưa có sản phẩm nào để chọn.</p>
                     @endforelse
                 </div>
             </div>
 
             <button type="submit"
                 class="w-full px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
-                Luu bo suu tap
+                Lưu bộ sưu tập
             </button>
         </form>
     </div>
@@ -670,7 +670,7 @@
                 });
             });
 
-            // -- Bo suu tap --------------------------------------------
+            // ── Bộ sưu tập ───────────────────────────────────────────
             let idBst = null;
 
             const demDaChon = () => $('#so-da-chon').text($('.chon-sp:checked').length);
@@ -687,7 +687,7 @@
 
             $('#btn-them-bst').click(function() {
                 idBst = null;
-                $('#tieu-de-bst').text('Tao bo suu tap');
+                $('#tieu-de-bst').text('Tạo bộ sưu tập');
                 $('#form-bst')[0].reset();
                 $('.chon-sp').prop('checked', false);
                 $('#loc-sp').val('').trigger('input');
@@ -698,7 +698,7 @@
             $(document).on('click', '.sua-bst', function() {
                 const b = $(this).data('bst');
                 idBst = b.id;
-                $('#tieu-de-bst').text('Sua bo suu tap');
+                $('#tieu-de-bst').text('Sửa bộ sưu tập');
                 $('#form-bst')[0].reset();
 
                 const f = $('#form-bst');
@@ -725,9 +725,9 @@
                     return $(this).val();
                 }).get();
 
-                // Bo suu tap rong thi web an khoi do, canh bao truoc cho khoi ngo ngang.
+                // Bộ sưu tập rỗng thì web ẩn khối đó, cảnh báo trước cho khỏi ngỡ ngàng.
                 if (ids.length === 0 &&
-                    !confirm('Chua tich san pham nao. Bo suu tap rong se khong hien tren web. Van luu?')) return;
+                    !confirm('Chưa tích sản phẩm nào. Bộ sưu tập rỗng sẽ không hiện trên web. Vẫn lưu?')) return;
 
                 $.ajax({
                     url: '/content/collection' + (idBst ? '/' + idBst : ''),
@@ -752,7 +752,7 @@
             });
 
             $(document).on('click', '.xoa-bst', function() {
-                if (!confirm('Xoa bo suu tap "' + $(this).data('name') + '"?')) return;
+                if (!confirm('Xoá bộ sưu tập "' + $(this).data('name') + '"?')) return;
                 $.ajax({
                     url: '/content/collection/' + $(this).data('id'),
                     type: 'DELETE',

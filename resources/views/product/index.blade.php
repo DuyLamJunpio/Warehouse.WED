@@ -267,23 +267,23 @@
                         <label for="import_price"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">IMPORT
                             PRICE</label>
-                        <input type="number" name="import_price" id="import_price"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        <input type="text" inputmode="numeric" name="import_price" id="import_price"
+                            class="o-tien shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             min="0" placeholder="0" required>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="export_price"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">EXPORT
                             PRICE</label>
-                        <input type="number" name="sell_price" id="export_price"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        <input type="text" inputmode="numeric" name="sell_price" id="export_price"
+                            class="o-tien shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             min="0" placeholder="0" required>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="discount_price"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">GIÁ KHUYẾN MÃI</label>
-                        <input type="number" name="discount_price" id="discount_price"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        <input type="text" inputmode="numeric" name="discount_price" id="discount_price"
+                            class="o-tien shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             min="0" placeholder="Bỏ trống nếu không giảm giá">
                     </div>
                     <div class="col-span-6 sm:col-span-3">
@@ -467,23 +467,23 @@
                         <label for="import_price_edit"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">IMPORT
                             PRICE</label>
-                        <input type="number" name="import_price" id="import_price_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        <input type="text" inputmode="numeric" name="import_price" id="import_price_edit"
+                            class="o-tien shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             min="0" placeholder="0" required>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="export_price_edit"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">EXPORT
                             PRICE</label>
-                        <input type="number" name="sell_price" id="export_price_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        <input type="text" inputmode="numeric" name="sell_price" id="export_price_edit"
+                            class="o-tien shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             min="0" placeholder="0" required>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="discount_price_edit"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">GIÁ KHUYẾN MÃI</label>
-                        <input type="number" name="discount_price" id="discount_price_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        <input type="text" inputmode="numeric" name="discount_price" id="discount_price_edit"
+                            class="o-tien shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             min="0" placeholder="Bỏ trống nếu không giảm giá">
                     </div>
                     <div class="col-span-6 sm:col-span-3">
@@ -600,6 +600,46 @@
     <script>
         $(document).ready(function() {
 
+            /**
+             * Ô nhập tiền hiện dấu chấm phân cách nghìn: 15999999 -> 15.999.999.
+             * Gõ số dài mà không có dấu chấm rất dễ thừa hoặc thiếu một số 0.
+             */
+            const nhomNghin = (v) => String(v).replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            const boCham = (v) => String(v).replace(/\./g, '');
+
+            $(document).on('input', '.o-tien', function() {
+                const cu = $(this).val();
+                const moi = nhomNghin(cu);
+                if (cu !== moi) $(this).val(moi);
+            });
+
+            // Định dạng lại những ô đã có sẵn giá lúc mở trang.
+            $('.o-tien').each(function() {
+                if ($(this).val()) $(this).val(nhomNghin($(this).val()));
+            });
+
+            /**
+             * Máy chủ chỉ nhận số nguyên nên phải bỏ dấu chấm trước khi gửi.
+             * Bỏ ngay trên phần tử rồi trả lại sau: nếu chỉ sửa trong FormData thì
+             * các ô giá của biến thể sinh động sẽ không đi qua đường đó.
+             */
+            const layFormDataTien = (form) => {
+                const o = $(form).find('.o-tien');
+                const giuLai = o.map(function() {
+                    return $(this).val();
+                }).get();
+
+                o.each(function() {
+                    $(this).val(boCham($(this).val()));
+                });
+                const fd = new FormData(form);
+                o.each(function(i) {
+                    $(this).val(giuLai[i]);
+                });
+
+                return fd;
+            };
+
             const reloadDataTable = () => {
                 $.ajax({
                     url: '{{ route('product.data') }}',
@@ -625,8 +665,8 @@
                             class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <input type="number" min="0" name="variants[${i}][quantity]" value="${data.quantity || 0}" placeholder="SL"
                             class="col-span-2 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <input type="number" min="0" name="variants[${i}][price_override]" value="${data.price_override || ''}" placeholder="Giá riêng"
-                            class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="text" inputmode="numeric" name="variants[${i}][price_override]" value="${data.price_override ? nhomNghin(data.price_override) : ''}" placeholder="Giá riêng"
+                            class="o-tien col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <button type="button"
                             class="removeVariantRow col-span-1 px-2 py-2 text-sm text-white bg-red-700 rounded-lg hover:bg-red-800">×</button>
                     </div>
