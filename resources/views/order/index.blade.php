@@ -2,11 +2,22 @@
     <div
         class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
         <div class="w-full mb-1">
-            <div class="mb-4">
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Quản lý đơn hàng</h1>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Tồn kho đã trừ ngay khi lập đơn. Hủy đơn hoặc khách hoàn hàng thì hàng được cộng trả về kho.
-                </p>
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <div>
+                    <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Quản lý đơn hàng</h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Tồn kho đã trừ ngay khi lập đơn. Hủy đơn hoặc khách hoàn hàng thì hàng được cộng trả về kho.
+                    </p>
+                </div>
+                <button type="button" id="btn-toggle-create"
+                    class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800 whitespace-nowrap">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z">
+                        </path>
+                    </svg>
+                    <span id="btn-toggle-create-label">Tạo đơn</span>
+                </button>
             </div>
 
             {{-- Số liệu tổng quan --}}
@@ -44,6 +55,8 @@
             </div>
         </div>
     </div>
+
+    @include('order.create')
 
     <div class="flex flex-col">
         <div class="overflow-x-auto">
@@ -122,21 +135,11 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             let currentOrderId = null;
 
             const money = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
-
-            const showAjaxError = (xhr) => {
-                const res = xhr.responseJSON || {};
-                if (res.errors) {
-                    alert(Object.keys(res.errors).map(k => res.errors[k].join('\n')).join('\n'));
-                } else {
-                    alert(res.error || res.message || 'Lỗi: ' + xhr.statusText);
-                }
-            };
 
             const openDrawer = () => $('#drawer-order-detail').removeClass('translate-x-full').attr('aria-hidden',
                 'false');
@@ -240,14 +243,11 @@
                 $.ajax({
                     url: '/order/' + currentOrderId + '/status',
                     type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
                     data: {
                         order_status: status
                     },
                     success: function(response) {
-                        alert(response.success);
+                        showToast(response.success);
                         closeDrawer();
                         reloadOrders();
                     },
