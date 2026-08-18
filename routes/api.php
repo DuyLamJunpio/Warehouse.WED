@@ -128,7 +128,9 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('throttle:20,1')->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store']);
     Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
-    Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid']);
+    // Chi web ban hang duoc goi: no da xac thuc chu ky PayOS truoc do.
+    Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid'])
+        ->middleware('storefront.secret');
 });
 
 /*

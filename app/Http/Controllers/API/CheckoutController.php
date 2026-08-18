@@ -41,6 +41,10 @@ class CheckoutController extends Controller
             'items.*.quantity' => 'required|integer|min:1|max:100',
         ]);
 
+        // Thả hàng của những đơn bỏ ngang TRƯỚC khi kiểm tồn, để đơn chưa thanh
+        // toán không chặn được khách đang thật sự muốn mua.
+        Invoice::cancelExpiredHolds();
+
         // Gộp các dòng trùng biến thể để không trừ kho hai lần cho cùng một món.
         $wanted = [];
         foreach ($data['items'] as $item) {
@@ -108,6 +112,12 @@ class CheckoutController extends Controller
                 'shipping_phone' => $customer->customer_phone,
                 'shipping_address' => implode(', ', [$data['address'], $data['ward'], $data['province']]),
                 'payment_method' => $data['payment_method'] ?? 'banking',
+                // Kho bị trừ ngay lúc này, nên đơn phải có hạn: quá hạn mà không
+                // nhận được tiền thì lệnh orders:cancel-expired trả hàng về kho.
+                // COD không có hạn vì khách trả tiền khi nhận hàng.
+                'payment_expires_at' => ($data['payment_method'] ?? 'banking') === 'cod'
+                    ? null
+                    : now()->addMinutes((int) config('services.storefront.payment_window_minutes', 30)),
                 // Chưa nhận được tiền: đơn chỉ được xác nhận sau khi chuyển khoản thành công.
                 'pay_status' => 0,
                 'note' => $data['note'] ?? null,
@@ -169,21 +179,65 @@ class CheckoutController extends Controller
      */
     public function markPaid(string $orderCode)
     {
-        $order = Invoice::orders()->where('order_code', $orderCode)->first();
+        DB::beginTransaction();
+        try {
+            // Khoá dòng: lệnh orders:cancel-expired có thể đang xét đúng đơn này.
+            $order = Invoice::orders()->where('order_code', $orderCode)->lockForUpdate()->first();
 
-        if (!$order) {
-            return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+            if (!$order) {
+                DB::rollBack();
+
+                return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+            }
+
+            if ((int) $order->pay_status === 1) {
+                DB::rollBack();
+
+                // Cổng thanh toán có thể gọi lại nhiều lần cho cùng một đơn.
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đơn đã được ghi nhận thanh toán trước đó.',
+                ]);
+            }
+
+            $order->pay_status = 1;
+
+            if ($order->order_status === Invoice::STATUS_CANCELLED) {
+                // Tiền về sau khi đơn đã bị huỷ vì quá hạn. KHÔNG tự xác nhận lại:
+                // hàng đã được trả về kho và có thể đã bán cho người khác. Ghi nhận
+                // đã trả tiền rồi để nhân viên xử lý tay (giao bù hoặc hoàn tiền).
+                $order->note = trim(($order->note ? $order->note . "\n" : '')
+                    . 'CẦN XỬ LÝ: nhận được tiền sau khi đơn đã huỷ quá hạn.');
+                $order->save();
+
+                DB::commit();
+
+                Log::critical('Nhận được thanh toán cho đơn đã huỷ.', ['order_code' => $orderCode]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đơn đã bị huỷ trước đó; đã ghi nhận thanh toán để nhân viên xử lý tay.',
+                ]);
+            }
+
+            // Khách trả tiền xong thì đơn không còn là "chờ xác nhận" nữa.
+            if ($order->order_status === Invoice::STATUS_PENDING) {
+                $order->order_status = Invoice::STATUS_CONFIRMED;
+            }
+
+            // Đã trả tiền thì hạn thanh toán hết ý nghĩa; xoá để lệnh quét bỏ qua đơn này.
+            $order->payment_expires_at = null;
+            $order->save();
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Đã ghi nhận thanh toán.']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Ghi nhận thanh toán thất bại: ' . $e->getMessage(), ['order_code' => $orderCode]);
+
+            return response()->json(['error' => 'Không ghi nhận được thanh toán.'], 500);
         }
-
-        if ((int) $order->pay_status === 1) {
-            // Cổng thanh toán có thể gọi lại nhiều lần cho cùng một đơn.
-            return response()->json(['success' => true, 'message' => 'Đơn đã được ghi nhận thanh toán trước đó.']);
-        }
-
-        $order->pay_status = 1;
-        $order->save();
-
-        return response()->json(['success' => true, 'message' => 'Đã ghi nhận thanh toán.']);
     }
 
     /**
@@ -196,6 +250,10 @@ class CheckoutController extends Controller
             'items.*.variant_id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
+
+        // Thả hàng của những đơn bỏ ngang TRƯỚC khi kiểm tồn, để đơn chưa thanh
+        // toán không chặn được khách đang thật sự muốn mua.
+        Invoice::cancelExpiredHolds();
 
         $variants = ProductVariant::with('product')
             ->whereIn('id', array_column($data['items'], 'variant_id'))
