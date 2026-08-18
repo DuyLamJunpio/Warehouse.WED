@@ -141,4 +141,5 @@ Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
     Route::get('/products', [StorefrontController::class, 'products']);
     Route::get('/products/{slug}', [StorefrontController::class, 'product']);
     Route::get('/categories', [StorefrontController::class, 'categoriesIndex']);
+    Route::get('/content', [StorefrontController::class, 'content']);
 });

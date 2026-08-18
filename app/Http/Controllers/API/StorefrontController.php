@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Banner;
 use App\Models\Categories;
 use App\Models\ImageModel;
 use App\Models\Product;
+use App\Models\SiteText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -68,6 +70,34 @@ class StorefrontController extends Controller
     public function categoriesIndex()
     {
         return response()->json(['categories' => $this->categories()]);
+    }
+
+    /**
+     * Nội dung trang chủ chỉnh từ trang quản trị: slide hero, chữ chạy, tiêu đề.
+     *
+     * Chỉ trả về những mục đang trong thời gian hiển thị. Tiêu đề chưa ai sửa
+     * thì không có trong danh sách, web tự dùng chữ mặc định của nó.
+     */
+    public function content()
+    {
+        $banners = Banner::live()->get()->map(fn($b) => [
+            'id' => $b->id,
+            'media' => $this->url($b->media_path),
+            'media_type' => $b->media_type,
+            'poster' => $b->poster_path ? $this->url($b->poster_path) : null,
+            'mobile' => $b->mobile_path ? $this->url($b->mobile_path) : null,
+            'alt' => $b->alt,
+            'heading' => $b->heading,
+            'subheading' => $b->subheading,
+            'cta_label' => $b->cta_label,
+            'cta_link' => $b->cta_link,
+        ])->values();
+
+        return response()->json([
+            'banners' => $banners,
+            'marquee' => SiteText::marquee()->live()->pluck('value')->values(),
+            'headings' => SiteText::heading()->live()->pluck('value', 'key'),
+        ]);
     }
 
     private function categories(): array

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\categoryController;
+use App\Http\Controllers\ContentController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
@@ -57,6 +58,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
     Route::post('/order/{id}/status', [OrderController::class, 'updateStatus'])->name('order.status');
     Route::get('/order/{id}/print', [OrderController::class, 'print'])->name('order.print');
+
+    // Nội dung trang chủ web bán hàng: slide hero, chữ chạy, tiêu đề các khối
+    Route::get('/content', [ContentController::class, 'index'])->name('content');
+    Route::post('/content/banner', [ContentController::class, 'storeBanner'])->name('content.banner.store');
+    Route::post('/content/banner/{id}', [ContentController::class, 'updateBanner'])->name('content.banner.update');
+    Route::delete('/content/banner/{id}', [ContentController::class, 'destroyBanner'])->name('content.banner.destroy');
+    Route::post('/content/banner/{id}/reorder', [ContentController::class, 'reorderBanner'])->name('content.banner.reorder');
+    Route::post('/content/marquee', [ContentController::class, 'saveMarquee'])->name('content.marquee');
+    Route::post('/content/headings', [ContentController::class, 'saveHeadings'])->name('content.headings');
 
     // Quản lý tồn kho theo biến thể size/màu
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
