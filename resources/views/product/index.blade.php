@@ -789,7 +789,7 @@
                                 );
                             }
 
-                            var mediaSrc = image.path.replace('public', 'storage');
+                            var mediaSrc = window.storageUrl(image.path);
                             // Media đã lưu có thể là video: render <video> thay cho <img>.
                             var img = image.media_type === 'video' ?
                                 $('<video>').attr({

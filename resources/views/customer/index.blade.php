@@ -509,7 +509,7 @@
                 id = customerData.id;
                 var newImageUrl;
                 if (customerData.avatar != null) {
-                    newImageUrl = customerData.avatar.replace("public", "storage");
+                    newImageUrl = window.storageUrl(customerData.avatar);
                     $('#preview-image-edit').attr('src', newImageUrl);
                     $('#preview-image-edit').show();
                     $("#svg_edit").hide();

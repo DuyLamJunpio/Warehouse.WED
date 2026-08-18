@@ -11,6 +11,19 @@
     <meta name="generator" content="Hugo 0.123.6">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <script>
+        // Gốc kho ảnh, do disk đang dùng quyết định (local hay Supabase Storage).
+        // Trước đây JS tự sửa chuỗi "public" -> "storage", chỉ đúng khi ảnh nằm
+        // trên chính máy chủ này; lên kho ngoài là hỏng.
+        window.STORAGE_BASE = @json(rtrim(Storage::url(''), '/'));
+
+        window.storageUrl = function(path) {
+            if (!path) return '';
+            if (/^https?:\/\//i.test(path)) return path;
+            return window.STORAGE_BASE + '/' + String(path).replace(/^\/+/, '');
+        };
+    </script>
+
     <title>Kho</title>
 
 

@@ -1337,16 +1337,15 @@
                     $('#discountNumberEdit').text(response.discount + '%');
                     $('#total_amount_edit').text(formatPrice(response.total_amount));
                     $('#signature_name_edit').val(response.signature_name);
-                    $('#preview-image-edit').attr("src", response.signature.replace('public',
-                        'storage'));
+                    $('#preview-image-edit').attr("src", window.storageUrl(response.signature));
 
                     for (let index = 0; index < response.product_invoices.length; index++) {
                         const element = response.product_invoices[index];
 
-                        const imagePath = element.product.image_model.find(item => item.is_pined === 1)
-                            ?.path.replace('public', 'storage') ||
-                            (element.product.image_model.length > 0 ? element.product.image_model[0]
-                                .path.replace('public', 'storage') :
+                        const pinned = element.product.image_model.find(item => item.is_pined === 1);
+                        const imagePath = pinned ? window.storageUrl(pinned.path) :
+                            (element.product.image_model.length > 0 ?
+                                window.storageUrl(element.product.image_model[0].path) :
                                 '{{ asset('images/no-photo.svg') }}'
                             );
 
