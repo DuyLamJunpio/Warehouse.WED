@@ -35,6 +35,7 @@ class ContentController extends Controller
         return view('content.index', [
             'banners' => Banner::orderBy('sort_order')->get(),
             'marquees' => SiteText::marquee()->orderBy('sort_order')->get(),
+            'announcements' => SiteText::announcement()->orderBy('sort_order')->get(),
             'headings' => $this->headingValues(),
             'headingLabels' => SiteText::HEADINGS,
             'limits' => [
@@ -200,6 +201,13 @@ class ContentController extends Controller
 
     public function saveMarquee(Request $request)
     {
+        // Cùng một hàm phục vụ hai dải chữ: dải nhỏ trên cùng (mọi trang) và
+        // dải chữ lớn giữa trang chủ. Chúng khác nhau ở vị trí chứ không khác
+        // cách lưu, nên tách hai hàm gần giống hệt nhau là thừa.
+        $group = $request->input('group') === SiteText::GROUP_ANNOUNCEMENT
+            ? SiteText::GROUP_ANNOUNCEMENT
+            : SiteText::GROUP_MARQUEE;
+
         $data = $request->validate([
             'items' => ['present', 'array'],
             'items.*.value' => ['required', 'string', 'max:120'],
@@ -212,11 +220,11 @@ class ContentController extends Controller
 
         // Lưu lại toàn bộ danh sách: dòng bị bỏ khỏi form nghĩa là người dùng đã
         // xoá, nên xoá khỏi CSDL cho khớp đúng thứ họ nhìn thấy trên màn hình.
-        SiteText::marquee()->delete();
+        SiteText::where('group', $group)->delete();
 
         foreach (array_values($data['items']) as $i => $item) {
             SiteText::create([
-                'group' => SiteText::GROUP_MARQUEE,
+                'group' => $group,
                 'value' => $item['value'],
                 'sort_order' => $i,
                 'status' => true,

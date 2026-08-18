@@ -93,17 +93,59 @@
             </div>
         </div>
 
-        {{-- ══ 2. Chữ chạy ════════════════════════════════════════════ --}}
+        {{-- ══ 2. Chữ chạy trên cùng ══════════════════════════════════ --}}
         <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
             <div class="flex items-center justify-between mb-1">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Chữ chạy ngang</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Chữ chạy nhỏ trên cùng</h2>
+                <button type="button" id="btn-them-tb"
+                    class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
+                    + Thêm dòng
+                </button>
+            </div>
+            <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+                Dải chữ nhỏ chạy sát mép trên. <strong>Hiện ở mọi trang</strong> chứ không riêng trang chủ — hợp để
+                thông báo khuyến mãi, phí giao hàng, chính sách đổi trả.
+            </p>
+
+            <div id="danh-sach-tb" class="space-y-2">
+                @foreach ($announcements as $a)
+                    <div class="grid items-center grid-cols-12 gap-2 dong-tb">
+                        <input type="text" value="{{ $a->value }}" maxlength="120"
+                            placeholder="Ví dụ: Miễn phí giao hàng từ 500.000 ₫"
+                            class="tb-value col-span-5 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="datetime-local" value="{{ $a->starts_at?->format('Y-m-d\TH:i') }}"
+                            class="tb-start col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="datetime-local" value="{{ $a->ends_at?->format('Y-m-d\TH:i') }}"
+                            class="tb-end col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <button type="button"
+                            class="col-span-1 px-2 py-2 text-sm text-white bg-red-700 rounded-lg xoa-dong-tb hover:bg-red-800">×</button>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                <span class="col-span-5">Nội dung</span>
+                <span class="col-span-3">Bắt đầu hiện</span>
+                <span class="col-span-3">Ngừng hiện</span>
+            </div>
+
+            <button type="button" id="btn-luu-tb"
+                class="px-5 py-2.5 mt-4 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
+                Lưu chữ trên cùng
+            </button>
+        </div>
+
+        {{-- ══ 3. Chữ chạy lớn ════════════════════════════════════════ --}}
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-1">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Chữ chạy lớn giữa trang chủ</h2>
                 <button type="button" id="btn-them-chu"
                     class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
                     + Thêm dòng
                 </button>
             </div>
             <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
-                Các cụm từ chạy ngang trên nền tối. Nên ngắn gọn 2–4 từ. Để trống ngày là hiện mãi.
+                Dải chữ serif cỡ lớn nằm giữa trang chủ. Nên ngắn gọn 2–4 từ. Để trống ngày là hiện mãi.
             </p>
 
             <div id="danh-sach-chu" class="space-y-2">
@@ -134,7 +176,7 @@
             </button>
         </div>
 
-        {{-- ══ 3. Tiêu đề các khối ════════════════════════════════════ --}}
+        {{-- ══ 4. Tiêu đề các khối ════════════════════════════════════ --}}
         <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tiêu đề các khối</h2>
             <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
@@ -445,6 +487,45 @@
                         alert(r.success);
                         location.reload();
                     },
+                    error: baoLoi
+                });
+            });
+
+            // ── Chữ chạy trên cùng ───────────────────────────────────
+            const dongTbMoi = () => $(`
+                <div class="dong-tb grid grid-cols-12 gap-2 items-center">
+                    <input type="text" maxlength="120" placeholder="Ví dụ: Miễn phí giao hàng từ 500.000 ₫"
+                        class="tb-value col-span-5 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="datetime-local"
+                        class="tb-start col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="datetime-local"
+                        class="tb-end col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <button type="button" class="xoa-dong-tb col-span-1 px-2 py-2 text-sm text-white bg-red-700 rounded-lg hover:bg-red-800">×</button>
+                </div>`);
+
+            $('#btn-them-tb').click(() => $('#danh-sach-tb').append(dongTbMoi()));
+            $(document).on('click', '.xoa-dong-tb', function() {
+                $(this).closest('.dong-tb').remove();
+            });
+
+            $('#btn-luu-tb').click(function() {
+                const items = [];
+                $('#danh-sach-tb .dong-tb').each(function() {
+                    const value = $(this).find('.tb-value').val().trim();
+                    if (!value) return;
+                    items.push({
+                        value: value,
+                        starts_at: $(this).find('.tb-start').val() || null,
+                        ends_at: $(this).find('.tb-end').val() || null
+                    });
+                });
+
+                $.ajax({
+                    url: '{{ route('content.marquee') }}',
+                    type: 'POST',
+                    headers: csrf(),
+                    data: { items: items, group: 'announcement' },
+                    success: function(r) { alert(r.success); location.reload(); },
                     error: baoLoi
                 });
             });

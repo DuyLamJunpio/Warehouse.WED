@@ -14,6 +14,8 @@ class SiteText extends Model
     use HasFactory;
 
     public const GROUP_MARQUEE = 'marquee';
+    /** Dải chữ nhỏ chạy trên cùng, hiện ở MỌI trang chứ không riêng trang chủ. */
+    public const GROUP_ANNOUNCEMENT = 'announcement';
     public const GROUP_HEADING = 'heading';
 
     /**
@@ -57,5 +59,10 @@ class SiteText extends Model
     public function scopeHeading(Builder $query): Builder
     {
         return $query->where('group', self::GROUP_HEADING);
+    }
+
+    public function scopeAnnouncement(Builder $query): Builder
+    {
+        return $query->where('group', self::GROUP_ANNOUNCEMENT);
     }
 }

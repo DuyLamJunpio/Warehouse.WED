@@ -96,6 +96,7 @@ class StorefrontController extends Controller
         return response()->json([
             'banners' => $banners,
             'marquee' => SiteText::marquee()->live()->pluck('value')->values(),
+            'announcement' => SiteText::announcement()->live()->pluck('value')->values(),
             'headings' => SiteText::heading()->live()->pluck('value', 'key'),
         ]);
     }
