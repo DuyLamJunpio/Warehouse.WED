@@ -174,7 +174,6 @@
         <div id="history-body" class="space-y-3"></div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             let adjustingVariantId = null;

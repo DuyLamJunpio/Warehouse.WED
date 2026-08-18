@@ -21,7 +21,7 @@
             <img class="w-10 h-10 rounded-lg"
                 @if (isset($item->avatar)) src="{{ Storage::url($item->avatar) }}"
             @else
-            src="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+            src="{{ asset('images/no-photo.svg') }}" @endif
                 alt="{{ $item->customer_name }}">
             <div>
                 <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $item->customer_name }}</div>

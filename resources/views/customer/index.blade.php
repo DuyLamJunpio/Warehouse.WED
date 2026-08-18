@@ -409,42 +409,24 @@
         </form>
     </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     {{-- add supplier --}}
     <script>
         $(document).ready(function() {
+            // Nạp lại bảng khách hàng sau mỗi thao tác (thêm / sửa / xóa dùng chung).
+            window.reloadCustomerTable = function() {
+                $.get('{{ route('customer.data') }}', function(data) {
+                    $('#customerTable').html(data);
+                });
+            };
+
             $('#formAdd').submit(function(e) {
                 e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
-                var formData = new FormData(this);
-                $.ajax({
-                    url: '{{ route('customer.add') }}', // URL được định nghĩa trong routes
-                    type: 'POST',
-                    data: formData,
-                    contentType: false, // Quan trọng: không thiết lập kiểu nội dung
-                    processData: false, // Quan trọng: không xử lý dữ liệu
-                    success: function(response) {
-                        // Xử lý khi thêm thành công
-                        alert(response.success);
 
-                        $('#closeDrawerAdd').click();
-
-                        // Có thể làm mới danh sách suppliers hoặc reset form tại đây
-                        $('form').find('input[type=text], input[type=file],textarea').val('');
-
-                        $.ajax({
-                            url: '{{ route('customer.data') }}', // Đường dẫn tới phương thức getSuppliers
-                            type: 'GET',
-                            success: function(data) {
-                                $('#customerTable').html(
-                                    data); // Cập nhật nội dung của bảng
-                            }
-                        });
-                    },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                submitFormWithProgress($(this), '{{ route('customer.add') }}', function(response) {
+                    showToast(response.success);
+                    $('#closeDrawerAdd').click();
+                    $('form').find('input[type=text], input[type=file],textarea').val('');
+                    reloadCustomerTable();
                 });
             });
         });
@@ -470,28 +452,15 @@
                     $.ajax({
                         url: url, // Sử dụng nối chuỗi để thêm idCustomer vào URL
                         type: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
                         success: function(response) {
                             // Xử lý khi xóa thành công
-                            alert(response.success);
+                            showToast(response.success);
 
                             $('#closeDrawerDelete').click();
 
-                            $.ajax({
-                                url: '{{ route('customer.data') }}', // Đường dẫn tới phương thức getSuppliers
-                                type: 'GET',
-                                success: function(data) {
-                                    $('#customerTable').html(
-                                        data); // Cập nhật nội dung của bảng
-                                }
-                            });
+                            reloadCustomerTable();
                         },
-                        error: function(xhr) {
-                            // Xử lý lỗi
-                            alert('Error: ' + xhr.statusText);
-                        }
+                        error: showAjaxError
                     });
                 });
 
@@ -596,32 +565,11 @@
             $('#formEdit').submit(function(e) {
                 e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
                 const urlEdit = '/customer/edit/' + id;
-                var formData = new FormData(this);
-                    $.ajax({
-                        url: urlEdit, // URL được định nghĩa trong routes
-                        type: 'POST',
-                        data: formData,
-                        contentType: false, // Quan trọng: không thiết lập kiểu nội dung
-                        processData: false, // Quan trọng: không xử lý dữ liệu
-                    success: function(response) {
-                        // Xử lý khi thêm thành công
-                        alert(response.success);
 
-                        $('#closeDrawerEdit').click();
-
-                        $.ajax({
-                            url: '{{ route('customer.data') }}', // Đường dẫn tới phương thức getSuppliers
-                            type: 'GET',
-                            success: function(data) {
-                                $('#customerTable').html(
-                                    data); // Cập nhật nội dung của bảng
-                            }
-                        });
-                    },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                submitFormWithProgress($(this), urlEdit, function(response) {
+                    showToast(response.success);
+                    $('#closeDrawerEdit').click();
+                    reloadCustomerTable();
                 });
             });
         });
@@ -817,7 +765,7 @@
                         $('#profile-note').val(c.note || '');
                     },
                     error: function(xhr) {
-                        alert((xhr.responseJSON || {}).error || 'Không tải được hồ sơ khách hàng.');
+                        showToast((xhr.responseJSON || {}).error || 'Không tải được hồ sơ khách hàng.', 'error');
                     }
                 });
             });
@@ -827,17 +775,14 @@
                 $.ajax({
                     url: '/customer/' + profileCustomerId + '/note',
                     type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
                     data: {
                         note: $('#profile-note').val()
                     },
                     success: function(r) {
-                        alert(r.success);
+                        showToast(r.success);
                     },
                     error: function(xhr) {
-                        alert((xhr.responseJSON || {}).error || 'Không lưu được ghi chú.');
+                        showToast((xhr.responseJSON || {}).error || 'Không lưu được ghi chú.', 'error');
                     }
                 });
             });

@@ -349,19 +349,8 @@
             </div>
         </form>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     {{-- add categories --}}
     <script>
-        // Hiển thị lỗi trả về từ server: lỗi validate (422) hoặc lỗi nghiệp vụ.
-        function showAjaxError(xhr) {
-            const res = xhr.responseJSON || {};
-            if (res.errors) {
-                alert(Object.keys(res.errors).map(k => res.errors[k].join('\n')).join('\n'));
-            } else {
-                alert(res.error || res.message || 'Lỗi: ' + xhr.statusText);
-            }
-        }
 
         // Nạp lại bảng danh mục sau mỗi thao tác.
         function reloadCategories() {
@@ -378,28 +367,19 @@
             $('#formAdd').submit(function(e) {
                 e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
 
-                $.ajax({
-                    url: '{{ route('categories.add') }}', // URL được định nghĩa trong routes
-                    type: 'POST',
-                    // FormData thay cho serialize() vì form có ảnh danh mục.
-                    data: new FormData(this),
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        alert(response.success);
-                        $('#closeDrawerAdd').click();
-                        $('#formAdd')[0].reset();
+                submitFormWithProgress($(this), '{{ route('categories.add') }}', function(response) {
+                    showToast(response.success);
+                    $('#closeDrawerAdd').click();
+                    $('#formAdd')[0].reset();
 
-                        // Danh mục gốc vừa tạo phải có mặt ngay trong ô chọn "danh mục cha".
-                        const created = response.category;
-                        if (created && !created.parent_id) {
-                            $('#parent_id, #parent_id_edit').append(
-                                $('<option>').val(created.id).text(created.name));
-                        }
+                    // Danh mục gốc vừa tạo phải có mặt ngay trong ô chọn "danh mục cha".
+                    const created = response.category;
+                    if (created && !created.parent_id) {
+                        $('#parent_id, #parent_id_edit').append(
+                            $('<option>').val(created.id).text(created.name));
+                    }
 
-                        reloadCategories();
-                    },
-                    error: showAjaxError
+                    reloadCategories();
                 });
             });
 
@@ -408,9 +388,6 @@
                 $.ajax({
                     url: '/categories/reorder/' + $(this).data('id-categories'),
                     type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
                     data: {
                         direction: $(this).data('direction')
                     },
@@ -441,12 +418,9 @@
                     $.ajax({
                         url: url, // Sử dụng nối chuỗi để thêm idCategories vào URL
                         type: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
                         success: function(response) {
                             // Xử lý khi xóa thành công
-                            alert(response.success);
+                            showToast(response.success);
                             $('#closeDrawerDelete').click();
                             reloadCategories();
                         },
@@ -542,20 +516,12 @@
             $('#formEdit').submit(function(e) {
                 e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
                 const urlEdit = '/categories/edit/' + id;
-                $.ajax({
-                    url: urlEdit, // URL được định nghĩa trong routes
-                    type: 'POST',
-                    // FormData thay cho serialize() vì form có ảnh danh mục.
-                    data: new FormData(this),
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        alert(response.success);
-                        $('#closeDrawerEdit').click();
-                        $('#formEdit')[0].reset();
-                        reloadCategories();
-                    },
-                    error: showAjaxError
+
+                submitFormWithProgress($(this), urlEdit, function(response) {
+                    showToast(response.success);
+                    $('#closeDrawerEdit').click();
+                    $('#formEdit')[0].reset();
+                    reloadCategories();
                 });
             });
         });

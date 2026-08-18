@@ -1,0 +1,345 @@
+/**
+ * Tiện ích dùng chung cho toàn bộ trang quản trị.
+ *
+ * File này đi qua Vite nên là module (defer): nó chạy SAU khi jQuery đã được nạp
+ * bằng thẻ <script> thường ở <head> của layout, và TRƯỚC khi các callback
+ * $(document).ready() trong blade chạy. Nhờ vậy mọi hàm ở đây đều dùng được bên
+ * trong $(document).ready() của từng trang mà không cần import gì.
+ *
+ * Trước đây các hàm này bị copy vào từng blade, dẫn tới sửa một chỗ quên chỗ khác
+ * (ví dụ formatPrice có 3 bản, một bản sai làm mọi sản phẩm hiện chung một giá).
+ */
+
+const jq = window.jQuery;
+
+if (!jq) {
+    console.error('admin.js: jQuery phải được nạp trước bundle Vite (xem layouts/app.blade.php).');
+} else {
+    setupAdminHelpers(jq);
+}
+
+function setupAdminHelpers($) {
+    // ----- CSRF cho mọi request AJAX -----
+    // Thay cho việc lặp lại khối headers: { 'X-CSRF-TOKEN': ... } ở từng lời gọi.
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+        },
+    });
+
+    // ----- Định dạng tiền -----
+    /**
+     * Đổi một giá trị bất kỳ thành chuỗi tiền VND. Chấp nhận cả chuỗi đã định dạng
+     * sẵn ("1.200.000 ₫") để gọi lại nhiều lần vẫn không hỏng.
+     */
+    window.formatPrice = function (price) {
+        const numeric = parseInt(
+            String(price === null || price === undefined ? '' : price)
+                .replace(/\./g, '')
+                .replace('₫', '')
+                .replace(/\s/g, '')
+                .trim(),
+            10
+        );
+
+        if (isNaN(numeric)) {
+            return '';
+        }
+
+        return numeric.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+    };
+
+    /**
+     * Định dạng tại chỗ mọi ô khớp selector.
+     *
+     * Bắt buộc phải duyệt từng phần tử: $(sel).text() trả về chuỗi NỐI của mọi
+     * phần tử, còn .text(giá trị) ghi đè TẤT CẢ bằng cùng một giá trị.
+     */
+    window.formatPriceCells = function (selector) {
+        $(selector).each(function () {
+            $(this).text(window.formatPrice($(this).text()));
+        });
+    };
+
+    // ----- Thông báo -----
+    const TOAST_STYLE = {
+        success: { bg: '#047857', icon: '✓' },
+        error: { bg: '#b91c1c', icon: '!' },
+        info: { bg: '#1d4ed8', icon: 'i' },
+    };
+
+    const toastHost = function () {
+        let host = $('#admin-toast-host');
+
+        if (!host.length) {
+            host = $('<div id="admin-toast-host"></div>').css({
+                position: 'fixed',
+                top: '1rem',
+                right: '1rem',
+                zIndex: 9999,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                maxWidth: '24rem',
+            });
+            $('body').append(host);
+        }
+
+        return host;
+    };
+
+    /**
+     * Thông báo không chặn thao tác, thay cho alert().
+     * Dùng style nội tuyến để không phụ thuộc việc Tailwind có giữ lại class hay không.
+     */
+    window.showToast = function (message, type) {
+        if (!message) return;
+
+        const style = TOAST_STYLE[type || 'success'] || TOAST_STYLE.info;
+
+        const toast = $('<div></div>')
+            .text(style.icon + '  ' + message)
+            .css({
+                background: style.bg,
+                color: '#fff',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,.25)',
+                fontSize: '0.875rem',
+                lineHeight: '1.25rem',
+                whiteSpace: 'pre-line',
+                cursor: 'pointer',
+                opacity: 0,
+            });
+
+        toast.on('click', function () {
+            toast.remove();
+        });
+
+        toastHost().append(toast);
+        toast.animate({ opacity: 1 }, 150);
+
+        // Lỗi để lâu hơn vì thường có nhiều dòng cần đọc.
+        setTimeout(
+            function () {
+                toast.fadeOut(200, function () {
+                    toast.remove();
+                });
+            },
+            type === 'error' ? 6000 : 3500
+        );
+    };
+
+    /**
+     * Hiển thị lỗi validate (422) hoặc lỗi nghiệp vụ trả về từ server.
+     */
+    window.showAjaxError = function (xhr) {
+        const res = (xhr && xhr.responseJSON) || {};
+
+        const message = res.errors
+            ? Object.keys(res.errors)
+                  .map(function (k) {
+                      return res.errors[k].join('\n');
+                  })
+                  .join('\n')
+            : res.error || res.message || 'Lỗi: ' + ((xhr && xhr.statusText) || 'không rõ');
+
+        window.showToast(message, 'error');
+    };
+
+    // ----- Nút gỡ media -----
+    const CLOSE_ICON =
+        'data:image/svg+xml;utf8,' +
+        encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">' +
+                '<circle cx="12" cy="12" r="11" fill="rgba(17,24,39,.75)"/>' +
+                '<path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' +
+                '</svg>'
+        );
+
+    /**
+     * Nút "x" để gỡ một ảnh/video khỏi khung xem trước.
+     *
+     * Icon nhúng thẳng dưới dạng data URI: bản cũ hotlink từ vecteezy.com nên site
+     * đó chết hoặc chặn hotlink là nút biến mất khỏi trang quản trị.
+     */
+    window.closeIconButton = function () {
+        return $('<img>')
+            .addClass('absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer z-10')
+            .attr({ src: CLOSE_ICON, alt: 'Xóa' });
+    };
+
+    // ----- Gửi form kèm trạng thái đang xử lý -----
+    const SPINNER =
+        '<svg class="inline w-4 h-4 mr-2 -mt-0.5 animate-spin" viewBox="0 0 24 24" fill="none">' +
+        '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+        '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path></svg>';
+
+    /**
+     * Gửi form bằng AJAX, đồng thời khóa nút và hiện tiến trình.
+     *
+     * Form gửi bằng AJAX thì trình duyệt không có thanh tải riêng; không có phản hồi
+     * thì người dùng tưởng hệ thống đứng và bấm lại nhiều lần, tạo bản ghi trùng.
+     */
+    window.submitFormWithProgress = function (form, url, onSuccess, options) {
+        if (form.data('submitting')) return;
+
+        const settings = options || {};
+        const button = form.find('button[type="submit"]');
+        const originalLabel = button.html();
+        form.data('submitting', true);
+
+        $.ajax({
+            url: url,
+            type: settings.method || 'POST',
+            data: new FormData(form[0]),
+            contentType: false,
+            processData: false,
+            xhr: function () {
+                const xhr = $.ajaxSettings.xhr();
+
+                if (xhr.upload) {
+                    xhr.upload.addEventListener('progress', function (ev) {
+                        if (!ev.lengthComputable) return;
+
+                        const percent = Math.round((ev.loaded / ev.total) * 100);
+                        // Tải file xong rồi vẫn còn phải chờ server ghi vào DB.
+                        button.html(
+                            SPINNER +
+                                (percent < 100
+                                    ? 'Đang tải lên ' + percent + '%'
+                                    : 'Đang lưu vào hệ thống...')
+                        );
+                    });
+                }
+
+                return xhr;
+            },
+            beforeSend: function () {
+                button
+                    .prop('disabled', true)
+                    .addClass('opacity-60 cursor-not-allowed')
+                    .html(SPINNER + 'Đang xử lý...');
+            },
+            complete: function () {
+                form.data('submitting', false);
+                button
+                    .prop('disabled', false)
+                    .removeClass('opacity-60 cursor-not-allowed')
+                    .html(originalLabel);
+            },
+            success: onSuccess,
+            error: settings.error || window.showAjaxError,
+        });
+    };
+
+    // ----- Chọn ảnh / video -----
+    /**
+     * Quản lý danh sách media đã chọn của một input file.
+     *
+     * Danh sách được TÍCH LŨY trong JS vì trình duyệt thay mới hoàn toàn input.files
+     * sau mỗi lần chọn: chỉ dựa vào input.files thì lần chọn trước bị mất âm thầm
+     * (chọn video rồi chọn ảnh thì chỉ ảnh được gửi đi, dù khung xem trước vẫn hiện
+     * đủ cả hai).
+     */
+    window.createMediaPicker = function (inputSel, previewSel, pinSel) {
+        const picker = {
+            input: $(inputSel),
+            preview: $(previewSel),
+            pin: $(pinSel),
+            items: [],
+        };
+
+        // Ghi danh sách tích lũy ngược lại vào input để FormData gửi đủ file.
+        picker.sync = function () {
+            const transfer = new DataTransfer();
+            picker.items.forEach(function (item) {
+                transfer.items.add(item.file);
+            });
+            picker.input.prop('files', transfer.files);
+        };
+
+        picker.remove = function (item) {
+            const index = picker.items.indexOf(item);
+            if (index === -1) return;
+
+            picker.items.splice(index, 1);
+            URL.revokeObjectURL(item.url);
+            item.slide.remove();
+
+            // Ảnh đại diện vừa bị gỡ thì bỏ luôn lựa chọn ghim.
+            if (picker.pin.val() === item.file.name) {
+                picker.pin.val('');
+            }
+
+            picker.sync();
+        };
+
+        picker.reset = function () {
+            picker.items.forEach(function (item) {
+                URL.revokeObjectURL(item.url);
+            });
+            picker.items = [];
+            picker.sync();
+            picker.preview.empty();
+        };
+
+        picker.add = function (file) {
+            // Bỏ qua file trùng để không tải lên hai lần cùng một ảnh.
+            const isDuplicate = picker.items.some(function (item) {
+                return item.file.name === file.name && item.file.size === file.size;
+            });
+            if (isDuplicate) return;
+
+            const isVideo = file.type.indexOf('video/') === 0;
+            // createObjectURL thay cho FileReader.readAsDataURL: đọc video vài chục MB
+            // thành chuỗi base64 làm treo trình duyệt và tốn gấp rưỡi bộ nhớ.
+            const url = URL.createObjectURL(file);
+            const slide = $('<swiper-slide>').addClass('slide relative border border-gray-300');
+            const item = { file: file, url: url, slide: slide };
+            picker.items.push(item);
+
+            const media = isVideo
+                ? $('<video>')
+                      .attr({ src: url, controls: true, preload: 'metadata' })
+                      .addClass('w-full')
+                : $('<img>').attr('src', url);
+
+            const deleteBtn = window.closeIconButton();
+            deleteBtn.on('click', function (ev) {
+                ev.stopPropagation();
+                picker.remove(item);
+            });
+
+            if (isVideo) {
+                slide.append(
+                    $('<span>')
+                        .addClass('absolute bottom-0 left-0 px-1 text-xs text-white bg-black/60')
+                        .text('VIDEO')
+                );
+            } else {
+                // Chỉ ảnh mới được chọn làm ảnh đại diện; video thì bỏ qua.
+                slide.on('click', function () {
+                    picker.preview.find('swiper-slide').removeClass('selected');
+                    $(this).addClass('selected');
+                    picker.preview.prepend($(this));
+                    picker.pin.val(file.name);
+                    $('.download').removeClass('selected');
+                });
+            }
+
+            slide.append(media).append(deleteBtn);
+            picker.preview.append(slide);
+        };
+
+        picker.input.on('change', function () {
+            Array.from(picker.input.prop('files') || []).forEach(function (file) {
+                picker.add(file);
+            });
+            // Gộp cả file chọn lần trước lẫn lần này rồi ghi lại vào input.
+            picker.sync();
+        });
+
+        return picker;
+    };
+}

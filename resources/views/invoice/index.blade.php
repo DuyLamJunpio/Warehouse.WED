@@ -744,8 +744,6 @@
 
 
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
 
 
@@ -1349,7 +1347,7 @@
                             ?.path.replace('public', 'storage') ||
                             (element.product.image_model.length > 0 ? element.product.image_model[0]
                                 .path.replace('public', 'storage') :
-                                'https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg'
+                                '{{ asset('images/no-photo.svg') }}'
                             );
 
                         const row = `

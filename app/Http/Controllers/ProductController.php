@@ -204,8 +204,8 @@ class ProductController extends Controller
             $product = Product::create($data);
 
             $this->storeMedia($product, $request);
-            $this->syncVariants($product, $request->input('variants', []));
-            $this->syncProductStatus($product);
+            $totalQuantity = $this->syncVariants($product, $request->input('variants', []));
+            $this->syncProductStatus($product, $totalQuantity);
 
             DB::commit();
             return response()->json(['success' => 'Sản phẩm đã được thêm thành công!']);
@@ -288,10 +288,12 @@ class ProductController extends Controller
 
             $product->update($data);
 
-            $this->syncPinnedMedia($product, $request->input('pin_image'));
+            // Phải lưu media trước: ảnh đại diện có thể chính là ảnh vừa upload,
+            // đổi ghim trước khi lưu thì không tìm thấy tên file nên bị bỏ qua.
             $this->storeMedia($product, $request);
-            $this->syncVariants($product, $request->input('variants', []));
-            $this->syncProductStatus($product);
+            $this->syncPinnedMedia($product, $request->input('pin_image'));
+            $totalQuantity = $this->syncVariants($product, $request->input('variants', []));
+            $this->syncProductStatus($product, $totalQuantity);
 
             DB::commit();
             // Trả JSON vì form sửa gửi bằng AJAX; bản cũ redirect()->back() khiến JS không đọc được kết quả.
@@ -344,6 +346,9 @@ class ProductController extends Controller
 
     /**
      * Lưu media mới (ảnh hoặc video) và nối vào cuối danh sách hiện có.
+     *
+     * DB đặt ở xa (~300ms mỗi round-trip) nên phần này cố ý gộp truy vấn:
+     * 1 truy vấn thống kê + 1 lệnh chèn hàng loạt, thay vì 2 + N như trước.
      */
     private function storeMedia(Product $product, Request $request): void
     {
@@ -351,25 +356,41 @@ class ProductController extends Controller
             return;
         }
 
-        $sortOrder = (int) ImageModel::where('product_id', $product->id)->max('sort_order');
-        $hasPinned = ImageModel::where('product_id', $product->id)->where('is_pined', true)->exists();
-        $records = [];
+        // Gộp "sort_order lớn nhất" và "đã có ảnh ghim chưa" vào cùng một truy vấn.
+        $stats = ImageModel::where('product_id', $product->id)
+            ->selectRaw('COALESCE(MAX(sort_order), 0) AS max_sort')
+            ->selectRaw('COALESCE(SUM(CASE WHEN is_pined THEN 1 ELSE 0 END), 0) AS pinned_count')
+            ->first();
+
+        $sortOrder = (int) ($stats->max_sort ?? 0);
+        $hasPinned = (int) ($stats->pinned_count ?? 0) > 0;
+        $now = now();
+        $rows = [];
 
         foreach ($request->file('media') as $file) {
             $isVideo = str_starts_with((string) $file->getMimeType(), 'video/');
             $name = $file->getClientOriginalName();
+            $shouldPin = !$isVideo && !$hasPinned && $request->pin_image === $name;
 
-            $records[] = new ImageModel([
+            $rows[] = [
+                'product_id' => $product->id,
                 'path' => $file->store('public/images'),
                 'name' => $name,
                 'media_type' => $isVideo ? ImageModel::TYPE_VIDEO : ImageModel::TYPE_IMAGE,
                 'sort_order' => ++$sortOrder,
                 // Video không dùng làm ảnh đại diện được, nên chỉ ảnh mới được ghim.
-                'is_pined' => !$isVideo && !$hasPinned && $request->pin_image === $name,
-            ]);
+                'is_pined' => $shouldPin,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            // Tránh ghim hai media khi người dùng gửi lên nhiều file trùng tên.
+            $hasPinned = $hasPinned || $shouldPin;
         }
 
-        $product->imageModel()->saveMany($records);
+        if ($rows) {
+            ImageModel::insert($rows);
+        }
     }
 
     /**
@@ -386,7 +407,8 @@ class ProductController extends Controller
             ->where('media_type', ImageModel::TYPE_IMAGE)
             ->first();
 
-        if (!$pinned) {
+        // Đã ghim đúng ảnh đó rồi thì thôi, khỏi tốn thêm 2 truy vấn mỗi lần sửa.
+        if (!$pinned || $pinned->is_pined) {
             return;
         }
 
@@ -396,13 +418,24 @@ class ProductController extends Controller
     }
 
     /**
-     * Lưu ma trận biến thể size/màu gửi từ form.
+     * Lưu ma trận biến thể size/màu gửi từ form và trả về tổng tồn kho.
      * Biến thể không còn trong danh sách gửi lên sẽ bị xóa.
+     *
+     * Nạp một lần rồi so khớp trong PHP: bản cũ gọi firstOrNew + save cho từng
+     * dòng (2 round-trip mỗi biến thể), 12 biến thể là đã mất ~8 giây chờ DB.
      */
-    private function syncVariants(Product $product, array $variants): void
+    private function syncVariants(Product $product, array $variants): int
     {
+        $existing = ProductVariant::where('product_id', $product->id)
+            ->get()
+            ->keyBy(fn($v) => $this->variantKey($v->size, $v->color));
+
         $keptIds = [];
+        $inserts = [];
+        $seen = [];
         $sortOrder = 0;
+        $total = 0;
+        $now = now();
 
         foreach ($variants as $row) {
             $size = trim((string) ($row['size'] ?? '')) ?: null;
@@ -413,52 +446,112 @@ class ProductController extends Controller
                 continue;
             }
 
-            $variant = ProductVariant::firstOrNew([
-                'product_id' => $product->id,
-                'size' => $size,
-                'color' => $color,
-            ]);
+            $key = $this->variantKey($size, $color);
 
-            if (!$variant->exists) {
-                $variant->sku = $product->barcode . '-' . strtoupper(Str::random(5));
+            // Form có thể gửi trùng tổ hợp size/màu; giữ dòng đầu tiên để không
+            // vi phạm ràng buộc unique(product_id, size, color).
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $quantity = max(0, (int) ($row['quantity'] ?? 0));
+            $rawPrice = $row['price_override'] ?? null;
+            $priceOverride = ($rawPrice === null || $rawPrice === '') ? null : (int) $rawPrice;
+            $order = $sortOrder++;
+            $total += $quantity;
+
+            $variant = $existing->get($key);
+
+            if (!$variant) {
+                $inserts[] = [
+                    'product_id' => $product->id,
+                    'size' => $size,
+                    'color' => $color,
+                    'sku' => $product->barcode . '-' . strtoupper(Str::random(5)),
+                    'quantity' => $quantity,
+                    'price_override' => $priceOverride,
+                    'sort_order' => $order,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                continue;
             }
 
-            $variant->quantity = (int) ($row['quantity'] ?? 0);
-            $variant->price_override = $row['price_override'] ?? null;
-            $variant->sort_order = $sortOrder++;
-            $variant->save();
-
             $keptIds[] = $variant->id;
+
+            // Chỉ ghi khi giá trị thật sự đổi: mỗi UPDATE thừa là một round-trip thừa.
+            if (
+                $variant->quantity !== $quantity
+                || $variant->price_override !== $priceOverride
+                || $variant->sort_order !== $order
+            ) {
+                $variant->quantity = $quantity;
+                $variant->price_override = $priceOverride;
+                $variant->sort_order = $order;
+                $variant->save();
+            }
         }
 
+        // Xóa trước rồi mới chèn: biến thể mới chưa có id nên không nằm trong
+        // $keptIds, nếu xóa sau sẽ quét mất chính những dòng vừa thêm.
         ProductVariant::where('product_id', $product->id)
             ->whereNotIn('id', $keptIds ?: [0])
             ->delete();
+
+        if ($inserts) {
+            ProductVariant::insert($inserts);
+        }
+
+        return $total;
     }
 
-    private function syncProductStatus(Product $product): void
+    /**
+     * Khóa so khớp biến thể: phân biệt "không có" với chuỗi rỗng.
+     */
+    private function variantKey(?string $size, ?string $color): string
     {
-        $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
-        $product->status = $total > 0 ? 1 : 2;
+        return ($size ?? '~') . '||' . ($color ?? '~');
+    }
+
+    /**
+     * Đồng bộ trạng thái còn/hết hàng từ tổng tồn kho đã tính sẵn ở syncVariants,
+     * tránh chạy thêm một truy vấn SUM nữa.
+     */
+    private function syncProductStatus(Product $product, int $totalQuantity): void
+    {
+        $status = $totalQuantity > 0 ? 1 : 2;
+
+        if ((int) $product->status === $status) {
+            return;
+        }
+
+        $product->status = $status;
         $product->save();
     }
 
     private function uniqueSlug(string $name, ?int $ignoreId = null): string
     {
         $base = Str::slug($name) ?: 'san-pham';
-        $slug = $base;
-        $suffix = 2;
 
-        while (
-            Product::withTrashed()
-                ->where('slug', $slug)
-                ->when($ignoreId, fn($q) => $q->whereKeyNot($ignoreId))
-                ->exists()
-        ) {
-            $slug = $base . '-' . $suffix++;
+        // Lấy toàn bộ slug cùng tiền tố trong một truy vấn, thay vì lặp exists()
+        // cho từng hậu tố (mỗi vòng lặp là một round-trip tới DB ở xa).
+        $taken = Product::withTrashed()
+            ->where(fn($q) => $q->where('slug', $base)->orWhere('slug', 'like', $base . '-%'))
+            ->when($ignoreId, fn($q) => $q->whereKeyNot($ignoreId))
+            ->pluck('slug')
+            ->all();
+
+        if (!in_array($base, $taken, true)) {
+            return $base;
         }
 
-        return $slug;
+        $suffix = 2;
+        while (in_array($base . '-' . $suffix, $taken, true)) {
+            $suffix++;
+        }
+
+        return $base . '-' . $suffix;
     }
 
 

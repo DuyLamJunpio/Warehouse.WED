@@ -9,7 +9,7 @@
                     @elseif($item->productImage->first())
                     data-product-image="{{ Storage::url($item->productImage->first()->path) }}"
                     @else
-                    data-product-image="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+                    data-product-image="{{ asset('images/no-photo.svg') }}" @endif
                     data-price="{{ $item->sell_price }}" data-cost="{{ $item->import_price }}"
                     data-inventory="{{ $item->variants_sum_quantity ?? 0 }}" data-status="{{ $item->status }}"
                     data-variants="{{ json_encode(
@@ -25,7 +25,7 @@
                 @elseif($item->productImage->first())
                 src="{{ Storage::url($item->productImage->first()->path) }}"
                 @else
-                src="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+                src="{{ asset('images/no-photo.svg') }}" @endif
                 alt="{{ $item->product_name }}">
             <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
                 <div class="text-base font-semibold text-gray-9000 dark:text-white">{{ $item->product_name }}</div>
@@ -52,7 +52,6 @@
     </tr>
 @endforeach
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
         updatePricesAndTotal();

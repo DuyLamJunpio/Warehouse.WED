@@ -19,6 +19,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    {{-- jQuery phải nạp trước bundle Vite: các script inline trong blade chạy ngay
+         lúc parse nên cần $ có sẵn, còn admin.js (module, defer) chạy sau đó. --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="apple-touch-icon" sizes="180x180"
         href="https://flowbite-admin-dashboard.vercel.app/apple-touch-icon.png">
@@ -440,19 +443,7 @@
                                     </svg>
                                     <span class="ml-3" sidebar-toggle-item>Sản phẩm</span>
                                 </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('pos') }}"
-                                    class="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700 ">
-                                    <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-                                        fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    <span class="ml-3" sidebar-toggle-item>Bán tại quầy</span>
-                                </a>
-                            </li>
+                            </li>
                             <li>
                                 <a href="{{ route('order') }}"
                                     class="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700 ">

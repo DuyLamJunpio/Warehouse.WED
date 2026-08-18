@@ -595,8 +595,6 @@
         </form>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
 
     <script>
@@ -610,70 +608,6 @@
                         $('#productTable').html(
                             data); // Cập nhật nội dung của bảng
                     }
-                });
-            }
-
-            // Xem trước media vừa chọn. File video render bằng <video>, ảnh render bằng <img>.
-            const uploadImages = (preview, pinImage, files) => {
-                $.each(files, function(index, file) {
-                    var isVideo = file.type.indexOf('video/') === 0;
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var mediaUrl = e.target.result;
-                        var imgContainer = $('<swiper-slide>').addClass(
-                            'slide relative border border-gray-300'
-                        );
-
-                        var media = isVideo ?
-                            $('<video>').attr({
-                                src: mediaUrl,
-                                controls: true,
-                                preload: 'metadata'
-                            }).addClass('w-full') :
-                            $('<img>').attr('src', mediaUrl);
-
-                        var deleteBtn = $('<img>').addClass(
-                                'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer z-10')
-                            .attr('src',
-                                'https://static.vecteezy.com/system/resources/previews/018/887/462/original/signs-close-icon-png.png'
-                            );
-
-                        deleteBtn.click(function(ev) {
-                            ev.stopPropagation();
-                            var parentSlide = $(this).parent();
-                            var isSelected = parentSlide.hasClass(
-                                'selected'
-                            ); // Kiểm tra xem ảnh có đang được chọn làm ảnh ghim không
-                            parentSlide.remove(); // Xóa ảnh
-
-                            if (isSelected) {
-                                pinImage.val(
-                                    ''); // Reset giá trị của input nếu ảnh được ghim bị xóa
-                            }
-                        });
-
-                        // Chỉ ảnh mới được chọn làm ảnh đại diện; video thì bỏ qua.
-                        if (!isVideo) {
-                            imgContainer.click(function() {
-                                preview.find('swiper-slide').removeClass('selected');
-                                $(this).addClass('selected');
-                                preview.prepend($(this));
-                                pinImage.val(file.name);
-                                $('.download').each(function() {
-                                    $(this).removeClass('selected');
-                                });
-                            });
-                        } else {
-                            imgContainer.append($('<span>')
-                                .addClass(
-                                    'absolute bottom-0 left-0 px-1 text-xs text-white bg-black/60')
-                                .text('VIDEO'));
-                        }
-
-                        imgContainer.append(media).append(deleteBtn);
-                        preview.append(imgContainer);
-                    };
-                    reader.readAsDataURL(file);
                 });
             }
 
@@ -747,57 +681,20 @@
             bindVariantGenerator('#variant-generator-add', '#variants-add');
             bindVariantGenerator('#variant-generator-edit', '#variants-edit');
 
-            // Hiển thị lỗi validate (422) hoặc lỗi nghiệp vụ từ server.
-            const showAjaxError = (xhr) => {
-                const res = xhr.responseJSON || {};
-                if (res.errors) {
-                    alert(Object.keys(res.errors).map(k => res.errors[k].join('\n')).join('\n'));
-                } else {
-                    alert(res.error || res.message || 'Lỗi: ' + xhr.statusText);
-                }
-            };
-
-            var inputFile = $('#dropzone-file');
-            var preview = $('#image-preview');
-            var pinImage = $('#choose-image');
-
-            inputFile.on('change', function() {
-                var files = inputFile.prop('files');
-                uploadImages(preview, pinImage, files);
-            });
-
-            var inputFile_edit = $('#dropzone-file-edit');
-            var preview_edit_new = $('#image-preview-edit-new');
-
-            inputFile_edit.on('change', function() {
-                var files_edit = inputFile_edit.prop('files');
-                uploadImages(preview_edit_new, $('#choose-image-edit'), files_edit);
-            })
+            const addPicker = createMediaPicker('#dropzone-file', '#image-preview', '#choose-image');
+            const editPicker = createMediaPicker('#dropzone-file-edit', '#image-preview-edit-new',
+                '#choose-image-edit');
 
             // add product
             $('#formAdd').submit(function(e) {
                 e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
-                var formData = new FormData(this);
-                $.ajax({
-                    url: '{{ route('product.add') }}', // URL được định nghĩa trong routes
-                    type: 'POST',
-                    data: formData,
-                    contentType: false, // Quan trọng: không thiết lập kiểu nội dung
-                    processData: false, // Quan trọng: không xử lý dữ liệu
-                    success: function(response) {
-                        // Xử lý khi thêm thành công
-                        alert(response.success);
-
-                        $('#closeDrawerAdd').click();
-
-                        $('#formAdd').trigger('reset');
-                        $('#image-preview').empty();
-                        $('#variants-add').empty();
-
-                        reloadDataTable();
-
-                    },
-                    error: showAjaxError
+                submitFormWithProgress($(this), '{{ route('product.add') }}', function(response) {
+                    showToast(response.success);
+                    $('#closeDrawerAdd').click();
+                    $('#formAdd').trigger('reset');
+                    addPicker.reset();
+                    $('#variants-add').empty();
+                    reloadDataTable();
                 });
             });
 
@@ -808,27 +705,21 @@
                 e.preventDefault();
                 if (!editingProductId) return;
 
-                $.ajax({
-                    url: '/product/edit/' + editingProductId,
-                    type: 'POST',
-                    data: new FormData(this),
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        alert(response.success);
-                        $('#closeDrawerEdit').click();
-                        $('#image-preview-edit-new').empty();
-                        reloadDataTable();
-                    },
-                    error: showAjaxError
+                submitFormWithProgress($(this), '/product/edit/' + editingProductId, function(response) {
+                    showToast(response.success);
+                    $('#closeDrawerEdit').click();
+                    editPicker.reset();
+                    reloadDataTable();
                 });
             });
 
             $(document).on('click', '.editProductButton', function() {
                 // Mở drawer
-                $('.download').remove();
-                $('.slide').remove();
-                $('form').trigger('reset');
+                // Chỉ dọn drawer sửa. Trước đây $('.slide').remove() và
+                // $('form').trigger('reset') xóa luôn media đang chọn dở ở form Thêm.
+                $('#image-preview-edit').empty();
+                editPicker.reset();
+                $('#formEdit').trigger('reset');
 
                 const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
                 const drawerElement = $('#' + drawerId);
@@ -843,7 +734,6 @@
                     type: 'GET',
                     success: function(response) {
                         $('#product_name_edit').val(response[0].product_name);
-                        $('#inventory_edit').val(response[0].variants_sum_quantity);
                         $('#import_price_edit').val(response[0].import_price);
                         $('#export_price_edit').val(response[0].sell_price);
                         $('#discount_price_edit').val(response[0].discount_price);
@@ -862,7 +752,6 @@
                             variantsBox.append(variantRow(v));
                         });
 
-                        }
                         $.each(response[0].product_image, function(index, image) {
                             if (image.is_pined) {
                                 pinImage_edit.val(image.name);
@@ -893,34 +782,18 @@
                                 }).addClass('w-full') :
                                 $('<img>').attr('src', mediaSrc);
 
-                            var deleteBtn = $('<img>').addClass(
-                                    'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer z-10'
-                                )
-                                .attr('src',
-                                    'https://static.vecteezy.com/system/resources/previews/018/887/462/original/signs-close-icon-png.png'
-                                );
+                            var deleteBtn = window.closeIconButton();
 
                             deleteBtn.click(function() {
                                 $.ajax({
                                     url: '/delete-image/' + image
                                         .id,
                                     type: 'DELETE',
-                                    headers: {
-                                        'X-CSRF-TOKEN': $(
-                                                'meta[name="csrf-token"]')
-                                            .attr('content')
-                                    },
                                     success: function(response) {
-                                        // alert(response.success);
+                                        // showToast(response.success);
                                         reloadDataTable();
                                     },
-                                    error: function(xhr, status,
-                                        error) {
-                                        // Xử lý lỗi
-                                        alert('Có lỗi xảy ra: ' +
-                                            error
-                                        ); // Hiển thị thông báo lỗi
-                                    }
+                                    error: showAjaxError
                                 });
                                 var parentSlide = $(this).parent();
                                 var isSelected = parentSlide.hasClass(
@@ -929,9 +802,9 @@
                                 parentSlide.remove(); // Xóa ảnh
 
                                 if (isSelected) {
-                                    pinImage.val(
-                                        ''
-                                    ); // Reset giá trị của input nếu ảnh được ghim bị xóa
+                                    // Phải là input ghim của form SỬA; bản cũ gọi nhầm
+                                    // biến của form Thêm nên không reset được gì.
+                                    pinImage_edit.val('');
                                 }
                             });
 
@@ -960,7 +833,7 @@
                     },
                     error: function(xhr) {
                         // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
+                        showAjaxError(xhr);
                     }
                 });
 
@@ -1022,12 +895,9 @@
                         $.ajax({
                             url: url, // Sử dụng nối chuỗi để thêm idProduct vào URL
                             type: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                            },
                             success: function(response) {
                                 // Xử lý khi xóa thành công
-                                alert(response.success);
+                                showToast(response.success);
 
                                 $('#closeDrawerDelete').click();
 
@@ -1035,7 +905,7 @@
                             },
                             error: function(xhr) {
                                 // Xử lý lỗi
-                                alert('Error: ' + xhr.statusText);
+                                showAjaxError(xhr);
                             }
                         });
                     });

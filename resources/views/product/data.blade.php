@@ -13,7 +13,7 @@
             <img class="w-10 h-10 rounded-lg"
                 @if ($thumbnail) src="{{ Storage::url($thumbnail->path) }}"
         @else
-        src="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+        src="{{ asset('images/no-photo.svg') }}" @endif
                 alt="{{ $item->product_name }}">
             <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
                 <div class="text-base font-semibold text-gray-9000 dark:text-white">{{ $item->product_name }}</div>
@@ -79,32 +79,10 @@
         </td>
     </tr>
 @endforeach
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
 <script>
     $(document).ready(function() {
-
-        function formatPrice(price) {
-            // Chuyển đổi giá trị price thành số, loại bỏ các dấu chấm nếu có
-            var numericPrice = parseInt(price.toString().replace(/\./g, '').replace('₫', '').trim());
-            // Kiểm tra xem numericPrice có phải là số hợp lệ không
-            if (!isNaN(numericPrice)) {
-                // Định dạng số theo chuẩn Việt Nam và trả về
-                return numericPrice.toLocaleString('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND'
-                });
-            } else {
-                // Trả về chuỗi rỗng hoặc giá trị mặc định nếu price không phải là số
-                return '';
-            }
-        }
-
-        var price = $('.sell_price').text();
-        $('.sell_price').text(formatPrice(price));
-
-        var price = $('.import_price').text();
-        $('.import_price').text(formatPrice(price));
+        // formatPriceCells nam trong resources/js/admin.js: duyet tung o mot.
+        formatPriceCells('.sell_price, .import_price');
     });
 </script>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="Chưa có ảnh">
+  <rect width="80" height="80" rx="8" fill="#e5e7eb"/>
+  <path d="M18 54l14-16 10 11 8-8 12 13z" fill="#9ca3af"/>
+  <circle cx="30" cy="28" r="6" fill="#9ca3af"/>
+  <rect x="10" y="10" width="60" height="60" rx="6" fill="none" stroke="#9ca3af" stroke-width="3"/>
+</svg>
