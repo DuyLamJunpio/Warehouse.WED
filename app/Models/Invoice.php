@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Invoice extends Model
 {
@@ -72,6 +74,11 @@ class Invoice extends Model
         'shipping_address',
         'shipping_fee',
         'payment_method',
+        'payment_expires_at',
+    ];
+
+    protected $casts = [
+        'payment_expires_at' => 'datetime',
     ];
 
     protected $dates = ['deleted_at'];
@@ -166,5 +173,96 @@ class Invoice extends Model
         }
 
         return $query->get();
+    }
+    /**
+     * Cộng trả số lượng của từng dòng hàng về đúng biến thể đã bán.
+     *
+     * Dùng chung cho việc nhân viên huỷ đơn tay (OrderController) và lệnh tự huỷ
+     * đơn quá hạn (orders:cancel-expired) — hai nơi phải hoàn kho giống hệt nhau.
+     */
+    public function restockLines(): void
+    {
+        $touchedProducts = [];
+
+        foreach ($this->productInvoices as $line) {
+            if (!$line->variant_id) {
+                // Đơn cũ chưa gắn biến thể thì không biết trả về size/màu nào,
+                // bỏ qua để không cộng nhầm kho.
+                Log::warning("Dòng hàng #{$line->id} của đơn #{$this->id} không có variant_id, bỏ qua khi hoàn kho.");
+                continue;
+            }
+
+            $variant = ProductVariant::find($line->variant_id);
+            if (!$variant) {
+                continue;
+            }
+
+            $variant->quantity += $line->quantity;
+            $variant->save();
+
+            $touchedProducts[$variant->product_id] = true;
+        }
+
+        foreach (array_keys($touchedProducts) as $productId) {
+            $total = ProductVariant::where('product_id', $productId)->sum('quantity');
+            Product::where('id', $productId)->update(['status' => $total > 0 ? 1 : 2]);
+        }
+    }
+    /**
+     * Huỷ những đơn web quá hạn thanh toán và trả hàng về kho. Trả về số đơn đã huỷ.
+     *
+     * Cố ý KHÔNG chạy bằng cron mà gọi ngay tại những chỗ hàng thật sự được cần:
+     * lúc khách khác kiểm tồn hoặc đặt hàng, và lúc nhân viên mở trang Đơn hàng.
+     * Nhờ vậy một đơn bị bỏ ngang không bao giờ chặn được người mua thật — đúng
+     * khoảnh khắc người mua thật xuất hiện là hàng đã được thả ra.
+     */
+    public static function cancelExpiredHolds(): int
+    {
+        $grace = (int) config('services.storefront.expiry_grace_minutes', 5);
+
+        $ids = self::orders()
+            ->where('order_status', self::STATUS_PENDING)
+            ->where('pay_status', 0)
+            ->whereNotNull('payment_expires_at')
+            ->where('payment_expires_at', '<', now()->subMinutes($grace))
+            ->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return 0;
+        }
+
+        $cancelled = 0;
+
+        foreach ($ids as $id) {
+            DB::beginTransaction();
+            try {
+                // Khoá dòng rồi kiểm tra lại: webhook báo đã thanh toán có thể chạy
+                // xen vào giữa lúc đọc và lúc ghi, không được huỷ nhầm đơn vừa trả tiền.
+                $order = self::with('productInvoices')->lockForUpdate()->find($id);
+
+                if (
+                    !$order
+                    || $order->order_status !== self::STATUS_PENDING
+                    || (int) $order->pay_status === 1
+                ) {
+                    DB::rollBack();
+                    continue;
+                }
+
+                $order->restockLines();
+                $order->order_status = self::STATUS_CANCELLED;
+                $order->note = trim(($order->note ? $order->note . "\n" : '')
+                    . 'Tự huỷ: quá hạn thanh toán lúc ' . $order->payment_expires_at . '.');
+                $order->save();
+
+                DB::commit();
+                $cancelled++;
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error("Huỷ đơn quá hạn #{$id} thất bại: " . $e->getMessage());
+            }
+        }
+
+        return $cancelled;
     }
 }
