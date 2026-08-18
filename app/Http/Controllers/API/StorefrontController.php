@@ -155,6 +155,10 @@ class StorefrontController extends Controller
             'audience' => $product->audience ?: 'Unisex',
             // Hàng mới về trong 30 ngày, để web gắn nhãn "mới" bằng dữ liệu thật.
             'is_new' => $product->created_at?->gt(now()->subDays(30)) ?? false,
+            // Ngày tạo thật, để web sắp "hàng mới về" theo đúng thứ tự nhập hàng.
+            // Chỉ có cờ is_new thì mọi sản phẩm cũ hơn 30 ngày đều bằng điểm nhau
+            // và thứ tự rơi về bảng chữ cái - thêm hàng mới cũng không đẩy lên đầu.
+            'created_at' => $product->created_at?->toIso8601String(),
             // Lượt bán thật: chỉ đếm đơn đã hoàn thành.
             'sold' => (int) $product->productInvoices
                 ->filter(fn($line) => $line->invoice?->order_status === \App\Models\Invoice::STATUS_COMPLETED)
