@@ -2,11 +2,11 @@
 
 use App\Http\Controllers\categoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatisticalController;
@@ -19,9 +19,7 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/categories', [categoryController::class, 'index'])->name('categories');
     Route::get('/categories/data', [categoryController::class, 'getData'])->name('categories.data');
@@ -49,14 +47,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');
     Route::get('/search-products', [ProductController::class, 'search'])->name('product.search');
 
-    // Bán tại quầy: lập đơn cho khách mua trực tiếp ở cửa hàng
-    Route::get('/pos', [PosController::class, 'index'])->name('pos');
-    Route::get('/pos/search', [PosController::class, 'search'])->name('pos.search');
-    Route::post('/pos/store', [PosController::class, 'store'])->name('pos.store');
-
     // Quản lý đơn hàng bán (invoices có invoice_type = 1)
     Route::get('/order', [OrderController::class, 'index'])->name('order');
     Route::get('/order/data', [OrderController::class, 'getData'])->name('order.data');
+    // Lập đơn tại quầy ngay trong trang đơn hàng. Phải khai trước '/order/{id}'
+    // để route đó không nuốt mất đường dẫn.
+    Route::get('/order/variants', [OrderController::class, 'searchVariants'])->name('order.variants');
+    Route::post('/order/store', [OrderController::class, 'store'])->name('order.store');
     Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
     Route::post('/order/{id}/status', [OrderController::class, 'updateStatus'])->name('order.status');
     Route::get('/order/{id}/print', [OrderController::class, 'print'])->name('order.print');
