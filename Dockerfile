@@ -7,10 +7,12 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
+# Tailwind/PostCSS chỉ chạy khi có đủ file cấu hình; thiếu chúng thì app.css
+# build ra vẫn còn nguyên @tailwind và giao diện mất sạch CSS.
+COPY postcss.config.js tailwind.config.js vite.config.js ./
 COPY resources ./resources
-COPY vite.config.* ./
 COPY public ./public
 
 RUN npm run build
