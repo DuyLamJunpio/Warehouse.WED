@@ -19,6 +19,15 @@ use App\Services\OrderStatusMailer;
  */
 class OrderStatusObserver
 {
+    /**
+     * Những bước chuyển không gửi thư.
+     *
+     * Đóng gói là việc nội bộ trong kho: khách không có gì để làm với tin đó, và
+     * một lá thư kẹp giữa "đã xác nhận" và "đang giao" chỉ làm loãng những lá thư
+     * có việc thật. Muốn tắt hay bật thêm bước nào thì sửa đúng dòng này.
+     */
+    private const SILENT_STATUSES = [Invoice::STATUS_PACKING];
+
     public function __construct(private OrderStatusMailer $mailer) {}
 
     public function updated(Invoice $invoice): void
@@ -34,6 +43,10 @@ class OrderStatusObserver
 
         $to = (string) $invoice->order_status;
         if ($to === '') {
+            return;
+        }
+
+        if (in_array($to, self::SILENT_STATUSES, true)) {
             return;
         }
 
