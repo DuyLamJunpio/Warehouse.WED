@@ -9,6 +9,7 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CheckoutController;
 use App\Http\Controllers\API\StorefrontController;
+use App\Http\Controllers\API\StorefrontOrderController;
 use App\Http\Controllers\API\CustomerController;
 use App\Http\Controllers\API\InvoiceController;
 use App\Http\Controllers\API\LocationController;
@@ -143,3 +144,29 @@ Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
     Route::get('/categories', [StorefrontController::class, 'categoriesIndex']);
     Route::get('/content', [StorefrontController::class, 'content']);
 });
+
+/*
+ * Cho web bán hàng lưu đơn của trang thanh toán: mã trên URL, mã QR, hạn chuyển
+ * khoản, trạng thái PayOS. Bên đó không có cơ sở dữ liệu nào, và thư mục tạm của
+ * máy chủ Vercel bị xoá sau vài phút - đơn mất là khách đang trả tiền thì trang
+ * đơn hàng thành 404.
+ *
+ * Payload có tên, số điện thoại và địa chỉ khách, nên cả nhóm nằm sau bí mật
+ * dùng chung. Hạn gọi nới rộng vì trang thanh toán hỏi lại mỗi 4 giây trong lúc
+ * khách còn ở trong app ngân hàng.
+ */
+Route::middleware(['throttle:600,1', 'storefront.secret'])
+    ->prefix('storefront/orders')
+    ->group(function () {
+        Route::post('/', [StorefrontOrderController::class, 'store']);
+        // Đặt trước {ref} để mã PayOS không bị bắt làm mã trên URL.
+        Route::get('/by-code/{orderCode}', [StorefrontOrderController::class, 'showByCode'])
+            ->whereNumber('orderCode');
+
+        Route::prefix('{ref}')->whereAlphaNumeric('ref')->group(function () {
+            Route::get('/', [StorefrontOrderController::class, 'show']);
+            Route::patch('/', [StorefrontOrderController::class, 'update']);
+            Route::post('/email-claim', [StorefrontOrderController::class, 'claimEmail']);
+            Route::delete('/email-claim', [StorefrontOrderController::class, 'releaseEmail']);
+        });
+    });
