@@ -322,6 +322,13 @@
                                 class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
                             Sản phẩm nổi bật
                         </label>
+                        <label class="flex items-center mt-3 text-sm font-medium text-gray-900 dark:text-white">
+                            <input type="checkbox" name="manage_stock" value="1" checked
+                                class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
+                            Quản lý tồn kho
+                        </label>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Bỏ chọn với hàng đặt may, hàng order:
+                            sản phẩm luôn bán được dù kho ghi 0.</p>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="supplier"
@@ -523,6 +530,13 @@
                                 class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
                             Sản phẩm nổi bật
                         </label>
+                        <label class="flex items-center mt-3 text-sm font-medium text-gray-900 dark:text-white">
+                            <input type="checkbox" name="manage_stock" value="1" id="manage_stock_edit"
+                                class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
+                            Quản lý tồn kho
+                        </label>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Bỏ chọn với hàng đặt may, hàng order:
+                            sản phẩm luôn bán được dù kho ghi 0.</p>
                     </div>
                     <div class="col-span-6 sm:col-span-3">
                         <label for="supplier_edit"
@@ -768,6 +782,7 @@
                         $('#audience_edit').val(response[0].audience || 'Unisex');
                         $('#description_edit').val(response[0].description);
                         $('#is_featured_edit').prop('checked', !!response[0].is_featured);
+                        $('#manage_stock_edit').prop('checked', !!response[0].manage_stock);
                         $('#categories_edit').val(response[0].categories_id);
                         $('#supplier_edit').val(response[0].supplier_id);
                         $('#status_edit').val(response[0].status);

@@ -26,11 +26,13 @@ class Product extends Model
         'sell_price',
         'discount_price',
         'is_featured',
+        'manage_stock',
         'status',
     ];
 
     protected $casts = [
         'is_featured' => 'boolean',
+        'manage_stock' => 'boolean',
         'import_price' => 'integer',
         'sell_price' => 'integer',
         'discount_price' => 'integer',

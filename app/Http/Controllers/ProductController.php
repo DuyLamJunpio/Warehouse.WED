@@ -198,6 +198,7 @@ class ProductController extends Controller
             $data['barcode'] = Str::uuid()->toString();
             $data['slug'] = $this->uniqueSlug($data['product_name']);
             $data['is_featured'] = $request->boolean('is_featured');
+            $data['manage_stock'] = $request->boolean('manage_stock');
             // Tồn kho nằm ở biến thể; trạng thái được đồng bộ lại sau khi lưu biến thể.
             $data['status'] = 2;
 
@@ -285,6 +286,7 @@ class ProductController extends Controller
                 $data['slug'] = $this->uniqueSlug($data['product_name'], $product->id);
             }
             $data['is_featured'] = $request->boolean('is_featured');
+            $data['manage_stock'] = $request->boolean('manage_stock');
 
             $product->update($data);
 
@@ -325,6 +327,7 @@ class ProductController extends Controller
             'sell_price' => 'required|integer|min:0',
             'discount_price' => 'nullable|integer|min:0|lte:sell_price',
             'is_featured' => 'nullable|boolean',
+            'manage_stock' => 'nullable|boolean',
 
             // Media: ảnh tối đa 5MB, video tối đa 50MB (giới hạn theo từng file ở dưới).
             'media' => 'nullable|array',
@@ -520,7 +523,9 @@ class ProductController extends Controller
      */
     private function syncProductStatus(Product $product, int $totalQuantity): void
     {
-        $status = $totalQuantity > 0 ? 1 : 2;
+        // Hàng không theo dõi tồn kho thì luôn ở trạng thái bán được: số tồn của
+        // nó không phản ánh gì, để nó tự nhảy sang "hết hàng" là chặn nhầm.
+        $status = ($totalQuantity > 0 || !$product->manage_stock) ? 1 : 2;
 
         if ((int) $product->status === $status) {
             return;

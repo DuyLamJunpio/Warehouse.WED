@@ -71,7 +71,8 @@ class CheckoutController extends Controller
                     throw new \RuntimeException('Sản phẩm không còn tồn tại.');
                 }
 
-                if ($variant->quantity < $quantity) {
+                // Hàng không theo dõi tồn kho vẫn bán được dù kho ghi 0.
+                if ($variant->product->manage_stock && $variant->quantity < $quantity) {
                     throw new \RuntimeException(
                         'Sản phẩm "' . $variant->product->product_name . '" (' . $variant->label
                         . ') chỉ còn ' . $variant->quantity . ' sản phẩm.'
@@ -135,7 +136,8 @@ class CheckoutController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                $line['variant']->quantity -= $line['quantity'];
+                // max(0) để hàng không theo dõi tồn kho không tụt xuống số âm.
+                $line['variant']->quantity = max(0, $line['variant']->quantity - $line['quantity']);
                 $line['variant']->save();
             }
 
@@ -264,11 +266,14 @@ class CheckoutController extends Controller
         foreach ($data['items'] as $item) {
             $variant = $variants->get((int) $item['variant_id']);
             $available = $variant->quantity ?? 0;
+            // Hàng không theo dõi tồn kho luôn đủ: số tồn của nó chỉ để tham khảo.
+            $unlimited = (bool) $variant && ! $variant->product?->manage_stock;
 
             $result[] = [
                 'variant_id' => (int) $item['variant_id'],
                 'available' => $available,
-                'enough' => $available >= (int) $item['quantity'],
+                'manage_stock' => ! $unlimited,
+                'enough' => $unlimited || $available >= (int) $item['quantity'],
                 'product' => $variant->product->product_name ?? null,
                 'label' => $variant->label ?? null,
             ];

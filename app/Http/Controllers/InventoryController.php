@@ -80,9 +80,13 @@ class InventoryController extends Controller
         return [
             'total_quantity' => (int) (clone $base)->sum('quantity'),
             'total_variants' => (clone $base)->count(),
-            'low_stock' => (clone $base)->where('quantity', '>', 0)
+            // Cảnh báo chỉ tính hàng có theo dõi tồn kho; hàng đặt may nằm im ở
+            // mức 0 nên gộp vào là hai con số này mất hết ý nghĩa.
+            'low_stock' => ProductVariant::whereHas('product', fn($q) => $q->where('manage_stock', true))
+                ->where('quantity', '>', 0)
                 ->where('quantity', '<=', self::LOW_STOCK_THRESHOLD)->count(),
-            'out_of_stock' => (clone $base)->where('quantity', '<=', 0)->count(),
+            'out_of_stock' => ProductVariant::whereHas('product', fn($q) => $q->where('manage_stock', true))
+                ->where('quantity', '<=', 0)->count(),
             // Giá vốn đang nằm trong kho, tính theo giá nhập của sản phẩm.
             'stock_value' => (int) ProductVariant::whereHas('product')
                 ->join('products', 'products.id', '=', 'product_variants.product_id')

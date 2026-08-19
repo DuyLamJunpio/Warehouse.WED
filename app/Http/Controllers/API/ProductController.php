@@ -508,7 +508,8 @@ class ProductController extends Controller
     private function syncProductStatus(Product $product): void
     {
         $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
-        $product->status = $total > 0 ? 1 : 2;
+        // Hàng không theo dõi tồn kho không bao giờ bị gắn "hết hàng".
+        $product->status = ($total > 0 || !$product->manage_stock) ? 1 : 2;
         $product->save();
     }
 }

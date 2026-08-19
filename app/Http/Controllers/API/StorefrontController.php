@@ -169,7 +169,10 @@ class StorefrontController extends Controller
                 ? (int) $product->sell_price
                 : null,
             'is_featured' => (bool) $product->is_featured,
-            'in_stock' => $product->variants->sum('quantity') > 0,
+            // Hàng không theo dõi tồn kho (đặt may, hàng order) luôn bán được, kho
+            // ghi 0 cũng mặc kệ. Web bán hàng đọc cờ này để khỏi chặn nhầm.
+            'manage_stock' => (bool) $product->manage_stock,
+            'in_stock' => ! $product->manage_stock || $product->variants->sum('quantity') > 0,
             'total_stock' => (int) $product->variants->sum('quantity'),
             'images' => $gallery->all(),
             'videos' => $videos->map(fn($v) => $this->url($v->path))->values()->all(),
@@ -180,6 +183,8 @@ class StorefrontController extends Controller
                 'color' => $v->color,
                 'sku' => $v->sku,
                 'stock' => (int) $v->quantity,
+                // Có bán được dòng này không - đã tính cả cờ theo dõi tồn kho.
+                'available' => ! $product->manage_stock || $v->quantity > 0,
                 'price' => (int) ($v->price_override ?? $price),
             ])->values()->all(),
         ];

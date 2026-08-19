@@ -89,11 +89,15 @@ class DashboardController extends Controller
             'customers' => Customer::count(),
             'customers_month' => Customer::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
 
-            'low_stock' => ProductVariant::whereHas('product')
+            // Chỉ đếm hàng có theo dõi tồn kho: hàng đặt may luôn ở mức 0 nên
+            // gộp vào thì cảnh báo lúc nào cũng đỏ và không còn ai để ý nữa.
+            'low_stock' => ProductVariant::whereHas('product', fn($q) => $q->where('manage_stock', true))
                 ->where('quantity', '>', 0)
                 ->where('quantity', '<=', InventoryController::LOW_STOCK_THRESHOLD)
                 ->count(),
-            'out_of_stock' => ProductVariant::whereHas('product')->where('quantity', '<=', 0)->count(),
+            'out_of_stock' => ProductVariant::whereHas('product', fn($q) => $q->where('manage_stock', true))
+                ->where('quantity', '<=', 0)
+                ->count(),
         ];
     }
 

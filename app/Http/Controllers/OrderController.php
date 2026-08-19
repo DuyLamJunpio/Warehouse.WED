@@ -265,7 +265,8 @@ class OrderController extends Controller
                     throw new \RuntimeException('Sản phẩm không còn tồn tại.');
                 }
 
-                if ($variant->quantity < $quantity) {
+                // Hàng không theo dõi tồn kho vẫn bán được dù kho ghi 0.
+                if ($variant->product->manage_stock && $variant->quantity < $quantity) {
                     throw new \RuntimeException(
                         $variant->product->product_name . ' (' . $variant->label
                         . ') chỉ còn ' . $variant->quantity . ' sản phẩm.'
@@ -319,7 +320,8 @@ class OrderController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                $line['variant']->quantity -= $line['quantity'];
+                // max(0) để hàng không theo dõi tồn kho không tụt xuống số âm.
+                $line['variant']->quantity = max(0, $line['variant']->quantity - $line['quantity']);
                 $line['variant']->save();
             }
 
