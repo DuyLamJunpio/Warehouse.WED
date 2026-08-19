@@ -8,6 +8,7 @@ use App\Models\Categories;
 use App\Models\Collection;
 use App\Models\ImageModel;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\SiteText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -109,7 +110,32 @@ class StorefrontController extends Controller
             'marquee' => SiteText::marquee()->live()->pluck('value')->values(),
             'announcement' => SiteText::announcement()->live()->pluck('value')->values(),
             'headings' => SiteText::heading()->live()->pluck('value', 'key'),
+            // Hình thức thanh toán và phí giao hàng do trang quản trị quyết định.
+            // Web bán hàng chỉ hiển thị theo, còn số tiền thật vẫn do máy chủ tính
+            // lại lúc đặt hàng - không tin con số đi qua trình duyệt.
+            'sales' => $this->sales(),
         ]);
+    }
+
+    /**
+     * Cài đặt bán hàng dưới dạng web bán hàng dùng được ngay.
+     *
+     * Chỉ trả phí mà KHÁCH phải trả: phần shop tự gánh là chuyện nội bộ, đưa ra
+     * ngoài chỉ khiến trang thanh toán hiển thị một con số khách không hề trả.
+     */
+    private function sales(): array
+    {
+        return collect(Setting::sales())
+            ->map(fn($config) => [
+                'enabled' => (bool) $config['enabled'],
+                'free_shipping' => (bool) $config['free_shipping']
+                    || $config['fee_payer'] === Setting::PAYER_SHOP,
+                'shipping_fee' => $config['fee_payer'] === Setting::PAYER_SHOP
+                    ? 0
+                    : max(0, (int) $config['shipping_fee']),
+                'free_shipping_min_items' => $config['free_shipping_min_items'],
+            ])
+            ->all();
     }
 
     private function categories(): array

@@ -73,6 +73,7 @@ class Invoice extends Model
         'shipping_phone',
         'shipping_address',
         'shipping_fee',
+        'shop_shipping_fee',
         'payment_method',
         'payment_expires_at',
     ];

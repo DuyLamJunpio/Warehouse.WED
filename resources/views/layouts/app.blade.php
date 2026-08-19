@@ -522,6 +522,16 @@
                                 </a>
                             </li>
                             <li>
+                                <a href="{{ route('settings.sales') }}"
+                                    class="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700 ">
+                                    <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                                        fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M8 5a1 1 0 100 2h5.6l.9 2H8a1 1 0 100 2h7.1l-.5 1H8a3 3 0 102.8 2h2.4a3 3 0 102.7-1.8l2-4.6A1 1 0 0017 6h-1.3l-.8-1.7A1 1 0 0014 4H8z"></path>
+                                    </svg>
+                                    <span class="ml-3" sidebar-toggle-item>Cài đặt bán hàng</span>
+                                </a>
+                            </li>
+                            <li>
                                 <a href="{{ route('categories') }}"
                                     class="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700 ">
                                     <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"

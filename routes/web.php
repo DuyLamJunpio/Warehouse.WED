@@ -10,6 +10,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatisticalController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +61,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/order/{id}/print', [OrderController::class, 'print'])->name('order.print');
 
     // Nội dung trang chủ web bán hàng: slide hero, chữ chạy, tiêu đề các khối
+    // Cài đặt bán hàng: hình thức thanh toán và phí giao hàng.
+    Route::get('/settings/sales', [SettingController::class, 'index'])->name('settings.sales');
+    Route::post('/settings/sales', [SettingController::class, 'saveSales'])->name('settings.sales.save');
+
     Route::get('/content', [ContentController::class, 'index'])->name('content');
     Route::post('/content/banner', [ContentController::class, 'storeBanner'])->name('content.banner.store');
     Route::post('/content/banner/{id}', [ContentController::class, 'updateBanner'])->name('content.banner.update');

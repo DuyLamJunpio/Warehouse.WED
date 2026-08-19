@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +22,14 @@ use Illuminate\Support\Str;
  */
 class CheckoutController extends Controller
 {
-    /** Phí giao hàng hiện tại: miễn phí. */
-    private const SHIPPING_FEE = 0;
+    /**
+     * Khớp mã hình thức thanh toán mà web bán hàng gửi lên với khoá trong cài đặt.
+     * Mọi mã lạ đều coi là chuyển khoản, đúng như mặc định của trường payment_method.
+     */
+    private function settingKey(?string $paymentMethod): string
+    {
+        return $paymentMethod === 'cod' ? 'cod' : 'bank_transfer';
+    }
 
     public function store(Request $request)
     {
@@ -51,6 +58,23 @@ class CheckoutController extends Controller
             $id = (int) $item['variant_id'];
             $wanted[$id] = ($wanted[$id] ?? 0) + (int) $item['quantity'];
         }
+
+        // Phí giao hàng lấy từ cài đặt bán hàng, không phải hằng số trong mã nguồn.
+        $paymentMethod = $data['payment_method'] ?? 'banking';
+        $methodKey = $this->settingKey($paymentMethod);
+        $salesSettings = Setting::sales();
+
+        if (empty($salesSettings[$methodKey]['enabled'])) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Hình thức thanh toán này hiện không nhận đơn.',
+            ], 422);
+        }
+
+        // Ngưỡng miễn phí giao hàng đếm theo số món trong đơn.
+        $itemCount = array_sum($wanted);
+        $shippingFee = Setting::shippingFeeFor($methodKey, $itemCount, $salesSettings);
+        $shopShippingFee = Setting::shopShippingCost($methodKey, $itemCount, $salesSettings);
 
         DB::beginTransaction();
         try {
@@ -107,16 +131,19 @@ class CheckoutController extends Controller
                 'order_status' => Invoice::STATUS_PENDING,
                 'customer_id' => $customer->id,
                 'user_id' => $this->systemUserId(),
-                'total_amount' => $subtotal + self::SHIPPING_FEE,
-                'shipping_fee' => self::SHIPPING_FEE,
+                'total_amount' => $subtotal + $shippingFee,
+                'shipping_fee' => $shippingFee,
+                // Khoản shop tự gánh: không cộng vào tiền khách trả, nhưng vẫn phải
+                // lưu lại, nếu không thì lúc tính lãi khoản này biến mất.
+                'shop_shipping_fee' => $shopShippingFee,
                 'shipping_name' => $data['customer_name'],
                 'shipping_phone' => $customer->customer_phone,
                 'shipping_address' => implode(', ', [$data['address'], $data['ward'], $data['province']]),
-                'payment_method' => $data['payment_method'] ?? 'banking',
+                'payment_method' => $paymentMethod,
                 // Kho bị trừ ngay lúc này, nên đơn phải có hạn: quá hạn mà không
                 // nhận được tiền thì lệnh orders:cancel-expired trả hàng về kho.
                 // COD không có hạn vì khách trả tiền khi nhận hàng.
-                'payment_expires_at' => ($data['payment_method'] ?? 'banking') === 'cod'
+                'payment_expires_at' => $paymentMethod === 'cod'
                     ? null
                     : now()->addMinutes((int) config('services.storefront.payment_window_minutes', 30)),
                 // Chưa nhận được tiền: đơn chỉ được xác nhận sau khi chuyển khoản thành công.
@@ -144,7 +171,10 @@ class CheckoutController extends Controller
             // Sản phẩm hết sạch tồn thì đánh dấu hết hàng.
             foreach (array_unique(array_map(fn($l) => $l['variant']->product_id, $lines)) as $productId) {
                 $total = ProductVariant::where('product_id', $productId)->sum('quantity');
-                Product::where('id', $productId)->update(['status' => $total > 0 ? 1 : 2]);
+                // Hàng không theo dõi tồn kho không bao giờ bị gắn "hết hàng".
+                Product::where('id', $productId)
+                    ->where('manage_stock', true)
+                    ->update(['status' => $total > 0 ? 1 : 2]);
             }
 
             DB::commit();
@@ -153,8 +183,8 @@ class CheckoutController extends Controller
                 'success' => true,
                 'order_code' => $invoice->order_code,
                 'subtotal' => $subtotal,
-                'shipping_fee' => self::SHIPPING_FEE,
-                'total_amount' => $subtotal + self::SHIPPING_FEE,
+                'shipping_fee' => $shippingFee,
+                'total_amount' => $subtotal + $shippingFee,
                 'message' => 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
             ], 201);
         } catch (\RuntimeException $e) {
