@@ -51,6 +51,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 
+# Cấu hình PHP cho bản chạy thật: ảnh gốc không kèm php.ini nên nếu thiếu bước
+# này PHP giữ mặc định post_max_size 8M và chặn mọi lần tải ảnh/video cỡ thật.
+COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
+
+
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

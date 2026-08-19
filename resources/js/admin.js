@@ -131,10 +131,44 @@ function setupAdminHelpers($) {
     };
 
     /**
+     * Rút một câu đọc được từ phần thân không phải JSON.
+     *
+     * Máy chủ có thể trả HTML thay vì JSON: PHP chặn tệp quá lớn, hết thời gian
+     * chạy, hoặc phiên đăng nhập hết hạn nên bị đẩy về trang đăng nhập. Thiếu
+     * bước này thì người dùng chỉ nhận được một thông báo trống rỗng.
+     */
+    const docThanPhanHoi = function (xhr) {
+        const raw = (xhr && xhr.responseText) || '';
+        if (!raw) return '';
+
+        const warning = raw.match(/(?:Warning|Fatal error)[^<]*/i);
+        if (warning) return warning[0].trim();
+
+        // Bỏ thẻ HTML rồi lấy phần đầu, tránh đổ cả trang lỗi vào thông báo.
+        const text = raw.replace(/<[^>]*>/g, ' ').replace(/[ \t\r\n]+/g, ' ').trim();
+        return text.length > 300 ? text.slice(0, 300) + '…' : text;
+    };
+
+    /**
      * Hiển thị lỗi validate (422) hoặc lỗi nghiệp vụ trả về từ server.
      */
     window.showAjaxError = function (xhr) {
         const res = (xhr && xhr.responseJSON) || {};
+
+        // Không nhận được phản hồi nào: thường là tệp quá lớn nên máy chủ ngắt
+        // kết nối giữa chừng, hoặc mạng rớt khi đang tải lên.
+        if (xhr && xhr.status === 0) {
+            window.showToast(
+                'Mất kết nối khi đang tải lên. Tệp có thể quá lớn — thử bớt ảnh/video rồi lưu lại.',
+                'error'
+            );
+            return;
+        }
+
+        if (xhr && xhr.status === 413) {
+            window.showToast('Tệp tải lên vượt quá giới hạn của máy chủ.', 'error');
+            return;
+        }
 
         const message = res.errors
             ? Object.keys(res.errors)
@@ -142,7 +176,10 @@ function setupAdminHelpers($) {
                       return res.errors[k].join('\n');
                   })
                   .join('\n')
-            : res.error || res.message || 'Lỗi: ' + ((xhr && xhr.statusText) || 'không rõ');
+            : res.error ||
+              res.message ||
+              docThanPhanHoi(xhr) ||
+              'Lỗi: ' + ((xhr && xhr.statusText) || 'không rõ');
 
         window.showToast(message, 'error');
     };
@@ -245,7 +282,17 @@ function setupAdminHelpers($) {
                     .removeClass('opacity-60 cursor-not-allowed')
                     .html(originalLabel);
             },
-            success: onSuccess,
+            // Máy chủ vẫn có thể trả mã 200 kèm phần thân không phải JSON — PHP in
+            // cảnh báo "tệp quá lớn" ra trước là một ví dụ. Coi đó là thành công thì
+            // ngăn kéo đóng lại lặng lẽ dù chẳng có gì được lưu, nên phải chặn ở đây.
+            success: function (response, textStatus, xhr) {
+                if (!response || typeof response !== 'object' || !response.success) {
+                    window.showAjaxError(xhr);
+                    return;
+                }
+
+                onSuccess(response, textStatus, xhr);
+            },
             error: settings.error || window.showAjaxError,
         });
     };
