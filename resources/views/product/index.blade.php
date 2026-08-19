@@ -363,7 +363,8 @@
                             class="block w-full text-sm rounded-lg shadow-sm bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="Tạo nhanh: S,M,L,XL | Đen,Trắng  →  Enter">
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nhập danh sách size, dấu | rồi danh
-                            sách màu, nhấn Enter để sinh toàn bộ tổ hợp.</p>
+                            sách màu, nhấn Enter để sinh toàn bộ tổ hợp. Ngăn cách từng mục bằng dấu phẩy
+                            hoặc gạch chéo.</p>
                     </div>
                     <div id="variants-add" class="space-y-2"></div>
                 </div>
@@ -636,9 +637,9 @@
                 const i = variantRowIndex++;
                 return $(`
                     <div class="variant-row grid grid-cols-12 gap-2 items-center">
-                        <input type="text" name="variants[${i}][size]" value="${data.size || ''}" placeholder="Size"
+                        <input type="text" name="variants[${i}][size]" value="${data.size || ''}" maxlength="50" placeholder="Size"
                             class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <input type="text" name="variants[${i}][color]" value="${data.color || ''}" placeholder="Màu"
+                        <input type="text" name="variants[${i}][color]" value="${data.color || ''}" maxlength="50" placeholder="Màu"
                             class="col-span-3 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <input type="number" min="0" name="variants[${i}][quantity]" value="${data.quantity || 0}" placeholder="SL"
                             class="col-span-2 text-sm rounded-lg bg-gray-50 border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -665,7 +666,15 @@
                     e.preventDefault();
 
                     const parts = $(this).val().split('|');
-                    const split = (s) => (s || '').split(',').map(v => v.trim()).filter(Boolean);
+                    // Nhận cả dấu phẩy, gạch chéo và chấm phẩy: tên màu chép từ
+                    // trang bán hàng thường viết liền kiểu "Trắng/Kem/Đỏ Tươi",
+                    // chỉ tách theo dấu phẩy thì cả chuỗi thành một màu duy nhất
+                    // và bị máy chủ từ chối vì quá 50 ký tự.
+                    const split = (s) =>
+                        (s || '')
+                            .split(/[,;/\n]+/)
+                            .map(v => v.trim().slice(0, 50))
+                            .filter(Boolean);
                     const sizes = split(parts[0]);
                     const colors = split(parts[1]);
 
