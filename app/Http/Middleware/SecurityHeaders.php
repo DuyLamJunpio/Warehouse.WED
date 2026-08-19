@@ -28,15 +28,21 @@ class SecurityHeaders
         //   script  : jQuery + Swiper qua CDN
         //   style   : Tailwind sinh class nội tuyến nên cần 'unsafe-inline'
         //   img     : data: cho icon SVG nhúng, blob: cho ảnh/video xem trước
+        //   media   : kho ảnh/video ngoài (Supabase Storage) — video sản phẩm và
+        //             banner nằm ở đó, không khai thì trình duyệt chặn im lặng
         //   font    : Google Fonts
         // Chưa siết script-src về 'self' được vì các view còn nhiều <script> nội
         // tuyến; siết được sau khi gom hết JS vào bundle Vite.
+        // Suy từ cấu hình disk thay vì gõ cứng tên miền: đổi bucket hay đổi nhà
+        // cung cấp kho ảnh là chỉ sửa .env, CSP tự khớp theo.
+        $mediaHost = $this->mediaOrigin();
+
         $csp = implode('; ', [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https:",
-            "media-src 'self' data: blob:",
+            trim("media-src 'self' data: blob: {$mediaHost}"),
             "font-src 'self' data: https://fonts.gstatic.com",
             "connect-src 'self'",
             "frame-ancestors 'none'",
@@ -47,5 +53,25 @@ class SecurityHeaders
         $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;
+    }
+
+    /**
+     * Gốc (scheme + host) của kho ảnh ngoài, rỗng nếu đang dùng disk local.
+     */
+    private function mediaOrigin(): string
+    {
+        $url = config('filesystems.disks.'.config('filesystems.default').'.url');
+
+        if (! is_string($url) || $url === '') {
+            return '';
+        }
+
+        $parts = parse_url($url);
+
+        if (empty($parts['scheme']) || empty($parts['host'])) {
+            return '';
+        }
+
+        return $parts['scheme'].'://'.$parts['host'];
     }
 }
