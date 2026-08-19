@@ -21,23 +21,32 @@
             </div>
 
             {{-- Số liệu tổng quan --}}
-            <div class="grid grid-cols-2 gap-3 mb-4 lg:grid-cols-4">
+            <div class="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3 lg:grid-cols-6">
                 <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                     <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Tổng đơn</div>
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $summary['total_orders'] }}</div>
+                    <div id="tk-tong" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $summary['total_orders'] }}</div>
                 </div>
                 <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                     <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Chờ xác nhận</div>
-                    <div class="text-2xl font-bold text-yellow-500">{{ $summary['by_status']['pending'] ?? 0 }}</div>
+                    <div id="tk-cho-xac-nhan" class="text-2xl font-bold text-yellow-500">{{ $summary['by_status']['pending'] ?? 0 }}</div>
                 </div>
                 <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                     <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Đang giao</div>
-                    <div class="text-2xl font-bold text-blue-500">{{ $summary['by_status']['shipping'] ?? 0 }}</div>
+                    <div id="tk-dang-giao" class="text-2xl font-bold text-blue-500">{{ $summary['by_status']['shipping'] ?? 0 }}</div>
                 </div>
                 <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Doanh thu đã hoàn thành</div>
-                    <div class="text-2xl font-bold text-green-600">
+                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Đã hoàn hàng</div>
+                    <div id="tk-hoan" class="text-2xl font-bold text-orange-500">{{ $summary['by_status']['returned'] ?? 0 }}</div>
+                </div>
+                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Đã hủy</div>
+                    <div id="tk-huy" class="text-2xl font-bold text-red-500">{{ $summary['by_status']['cancelled'] ?? 0 }}</div>
+                </div>
+                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Doanh thu ghi nhận</div>
+                    <div id="tk-doanh-thu" class="text-2xl font-bold text-green-600">
                         {{ number_format($summary['revenue'], 0, ',', '.') }} ₫</div>
+                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Gồm đơn đã nhận tiền; trừ đơn hoàn và hủy.</div>
                 </div>
             </div>
 
@@ -235,24 +244,71 @@
                 });
             });
 
-            $('#btn-update-status').click(function() {
-                if (!currentOrderId) return;
-                const status = $('#order-next-status').val();
-                if (!status) return;
+            // Vẽ lại các ô số liệu từ dữ liệu máy chủ vừa gửi kèm.
+            const veLaiSoLieu = (summary) => {
+                if (!summary) return;
+                const dem = summary.by_status || {};
+                $('#tk-tong').text(summary.total_orders ?? 0);
+                $('#tk-cho-xac-nhan').text(dem.pending ?? 0);
+                $('#tk-dang-giao').text(dem.shipping ?? 0);
+                $('#tk-hoan').text(dem.returned ?? 0);
+                $('#tk-huy').text(dem.cancelled ?? 0);
+                $('#tk-doanh-thu').text(money(summary.revenue ?? 0));
+            };
 
-                $.ajax({
-                    url: '/order/' + currentOrderId + '/status',
+            /**
+             * Đổi trạng thái một đơn.
+             *
+             * Nút bị khoá và thay bằng vòng quay trong lúc chờ: gọi tới máy chủ đặt
+             * ở xa mất cả giây, không có dấu hiệu gì thì nhân viên bấm tiếp lần hai
+             * và đơn nhảy thêm một bước nữa.
+             */
+            const doiTrangThai = ($nut, orderId, status) => {
+                if ($nut.prop('disabled')) return;
+
+                const chuCu = $nut.html();
+                $nut.prop('disabled', true)
+                    .addClass('opacity-60 cursor-not-allowed')
+                    .html(
+                        '<svg class="inline w-4 h-4 mr-2 -mt-0.5 animate-spin" viewBox="0 0 24 24" fill="none">' +
+                        '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+                        '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>' +
+                        '</svg>Đang lưu...');
+
+                return $.ajax({
+                    url: '/order/' + orderId + '/status',
                     type: 'POST',
                     data: {
                         order_status: status
                     },
                     success: function(response) {
                         showToast(response.success);
-                        closeDrawer();
+                        veLaiSoLieu(response.summary);
                         reloadOrders();
                     },
-                    error: showAjaxError
+                    error: function(xhr) {
+                        // Dòng vẫn còn nguyên trên màn hình nên phải trả nút về như cũ.
+                        $nut.prop('disabled', false)
+                            .removeClass('opacity-60 cursor-not-allowed')
+                            .html(chuCu);
+                        showAjaxError(xhr);
+                    },
                 });
+            };
+
+            $(document).on('click', '.btn-doi-trang-thai', function() {
+                const $nut = $(this);
+                doiTrangThai($nut, $nut.data('order-id'), $nut.data('status'));
+            });
+
+            $('#btn-update-status').click(function() {
+                if (!currentOrderId) return;
+                const status = $('#order-next-status').val();
+                if (!status) return;
+
+                // Bấm khi đang gửi thì hàm bỏ qua và không trả về gì.
+                const yeuCau = doiTrangThai($(this), currentOrderId, status);
+                if (yeuCau) yeuCau.done(closeDrawer);
             });
         });
     </script>

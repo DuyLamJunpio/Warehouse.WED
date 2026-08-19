@@ -75,7 +75,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Đếm đơn theo từng trạng thái + doanh thu từ đơn đã hoàn thành.
+     * Đếm đơn theo từng trạng thái + doanh thu đã ghi nhận.
      */
     private function summary(): array
     {
@@ -87,9 +87,21 @@ class OrderController extends Controller
         return [
             'by_status' => $counts,
             'total_orders' => (int) $counts->sum(),
-            // Chỉ tính đơn đã hoàn thành: đơn đang giao có thể bị hoàn.
+            /**
+             * Doanh thu = tiền đã thực sự nằm trong tay shop.
+             *
+             * Đơn chuyển khoản đã nhận được tiền (pay_status = 1) tính ngay, không
+             * phải đợi giao xong: tiền đã về tài khoản rồi, treo nó lại nửa tháng
+             * chỉ khiến con số trên màn hình không khớp với sao kê ngân hàng. Đơn
+             * bán tại quầy cũng nằm nhóm này vì khách trả ngay.
+             *
+             * Đơn hoàn hàng và đơn huỷ bị trừ ra kể cả khi đã trả tiền — hàng quay
+             * về kho thì khoản đó không còn là doanh thu.
+             */
             'revenue' => (int) Invoice::orders()
-                ->where('order_status', Invoice::STATUS_COMPLETED)
+                ->whereNotIn('order_status', [Invoice::STATUS_CANCELLED, Invoice::STATUS_RETURNED])
+                ->where(fn($q) => $q->where('order_status', Invoice::STATUS_COMPLETED)
+                    ->orWhere('pay_status', 1))
                 ->sum('total_amount'),
         ];
     }
@@ -163,6 +175,9 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => 'Đã chuyển đơn sang "' . Invoice::ORDER_STATUSES[$newStatus] . '".',
+                // Gửi kèm số liệu mới: đổi trạng thái là đổi luôn cả doanh thu lẫn
+                // các ô đếm, để màn hình khỏi hiện số cũ cho tới lần tải trang sau.
+                'summary' => $this->summary(),
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
