@@ -165,6 +165,17 @@ function setupAdminHelpers($) {
             return;
         }
 
+        // Phiên làm việc không còn hiệu lực. Hay gặp nhất là sau mỗi lần máy chủ
+        // được triển khai lại: phiên lưu ở tệp trong container nên container mới
+        // là mọi tab đang mở đều cầm thẻ CSRF đã chết.
+        if (xhr && (xhr.status === 419 || xhr.status === 401)) {
+            window.showToast(
+                'Phiên đăng nhập đã hết hạn. Tải lại trang (F5) rồi thao tác lại — dữ liệu đang nhập sẽ mất nên hãy chép ra trước.',
+                'error'
+            );
+            return;
+        }
+
         if (xhr && xhr.status === 413) {
             window.showToast('Tệp tải lên vượt quá giới hạn của máy chủ.', 'error');
             return;
