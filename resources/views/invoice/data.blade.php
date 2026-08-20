@@ -1,81 +1,81 @@
-@foreach ($invoices as $item)
-    <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-        <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">HD{{ $item->id }}
+@forelse ($invoices as $item)
+    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-750/50 transition-colors">
+        <td class="px-4 py-3.5 whitespace-nowrap">
+            <span class="font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md">
+                HD{{ str_pad($item->id, 5, '0', STR_PAD_LEFT) }}
+            </span>
         </td>
-        <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
+        <td class="px-4 py-3.5 whitespace-nowrap">
             @php $username = $user->where('id', $item->user_id)->first(); @endphp
-            {{ $username->name }}</td>
-        <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
+            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {{ $username->name ?? '—' }}
+            </div>
+        </td>
+        <td class="px-4 py-3.5 whitespace-nowrap">
             @php
                 if ($item->invoice_type == 0) {
-                    $partner_name = $supplier->where('id', $item->supplier_id)->first()->supplier_name;
+                    $partner_name = $supplier->where('id', $item->supplier_id)->first()->supplier_name ?? '—';
                 } else {
-                    $partner_name = $customer->where('id', $item->customer_id)->first()->customer_name;
+                    $partner_name = $customer->where('id', $item->customer_id)->first()->customer_name ?? '—';
                 }
             @endphp
-            {{ $partner_name }}</td>
-        <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
-            @php
-                $formattedNumber = number_format($item->total_amount, 0, ',', '.') . ' đ'; // Định dạng số và thêm ký hiệu tiền "đ"
-            @endphp
-            {{ $formattedNumber }}</td>
-        <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $item->created_at }}
+            <div class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {{ $partner_name }}
+            </div>
         </td>
-        <td class="p-4 text-base font-normal text-gray-900 whitespace-nowrap dark:text-white">
+        <td class="px-4 py-3.5 whitespace-nowrap">
+            <span class="text-xs font-bold text-slate-900 dark:text-white">
+                {{ number_format((float)$item->total_amount, 0, ',', '.') }} đ
+            </span>
+        </td>
+        <td class="px-4 py-3.5 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+            {{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}
+        </td>
+        <td class="px-4 py-3.5 whitespace-nowrap">
             @if ($item->invoice_type == 0)
-                <div class="flex items-center">
-                    <div class="h-2.5 w-2.5 rounded-full bg-green-400 mr-2"></div> Nhập hàng
-                </div>
+                <x-badge variant="info" size="xs">Nhập hàng</x-badge>
             @elseif($item->invoice_type == 1)
-                <div class="flex items-center">
-                    <div class="h-2.5 w-2.5 rounded-full mr-2" style="background-color:#1008ff"></div> Xuất hàng
-                </div>
+                <x-badge variant="purple" size="xs">Xuất hàng</x-badge>
             @endif
         </td>
-        <td class="p-4 text-base font-normal text-gray-900 whitespace-nowrap dark:text-white">
+        <td class="px-4 py-3.5 whitespace-nowrap">
             @if ($item->pay_status == 0)
-                <div class="flex items-center">
-                    <div class="h-2.5 w-2.5 rounded-full mr-2" style="background-color:#ff7300"></div> Chưa thanh toán
-                </div>
+                <x-badge variant="warning" size="xs">Chưa thanh toán</x-badge>
             @elseif($item->pay_status == 1)
-                <div class="flex items-center">
-                    <div class="h-2.5 w-2.5 rounded-full mr-2" style="background-color:#00ff04"></div> Đã thanh toán
-                </div>
+                <x-badge variant="success" size="xs">Đã thanh toán</x-badge>
             @elseif($item->pay_status == 2)
-                <div class="flex items-center">
-                    <div class="h-2.5 w-2.5 rounded-full mr-2" style="background-color:#f6ff00"></div> Quá hạn
-                </div>
+                <x-badge variant="danger" size="xs">Quá hạn</x-badge>
             @elseif($item->pay_status == 3)
-                <div class="flex items-center">
-                    <div class="h-2.5 w-2.5 rounded-full mr-2" style="background-color:#ff0000"></div> Đã xóa
-                </div>
+                <x-badge variant="neutral" size="xs">Đã hủy/xóa</x-badge>
+            @elseif($item->pay_status == 4)
+                <x-badge variant="neutral" size="xs">Hoàn trả</x-badge>
             @endif
         </td>
-        <td class="p-4 space-x-2 whitespace-nowrap">
-            <button type="button" data-drawer-target="drawer-update-product-default"
-                data-drawer-show="drawer-update-product-default" aria-controls="drawer-update-product-default"
-                data-drawer-placement="right" data-id-invoice="{{ $item->id }}"
-                class="editInvoiceButton inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z">
-                    </path>
-                    <path fill-rule="evenodd"
-                        d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                        clip-rule="evenodd"></path>
-                </svg>
-                Cập nhật
-            </button>
-            <button type="button" data-drawer-target="drawer-delete-product-default"
-                data-drawer-show="drawer-delete-product-default" aria-controls="drawer-delete-product-default"
-                data-drawer-placement="right" data-id-invoice="{{ $item->id }}"
-                class="deleteSupplierButton inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                        clip-rule="evenodd"></path>
-                </svg>
-                Xóa
-            </button>
+        <td class="px-4 py-3.5 whitespace-nowrap text-right text-xs">
+            <div class="inline-flex items-center gap-1.5">
+                <button type="button" data-drawer-target="drawer-update-product-default"
+                    data-drawer-show="drawer-update-product-default" aria-controls="drawer-update-product-default"
+                    data-drawer-placement="right" data-id-invoice="{{ $item->id }}"
+                    class="editInvoiceButton p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 dark:hover:text-indigo-400 rounded-lg transition-colors"
+                    title="Chi tiết & Cập nhật">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </button>
+                <button type="button" data-id-invoice="{{ $item->id }}"
+                    class="deleteSupplierButton p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                    title="Xóa hóa đơn">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
         </td>
     </tr>
-@endforeach
+@empty
+    <tr>
+        <td colspan="8" class="p-8 text-center">
+            <x-empty-state title="Không tìm thấy hóa đơn nào" message="Chưa có dữ liệu hóa đơn nhập/xuất kho phù hợp." />
+        </td>
+    </tr>
+@endforelse

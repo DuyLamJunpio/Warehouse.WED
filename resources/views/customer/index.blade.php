@@ -1,770 +1,454 @@
 <x-app-layout>
-    <div
-        class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="mb-4">
-                <nav class="flex mb-5" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
-                     <li class="inline-flex items-center">
-                            <a href="{{ route('dashboard') }}"
-                                class="inline-flex items-center text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-white">
-                                <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
-                                    </path>
-                                </svg>
-                                Trang chủ
-                            </a>
+    {{-- Header & Breadcrumb --}}
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
+                        <li class="inline-flex items-center">
+                            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
                         </li>
                         <li>
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Khách hàng</span>
-                            </div>
+                            <span class="mx-1 text-slate-400">/</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">Khách hàng</span>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">TẤT CẢ KHÁCH HÀNG</h1>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Quản lý khách hàng
+                </h1>
             </div>
-            <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
-                <div class="flex items-center mb-4 sm:mb-0">
-                    <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Tìm kiếm</label>
-                        <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
-                            <input type="text" name="search" id="search-supplier"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Tìm theo tên, số điện thoại, địa chỉ">
-                        </div>
-                    </form>
-                    <div class="flex items-center w-full sm:justify-end">
-                        <div class="flex pl-2 space-x-1">
-                            <a href="#"
-                                class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                            </a>
-                            <a href="#"
-                                class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                            </a>
-                            <a href="#"
-                                class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z">
-                                    </path>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <button id="createProductButton"
-                    class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800"
-                    type="button" data-drawer-target="drawer-create-product-default"
-                    data-drawer-show="drawer-create-product-default" aria-controls="drawer-create-product-default"
-                    data-drawer-placement="right">
-                    Thêm khách hàng
+
+            <div class="flex items-center gap-2.5">
+                <button type="button" id="btn-open-create-customer"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Thêm khách hàng</span>
                 </button>
             </div>
         </div>
     </div>
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Tên
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Điện thoại
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Địa chỉ giao hàng
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Số đơn
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Tổng chi tiêu
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Hạng
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Thao tác
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTable"
-                            class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @include('customer.data')
-                        </tbody>
-                    </table>
+
+    {{-- Filter & Search Bar --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs mb-4 p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="relative w-full sm:max-w-md">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                 </div>
+                <input type="text" id="search-customer"
+                    class="block w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white placeholder-slate-400"
+                    placeholder="Tìm theo tên, số điện thoại, địa chỉ...">
+                <button type="button" id="clearCustomerSearch" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">✕</button>
             </div>
         </div>
     </div>
 
-    {{ $customers->withQueryString()->links('vendor.pagination.tailwind') }}
+    {{-- Customer Table Card --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th scope="col" class="p-4">Khách hàng</th>
+                        <th scope="col" class="p-4">Số điện thoại</th>
+                        <th scope="col" class="p-4">Địa chỉ giao hàng</th>
+                        <th scope="col" class="p-4 text-center">Số đơn</th>
+                        <th scope="col" class="p-4">Tổng chi tiêu</th>
+                        <th scope="col" class="p-4">Hạng khách</th>
+                        <th scope="col" class="p-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTable" class="divide-y divide-slate-200/80 dark:divide-slate-700/80">
+                    @include('customer.data')
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Edit Product Drawer -->
-    <div id="drawer-update-product-default"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Cập nhật sản phẩm</h5>
-        <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
-            aria-controls="drawer-update-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
-        <form id="formEdit" enctype="multipart/form-data">
-            @csrf
-            <div class="space-y-4">
-                <div class="grid grid-cols-6 gap-6">
-                    <div class="col-span-6 sm:col-full">
-                        <div id="btn_upload_edit" class="flex items-center justify-center w-full">
-                            <label for="avatar_edit"
-                                class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
-                                <div class="flex items-center justify-center w-full h-full"> <!-- Thêm div này -->
-                                    <img class="mt-3 rounded-lg w-28 h-28 sm:mb-0 xl:mb-4 2xl:mb-0"
-                                        id="preview-image-edit" src="" alt="picture"
-                                        style="object-fit: cover;"> <!-- Thêm style object-fit -->
-                                </div>
-                                <div id="svg_edit" class="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                    </svg>
-                                    <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                            class="font-semibold">Bấm để tải lên</span> hoặc kéo thả vào đây</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                        800x400px)</p>
-                                </div>
-                                <input id="avatar_edit" name="avatar" type="file" class="hidden" />
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-span-6 sm:col-full">
-                        <label for="customer_name_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên</label>
-                        <input type="text" name="customer_name" id="customer_name_edit"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Nhập tên khách hàng" required="">
-                    </div>
-                    <div class="col-span-6 sm:col-full">
-                        <label for="customer_phone_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Điện thoại</label>
-                        <input type="text" name="customer_phone" id="customer_phone_edit"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Nhập số điện thoại khách hàng" required="">
-                    </div>
-                    <div class="col-span-6 sm:col-full">
-                        <label for="customer_email_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-                        <input type="email" name="customer_email" id="customer_email_edit"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Nhập email khách hàng">
-                    </div>
-                    <div class="col-span-6 sm:col-full">
-                        <label for="status_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái</label>
-                        <select id="status_edit" name="status"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            <option value="0">Thường</option>
-                            <option value="1">VIP</option>
-                            <option value="1">Đã khoá</option>
-                        </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="province_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tỉnh / Thành phố</label>
-                        <input type="text" name="province" id="province_edit" placeholder="TP. Hồ Chí Minh"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="ward_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phường / Xã</label>
-                        <input type="text" name="ward" id="ward_edit" placeholder="Phường Bến Nghé"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    </div>
-                    <div class="col-span-6 sm:col-full">
-                        <label for="address_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ (số nhà, tên
-                            đường)</label>
-                        <textarea id="address_edit" rows="2" name="address"
-                            class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Số nhà, tên đường"></textarea>
-                    </div>
-                    <div class="col-span-6 sm:col-full">
-                        <label for="note_edit" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi
-                            chú chăm sóc khách hàng</label>
-                        <textarea id="note_edit" rows="3" name="note"
-                            class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Khách thích màu trung tính, hay đổi size..."></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="items-center p-6 border-t border-gray-200 rounded-b dark:border-gray-700">
-                <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4">
-                    <button type="submit"
-                        class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Cập nhật
-                    </button>
-                    <button type="button" data-drawer-dismiss="drawer-create-product-default"
-                        aria-controls="drawer-create-product-default"
-                        class="inline-flex w-full justify-center text-gray-500 items-center bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">
-                        <svg aria-hidden="true" class="w-5 h-5 -ml-1 sm:mr-1" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Huỷ
-                    </button>
-                </div>
-            </div>
-        </form>
+        <div id="customerPagination">
+            {{ $customers->withQueryString()->links('vendor.pagination.tailwind') }}
+        </div>
     </div>
 
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: THÊM KHÁCH HÀNG (CREATE CUSTOMER)                                 --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-create-customer" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Thêm khách hàng mới</h3>
+            </div>
+            <button type="button" class="close-customer-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">✕</button>
+        </div>
 
-    <!-- Delete Product Drawer -->
-    <div id="drawer-delete-product-default"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Xóa</h5>
-        <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
-            aria-controls="drawer-delete-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
-        <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3 id="contentDelete" class="mb-6 text-lg text-gray-500 dark:text-gray-400"></h3>
-        <a href="#" id="deleteBtn"
-            class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-3 py-2.5 text-center mr-2 dark:focus:ring-red-900">
-            Yes, I'm sure
-        </a>
-        <a href="#"
-            class="text-gray-900 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 border border-gray-200 font-medium inline-flex items-center rounded-lg text-sm px-3 py-2.5 text-center dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-            data-drawer-hide="drawer-delete-product-default">
-            No, cancel
-        </a>
-    </div>
-
-    <!-- Add Product Drawer -->
-    <div id="drawer-create-product-default"
-        class="fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Khách hàng</h5>
-        <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
-            aria-controls="drawer-create-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
-        <form id="formAdd" enctype="multipart/form-data">
+        <form id="formAddCustomer" enctype="multipart/form-data" class="flex-1 flex flex-col justify-between">
             @csrf
-            <div class="space-y-4">
+            <div class="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                 <div>
-                    <div id="btn_upload" class="flex items-center justify-center w-full">
-                        <label for="avatar"
-                            class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
-                            <div class="flex items-center justify-center w-full h-full"> <!-- Thêm div này -->
-                                <img class="mt-3 rounded-lg w-28 h-28 sm:mb-0 xl:mb-4 2xl:mb-0" id="preview-image"
-                                    src="" alt="picture" style="object-fit: cover;">
-                                <!-- Thêm style object-fit -->
-                            </div>
-                            <div id="svg" class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                </svg>
-                                <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                        class="font-semibold">Bấm để tải lên</span> hoặc kéo thả vào đây</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                    800x400px)</p>
-                            </div>
-                            <input id="avatar" name="avatar" type="file" class="hidden" />
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Họ và tên <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="customer_name" required placeholder="Nguyễn Văn A"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Số điện thoại <span class="text-rose-500">*</span>
                         </label>
+                        <input type="text" name="customer_phone" required placeholder="0901234567"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input type="email" name="customer_email" placeholder="email@example.com"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                     </div>
                 </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tỉnh / Thành phố</label>
+                        <input type="text" name="province" placeholder="TP. Hồ Chí Minh"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phường / Xã</label>
+                        <input type="text" name="ward" placeholder="Phường Bến Nghé"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                </div>
+
                 <div>
-                    <label for="customer_name"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên</label>
-                    <input type="text" name="customer_name" id="customer_name"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Nhập tên khách hàng" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ chi tiết</label>
+                    <textarea name="address" rows="2" placeholder="Số nhà, tên đường..."
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                 </div>
+
                 <div>
-                    <label for="customer_phone"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Điện thoại</label>
-                    <input type="text" name="customer_phone" id="customer_phone"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Nhập số điện thoại khách hàng" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ghi chú chăm sóc</label>
+                    <textarea name="note" rows="2" placeholder="Khách quen, sở thích, yêu cầu đặc biệt..."
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                 </div>
-                <div>
-                    <label for="customer_email"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-                    <input type="email" name="customer_email" id="customer_email"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Nhập email khách hàng">
-                </div>
-                <div>
-                    <label for="province"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tỉnh / Thành phố</label>
-                    <input type="text" name="province" id="province" placeholder="TP. Hồ Chí Minh"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                </div>
-                <div>
-                    <label for="ward" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phường /
-                        Xã</label>
-                    <input type="text" name="ward" id="ward" placeholder="Phường Bến Nghé"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                </div>
-                <div>
-                    <label for="address" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Địa chỉ
-                        (số nhà, tên đường)</label>
-                    <textarea id="address" rows="2" name="address"
-                        class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Số nhà, tên đường"></textarea>
-                </div>
-                <div>
-                    <label for="note" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi chú chăm
-                        sóc khách hàng</label>
-                    <textarea id="note" rows="3" name="note"
-                        class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                </div>
-                <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4 md:absolute">
-                    <button type="submit"
-                        class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Thêm khách hàng
-                    </button>
-                    <button type="button" data-drawer-dismiss="drawer-create-product-default"
-                        aria-controls="drawer-create-product-default"
-                        class="inline-flex w-full justify-center text-gray-500 items-center bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">
-                        <svg aria-hidden="true" class="w-5 h-5 -ml-1 sm:mr-1" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Huỷ
-                    </button>
-                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" class="close-customer-drawer px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">Hủy</button>
+                <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">Lưu khách hàng</button>
+            </div>
         </form>
     </div>
 
-    {{-- add supplier --}}
-    <script>
-        $(document).ready(function() {
-            // Nạp lại bảng khách hàng sau mỗi thao tác (thêm / sửa / xóa dùng chung).
-            window.reloadCustomerTable = function() {
-                $.get('{{ route('customer.data') }}', function(data) {
-                    $('#customerTable').html(data);
-                });
-            };
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: SỬA KHÁCH HÀNG (EDIT CUSTOMER)                                   --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-update-customer" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Cập nhật khách hàng</h3>
+            </div>
+            <button type="button" class="close-customer-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">✕</button>
+        </div>
 
-            $('#formAdd').submit(function(e) {
-                e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
+        <form id="formEditCustomer" enctype="multipart/form-data" class="flex-1 flex flex-col justify-between">
+            @csrf
+            <div class="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Họ và tên <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="customer_name" id="customer_name_edit" required
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
 
-                submitFormWithProgress($(this), '{{ route('customer.add') }}', function(response) {
-                    showToast(response.success);
-                    $('#closeDrawerAdd').click();
-                    $('form').find('input[type=text], input[type=file],textarea').val('');
-                    reloadCustomerTable();
-                });
-            });
-        });
-    </script>
-    {{-- delete supplier --}}
-    <script>
-        $(document).ready(function() {
-            // Sử dụng event delegation để gắn sự kiện click cho tất cả các nút hiện tại và tương lai
-            $(document).on('click', '.deleteSupplierButton', function() {
-                // Mở drawer
-                const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
-                const drawerElement = $('#' + drawerId);
-                const idCustomer = $(this).data('id-customer');
-                const nameCustomer = $(this).data('name-customer');
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Số điện thoại <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" name="customer_phone" id="customer_phone_edit" required
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input type="email" name="customer_email" id="customer_email_edit"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                </div>
 
-                $('#contentDelete').html('Bạn có chắc chắn muốn xóa <strong>' + nameCustomer +
-                    '</strong> không?');
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Trạng thái / Nhóm</label>
+                    <select id="status_edit" name="status"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <option value="0">Khách thường</option>
+                        <option value="1">Khách VIP</option>
+                        <option value="2">Đã khóa</option>
+                    </select>
+                </div>
 
-                $(document).off('click', '#deleteBtn').on('click', '#deleteBtn', function() {
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tỉnh / Thành phố</label>
+                        <input type="text" name="province" id="province_edit"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phường / Xã</label>
+                        <input type="text" name="ward" id="ward_edit"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    </div>
+                </div>
 
-                    const url = '/customer/delete/' + idCustomer;
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ chi tiết</label>
+                    <textarea id="address_edit" name="address" rows="2"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
+                </div>
 
-                    $.ajax({
-                        url: url, // Sử dụng nối chuỗi để thêm idCustomer vào URL
-                        type: 'DELETE',
-                        success: function(response) {
-                            // Xử lý khi xóa thành công
-                            showToast(response.success);
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ghi chú chăm sóc</label>
+                    <textarea id="note_edit" name="note" rows="2"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
+                </div>
+            </div>
 
-                            $('#closeDrawerDelete').click();
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" class="close-customer-drawer px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">Hủy</button>
+                <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">Cập nhật</button>
+            </div>
+        </form>
+    </div>
 
-                            reloadCustomerTable();
-                        },
-                        error: showAjaxError
-                    });
-                });
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: HỒ SƠ KHÁCH HÀNG & LỊCH SỬ (CUSTOMER PROFILE)                     --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-customer-profile" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-lg h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Hồ sơ khách hàng</h3>
+            </div>
+            <button type="button" class="close-customer-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">✕</button>
+        </div>
 
-                // Sử dụng Tailwind CSS classes để hiển thị drawer
-                drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
-                drawerElement.attr('aria-hidden', 'false');
-            });
-            // Sự kiện đóng drawer
-            $(document).ready(function() {
-                // Sự kiện đóng drawer khi click vào phần tử có thuộc tính data-drawer-dismiss hoặc data-drawer-hide
-                $(document).on('click', '[data-drawer-dismiss], [data-drawer-hide]', function() {
-                    const drawerId = $(this).attr('data-drawer-dismiss') || $(this).attr(
-                        'data-drawer-hide');
-                    const drawerElement = $('#' + drawerId);
-                    drawerElement.addClass('translate-x-full').removeClass('translate-x-0');
-                    drawerElement.attr('aria-hidden', 'true');
-                });
+        <div class="p-6 space-y-5 flex-1 overflow-y-auto custom-scrollbar" id="profile-body">
+            {{-- Loaded via AJAX --}}
+        </div>
 
-                // Sự kiện đóng drawer khi click ra bên ngoài drawer
-                $(document).on('click', function(event) {
-                    // Điều này giả định rằng tất cả các drawer của bạn có một class chung là `.drawer`
-                    const $drawer = $(
-                        '.drawer'); // Sửa đổi selector này để phù hợp với class của drawer của bạn
-
-                    // Kiểm tra xem click có nằm ngoài drawer và không phải là nút mở drawer
-                    if (!$drawer.is(event.target) && $drawer.has(event.target).length === 0 && !$(
-                            event.target).closest('[data-drawer-target]').length) {
-                        $drawer.addClass('translate-x-full').removeClass('translate-x-0');
-                        $drawer.attr('aria-hidden', 'true');
-                    }
-                });
-            });
-        });
-    </script>
-    {{-- edit supplier --}}
-    <script>
-        $(document).ready(function() {
-            // Sử dụng event delegation để gắn sự kiện click cho tất cả các nút hiện tại và tương lai
-            var id = 0;
-            $(document).on('click', '.editSupplierButton', function() {
-                // Mở drawer
-                const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
-                const drawerElement = $('#' + drawerId);
-                $('form').find('input[type=text], input[type=file],textarea').val('');
-                const customerData = $(this).data('item-customer');
-                id = customerData.id;
-                var newImageUrl;
-                if (customerData.avatar != null) {
-                    newImageUrl = window.storageUrl(customerData.avatar);
-                    $('#preview-image-edit').attr('src', newImageUrl);
-                    $('#preview-image-edit').show();
-                    $("#svg_edit").hide();
-                } else {
-                    $('#preview-image-edit').hide();
-                    $("#svg_edit").show();
-                }
-                $('#customer_name_edit').val(customerData.customer_name);
-                $('#customer_phone_edit').val(customerData.customer_phone);
-                $('#customer_email_edit').val(customerData.customer_email);
-                $('#address_edit').val(customerData.address);
-                $('#province_edit').val(customerData.province);
-                $('#ward_edit').val(customerData.ward);
-                $('#note_edit').val(customerData.note);
-
-                if (customerData.status == "1") {
-                    $('#status_edit').val("1");
-                } else if (customerData.status == "0") {
-                    $('#status_edit').val("0");
-                } else {
-                    $('#status_edit').val("2");
-                }
-
-                // Sử dụng Tailwind CSS classes để hiển thị drawer
-                drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
-                drawerElement.attr('aria-hidden', 'false');
-            });
-            // Sự kiện đóng drawer
-            $(document).ready(function() {
-                // Sự kiện đóng drawer khi click vào phần tử có thuộc tính data-drawer-dismiss hoặc data-drawer-hide
-                $(document).on('click', '[data-drawer-dismiss], [data-drawer-hide]', function() {
-                    const drawerId = $(this).attr('data-drawer-dismiss') || $(this).attr(
-                        'data-drawer-hide');
-                    const drawerElement = $('#' + drawerId);
-                    drawerElement.addClass('translate-x-full').removeClass('translate-x-0');
-                    drawerElement.attr('aria-hidden', 'true');
-                });
-
-                // Sự kiện đóng drawer khi click ra bên ngoài drawer
-                $(document).on('click', function(event) {
-                    // Điều này giả định rằng tất cả các drawer của bạn có một class chung là `.drawer`
-                    const $drawer = $(
-                        '.drawer'); // Sửa đổi selector này để phù hợp với class của drawer của bạn
-
-                    // Kiểm tra xem click có nằm ngoài drawer và không phải là nút mở drawer
-                    if (!$drawer.is(event.target) && $drawer.has(event.target).length === 0 && !$(
-                            event.target).closest('[data-drawer-target]').length) {
-                        $drawer.addClass('translate-x-full').removeClass('translate-x-0');
-                        $drawer.attr('aria-hidden', 'true');
-                    }
-                });
-            });
-            $('#formEdit').submit(function(e) {
-                e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
-                const urlEdit = '/customer/edit/' + id;
-
-                submitFormWithProgress($(this), urlEdit, function(response) {
-                    showToast(response.success);
-                    $('#closeDrawerEdit').click();
-                    reloadCustomerTable();
-                });
-            });
-        });
-    </script>
-    {{-- search --}}
-    <script>
-        $(document).ready(function() {
-            $('#search-supplier').on('input', function() {
-                var keyword = $(this).val();
-
-                $.ajax({
-                    url: '{{ route('suppliers.search') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        keyword: keyword
-                    },
-                    success: function(data) {
-                        $('#customerTable').empty();
-                        if (data.length > 0) {
-                            $('#customerTable').html(data)
-                        } else {
-                            // Hiển thị thông báo không tìm thấy kết quả
-                            $('#customerTable').html();
-                        }
-                    }
-                });
-            });
-        });
-    </script>
-    <script>
-        $('#checkall').change(function() {
-            // Lấy giá trị (checked hoặc không checked) của checkbox "checkall"
-            var isChecked = $(this).prop('checked');
-            // Set giá trị của tất cả các checkbox khác thành giá trị của checkbox "checkall"
-            $('.checkitem').prop('checked', isChecked);
-        });
-    </script>
-
-    <script>
-        $(document).ready(function() {
-            $('#closeDrawerAdd').click(function() {
-                $('form').find('input[type=text] ').val('');
-            })
-        })
-    </script>
-    <script>
-        $(document).ready(function() {
-            // Lấy các phần tử DOM cần thiết
-            var imageInput = $("#avatar");
-            var previewImage = $("#preview-image");
-            previewImage.hide();
-            var btn_upload = $("#btn_upload");
-            var svg = $("#svg");
-
-            // Sự kiện click cho button "Choose image"
-            btn_upload.on("click", function() {
-                imageInput.click(); // Kích hoạt sự kiện click trên input type=file
-            });
-
-            // Sự kiện khi có thay đổi trong input type=file
-            imageInput.on("change", function() {
-                var file = this.files[0]; // Lấy file đầu tiên từ danh sách các file được chọn
-                if (file) {
-                    // Đọc file hình ảnh dưới dạng URL
-                    var reader = new FileReader();
-                    reader.onload = function(event) {
-                        // Hiển thị hình ảnh đã chọn lên thẻ <img>
-                        svg.hide();
-                        previewImage.show();
-                        previewImage.attr("src", event.target.result);
-                    };
-                    reader.readAsDataURL(file); // Đọc file dưới dạng URL Data
-                }
-            });
-        });
-    </script>
-
-    <script>
-        $(document).ready(function() {
-            // Lấy các phần tử DOM cần thiết
-            var imageInput = $("#avatar_edit");
-            var previewImage = $("#preview-image-edit");
-            previewImage.hide();
-            var btn_upload = $("#btn_upload_edit");
-            var svg = $("#svg_edit");
-
-            // Sự kiện click cho button "Choose image"
-            btn_upload.on("click", function() {
-                imageInput.click(); // Kích hoạt sự kiện click trên input type=file
-            });
-
-            // Sự kiện khi có thay đổi trong input type=file
-            imageInput.on("change", function() {
-                var file = this.files[0]; // Lấy file đầu tiên từ danh sách các file được chọn
-                if (file) {
-                    // Đọc file hình ảnh dưới dạng URL
-                    var reader = new FileReader();
-                    reader.onload = function(event) {
-                        // Hiển thị hình ảnh đã chọn lên thẻ <img>
-                        svg.hide();
-                        previewImage.show();
-                        previewImage.attr("src", event.target.result);
-                    };
-                    reader.readAsDataURL(file); // Đọc file dưới dạng URL Data
-                }
-            });
-        });
-    </script>
-
-    {{-- Hồ sơ khách hàng: lịch sử mua và ghi chú chăm sóc --}}
-    <div id="drawer-customer-profile"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-lg p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-hidden="true">
-        <h5 class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Hồ sơ khách hàng</h5>
-        <button type="button" id="closeDrawerProfile"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
-
-        <div id="profile-body"></div>
-
-        <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-            <label for="profile-note" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi chú
-                chăm sóc khách hàng</label>
-            <textarea id="profile-note" rows="3"
-                class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="Khách thích màu trung tính, hay đổi size..."></textarea>
+        <div class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 sticky bottom-0">
+            <label for="profile-note" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                Ghi chú chăm sóc khách hàng
+            </label>
+            <textarea id="profile-note" rows="2"
+                class="block w-full text-xs rounded-xl bg-white border-slate-300 p-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                placeholder="Ghi chú sở thích, size quần áo, lịch sử tư vấn..."></textarea>
             <button type="button" id="btn-save-note"
-                class="w-full mt-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
-                Lưu ghi chú
+                class="w-full mt-2.5 px-4 py-2 text-xs font-semibold text-white rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-sm transition-all">
+                Lưu ghi chú CRM
             </button>
         </div>
     </div>
 
+    {{-- Confirmation Modal for Delete --}}
+    <x-modal-confirm id="modal-delete-customer" title="Xóa khách hàng" message="Bạn có chắc chắn muốn xóa khách hàng này? Thao tác này không thể hoàn tác." />
+
+    {{-- Scripts --}}
     <script>
         $(document).ready(function() {
+            let editCustomerId = null;
+            let deleteCustomerId = null;
             let profileCustomerId = null;
-            const money = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
+            const money = (n) => window.nhomNghin(n) + ' ₫';
 
-            const closeProfile = () => $('#drawer-customer-profile').addClass('translate-x-full').attr(
-                'aria-hidden', 'true');
-            $('#closeDrawerProfile').click(closeProfile);
+            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full');
+            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full');
 
+            $('.close-customer-drawer').click(function() {
+                closeDrawer('drawer-create-customer');
+                closeDrawer('drawer-update-customer');
+                closeDrawer('drawer-customer-profile');
+            });
+
+            window.reloadCustomerTable = function() {
+                $.get('{{ route('customer.data') }}', { keyword: $('#search-customer').val() }, function(data) {
+                    $('#customerTable').html(data);
+                });
+            };
+
+            // Search with debounce
+            $('#search-customer').on('input', window.debounce(function() {
+                const val = $(this).val();
+                if (val) $('#clearCustomerSearch').removeClass('hidden');
+                else $('#clearCustomerSearch').addClass('hidden');
+                window.reloadCustomerTable();
+            }, 300));
+
+            $('#clearCustomerSearch').on('click', function() {
+                $('#search-customer').val('');
+                $(this).addClass('hidden');
+                window.reloadCustomerTable();
+            });
+
+            // Create Drawer
+            $('#btn-open-create-customer').click(function() {
+                $('#formAddCustomer')[0].reset();
+                openDrawer('drawer-create-customer');
+            });
+
+            $('#formAddCustomer').submit(function(e) {
+                e.preventDefault();
+                window.submitFormWithProgress($(this), '{{ route('customer.add') }}', function(response) {
+                    window.showToast(response.success);
+                    closeDrawer('drawer-create-customer');
+                    window.reloadCustomerTable();
+                });
+            });
+
+            // Edit Drawer
+            $(document).on('click', '.editCustomerButton', function() {
+                const c = $(this).data('item-customer');
+                editCustomerId = c.id;
+                $('#customer_name_edit').val(c.customer_name);
+                $('#customer_phone_edit').val(c.customer_phone);
+                $('#customer_email_edit').val(c.customer_email || '');
+                $('#status_edit').val(c.status || 0);
+                $('#province_edit').val(c.province || '');
+                $('#ward_edit').val(c.ward || '');
+                $('#address_edit').val(c.address || '');
+                $('#note_edit').val(c.note || '');
+                openDrawer('drawer-update-customer');
+            });
+
+            $('#formEditCustomer').submit(function(e) {
+                e.preventDefault();
+                if (!editCustomerId) return;
+                window.submitFormWithProgress($(this), '/customer/edit/' + editCustomerId, function(response) {
+                    window.showToast(response.success);
+                    closeDrawer('drawer-update-customer');
+                    window.reloadCustomerTable();
+                });
+            });
+
+            // Delete Modal Trigger
+            $(document).on('click', '.deleteCustomerButton', function() {
+                deleteCustomerId = $(this).data('id-customer');
+                const name = $(this).data('name-customer');
+                $('#modal-delete-customer-msg').text(`Bạn có chắc muốn xóa khách hàng "${name}"?`);
+                $('#modal-delete-customer').removeClass('hidden');
+            });
+
+            $('#modal-delete-customer-confirm').click(function() {
+                if (!deleteCustomerId) return;
+                $.ajax({
+                    url: '/customer/delete/' + deleteCustomerId,
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    success: function(response) {
+                        window.showToast(response.success);
+                        $('#modal-delete-customer').addClass('hidden');
+                        window.reloadCustomerTable();
+                    },
+                    error: window.showAjaxError
+                });
+            });
+
+            // Profile View
             $(document).on('click', '.viewCustomerButton', function() {
                 profileCustomerId = $(this).data('id-customer');
-                $('#profile-body').html(
-                    '<p class="text-sm text-gray-500 dark:text-gray-400">Đang tải...</p>');
-                $('#drawer-customer-profile').removeClass('translate-x-full').attr('aria-hidden', 'false');
+                $('#profile-body').html('<div class="py-12 text-center text-slate-400 text-xs">Đang tải thông tin khách hàng...</div>');
+                openDrawer('drawer-customer-profile');
 
                 $.ajax({
                     url: '/customer/' + profileCustomerId + '/profile',
                     type: 'GET',
                     success: function(c) {
                         const rows = c.orders.length ? c.orders.map(o => `
-                            <div class="flex items-center justify-between py-2 text-sm border-b dark:border-gray-700">
+                            <div class="flex items-center justify-between py-2.5 text-xs border-b border-slate-100 dark:border-slate-700">
                                 <div>
-                                    <div class="font-medium text-gray-900 dark:text-white">${o.order_code}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">${o.created_at} · ${o.status}</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">${o.order_code}</div>
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">${o.created_at} · ${o.status}</div>
                                 </div>
-                                <div class="font-medium text-gray-900 dark:text-white">${money(o.total_amount)}</div>
-                            </div>`).join('') :
-                            '<p class="text-sm text-gray-500 dark:text-gray-400">Khách chưa có đơn nào.</p>';
+                                <div class="font-bold text-slate-900 dark:text-white">${money(o.total_amount)}</div>
+                            </div>
+                        `).join('') : '<p class="py-6 text-xs text-center text-slate-400">Khách chưa có đơn hàng nào.</p>';
 
                         $('#profile-body').html(`
-                            <div class="mb-4">
-                                <div class="text-lg font-bold text-gray-900 dark:text-white">${c.customer_name}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">${c.customer_phone} · ${c.customer_email || 'Chưa có email'}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">${c.full_address}</div>
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-700 space-y-1">
+                                <div class="text-base font-bold text-slate-900 dark:text-white">${c.customer_name}</div>
+                                <div class="text-xs text-slate-600 dark:text-slate-300">📞 ${c.customer_phone} · ✉️ ${c.customer_email || 'Chưa có email'}</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">📍 ${c.full_address || 'Chưa có địa chỉ'}</div>
                             </div>
-                            <div class="grid grid-cols-3 gap-3 mb-4">
-                                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">Hạng</div>
-                                    <div class="font-bold text-gray-900 dark:text-white">${c.tier}</div>
+
+                            <div class="grid grid-cols-3 gap-2.5">
+                                <div class="p-3 text-center rounded-xl bg-indigo-50/50 border border-indigo-100 dark:bg-indigo-950/30 dark:border-indigo-900">
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Hạng</div>
+                                    <div class="font-bold text-indigo-700 dark:text-indigo-300 text-sm mt-0.5">${c.tier}</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">Số đơn</div>
-                                    <div class="font-bold text-gray-900 dark:text-white">${c.order_count}</div>
+                                <div class="p-3 text-center rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-700/40 dark:border-slate-700">
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Số đơn</div>
+                                    <div class="font-bold text-slate-900 dark:text-white text-sm mt-0.5">${c.order_count}</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">Đã chi</div>
-                                    <div class="font-bold text-gray-900 dark:text-white">${money(c.total_spent)}</div>
+                                <div class="p-3 text-center rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-700/40 dark:border-slate-700">
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Tổng chi</div>
+                                    <div class="font-bold text-emerald-600 text-sm mt-0.5">${money(c.total_spent)}</div>
                                 </div>
                             </div>
-                            <h6 class="mb-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Lịch sử mua</h6>
-                            ${rows}
+
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Lịch sử đơn hàng</h4>
+                                <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-white dark:bg-slate-800">
+                                    ${rows}
+                                </div>
+                            </div>
                         `);
                         $('#profile-note').val(c.note || '');
                     },
-                    error: function(xhr) {
+                    error: window.showAjaxError
+                });
+            });
+
+            $('#btn-save-note').click(function() {
+                if (!profileCustomerId) return;
+                $.ajax({
+                    url: '/customer/' + profileCustomerId + '/note',
+                    type: 'POST',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data: { note: $('#profile-note').val() },
+                    success: function(r) {
+                        window.showToast(r.success);
+                    },
+                    error: window.showAjaxError
+                });
+            });
+        });
+    </script>
+</x-app-layout>
+or: function(xhr) {
                         showToast((xhr.responseJSON || {}).error || 'Không tải được hồ sơ khách hàng.', 'error');
                     }
                 });

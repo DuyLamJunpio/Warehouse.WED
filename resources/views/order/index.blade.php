@@ -1,159 +1,203 @@
 <x-app-layout>
-    <div
-        class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="flex items-start justify-between gap-3 mb-4">
-                <div>
-                    <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Quản lý đơn hàng</h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Tồn kho đã trừ ngay khi lập đơn. Hủy đơn hoặc khách hoàn hàng thì hàng được cộng trả về kho.
-                    </p>
-                </div>
+    {{-- Header & Breadcrumb --}}
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
+                        <li class="inline-flex items-center">
+                            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
+                        </li>
+                        <li>
+                            <span class="mx-1 text-slate-400">/</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">Đơn hàng</span>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Quản lý đơn hàng
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-2.5">
                 <button type="button" id="btn-toggle-create"
-                    class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800 whitespace-nowrap">
-                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z">
-                        </path>
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span id="btn-toggle-create-label">Tạo đơn</span>
+                    <span id="btn-toggle-create-label">Bán hàng (POS)</span>
+                    <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-indigo-700 text-indigo-200 rounded">F2</kbd>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- KPI Summary Cards --}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+        <x-stat-card label="Tổng đơn" :value="$summary['total_orders']" color="neutral">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card label="Chờ xử lý" :value="$summary['by_status']['pending'] ?? 0" color="amber">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card label="Đang giao" :value="$summary['by_status']['shipping'] ?? 0" color="indigo">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card label="Đã hoàn thành" :value="$summary['by_status']['completed'] ?? 0" color="emerald">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card label="Đã hoàn / hủy" :value="($summary['by_status']['returned'] ?? 0) + ($summary['by_status']['cancelled'] ?? 0)" color="rose">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </x-slot:icon>
+        </x-stat-card>
+
+        <x-stat-card label="Doanh thu thực" :value="number_format($summary['revenue'], 0, ',', '.') . ' ₫'" color="emerald">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </x-slot:icon>
+        </x-stat-card>
+    </div>
+
+    {{-- POS Drawer Panel Include --}}
+    @include('order.create')
+
+    {{-- Filter & Search Bar --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs mb-4 p-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            {{-- Search & Status Dropdown --}}
+            <div class="flex flex-1 flex-col sm:flex-row items-center gap-3">
+                <div class="relative w-full sm:max-w-xs">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="filter-keyword"
+                        class="block w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white placeholder-slate-400"
+                        placeholder="Tìm theo mã đơn, tên khách, SĐT...">
+                    <button type="button" id="clearKeyword" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                <div class="w-full sm:w-56">
+                    <select id="filter-status"
+                        class="block w-full py-2 px-3 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white">
+                        <option value="">Tất cả trạng thái</option>
+                        @foreach ($statuses as $key => $label)
+                            <option value="{{ $key }}">{{ $label }} ({{ $summary['by_status'][$key] ?? 0 }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            {{-- Quick Filter Pills --}}
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button type="button" data-status-pill="" class="status-filter-pill px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 transition-all">
+                    Tất cả ({{ $summary['total_orders'] }})
+                </button>
+                <button type="button" data-status-pill="pending" class="status-filter-pill px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Chờ xử lý ({{ $summary['by_status']['pending'] ?? 0 }})
+                </button>
+                <button type="button" data-status-pill="shipping" class="status-filter-pill px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Đang giao ({{ $summary['by_status']['shipping'] ?? 0 }})
+                </button>
+                <button type="button" data-status-pill="completed" class="status-filter-pill px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Đã xong ({{ $summary['by_status']['completed'] ?? 0 }})
                 </button>
             </div>
 
-            {{-- Số liệu tổng quan --}}
-            <div class="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3 lg:grid-cols-6">
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Tổng đơn</div>
-                    <div id="tk-tong" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $summary['total_orders'] }}</div>
-                </div>
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Chờ xác nhận</div>
-                    <div id="tk-cho-xac-nhan" class="text-2xl font-bold text-yellow-500">{{ $summary['by_status']['pending'] ?? 0 }}</div>
-                </div>
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Đang giao</div>
-                    <div id="tk-dang-giao" class="text-2xl font-bold text-blue-500">{{ $summary['by_status']['shipping'] ?? 0 }}</div>
-                </div>
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Đã hoàn hàng</div>
-                    <div id="tk-hoan" class="text-2xl font-bold text-orange-500">{{ $summary['by_status']['returned'] ?? 0 }}</div>
-                </div>
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Đã hủy</div>
-                    <div id="tk-huy" class="text-2xl font-bold text-red-500">{{ $summary['by_status']['cancelled'] ?? 0 }}</div>
-                </div>
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Doanh thu ghi nhận</div>
-                    <div id="tk-doanh-thu" class="text-2xl font-bold text-green-600">
-                        {{ number_format($summary['revenue'], 0, ',', '.') }} ₫</div>
-                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Gồm đơn đã nhận tiền; trừ đơn hoàn và hủy.</div>
-                </div>
-            </div>
-
-            {{-- Bộ lọc --}}
-            <div class="flex flex-col gap-2 sm:flex-row">
-                <input type="text" id="filter-keyword" placeholder="Tìm theo mã đơn, tên hoặc số điện thoại"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <select id="filter-status"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 sm:w-64 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="">Tất cả trạng thái</option>
-                    @foreach ($statuses as $key => $label)
-                        <option value="{{ $key }}">{{ $label }} ({{ $summary['by_status'][$key] ?? 0 }})</option>
-                    @endforeach
-                </select>
-            </div>
         </div>
     </div>
 
-    @include('order.create')
+    {{-- Order Table Card --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th scope="col" class="p-4">Mã đơn &amp; Thời gian</th>
+                        <th scope="col" class="p-4">Người nhận / SĐT</th>
+                        <th scope="col" class="p-4">Số lượng</th>
+                        <th scope="col" class="p-4">Tổng tiền</th>
+                        <th scope="col" class="p-4">Trạng thái</th>
+                        <th scope="col" class="p-4">Thanh toán</th>
+                        <th scope="col" class="p-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTable" class="divide-y divide-slate-200/80 dark:divide-slate-700/80">
+                    @include('order.data')
+                </tbody>
+            </table>
+        </div>
 
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Mã đơn</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Người nhận</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Số lượng</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Tổng tiền</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Trạng thái</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Thanh toán</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderTable"
-                            class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @include('order.data')
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div id="orderPagination">
+            {{ $orders->links('vendor.pagination.tailwind') }}
         </div>
     </div>
 
-    <div id="orderPagination">
-        {{ $orders->links('vendor.pagination.tailwind') }}
-    </div>
+    {{-- DRAWER: CHI TIẾT ĐƠN HÀNG (ORDER DETAIL) --}}
+    <div id="drawer-order-detail" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-xl h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        {{-- Drawer Header --}}
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Chi tiết đơn hàng</h3>
+            </div>
+            <button type="button" id="closeDrawerOrder"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+                ✕
+            </button>
+        </div>
 
-    {{-- Ngăn chi tiết đơn --}}
-    <div id="drawer-order-detail"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-lg p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-hidden="true">
-        <h5 class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Chi tiết đơn hàng</h5>
-        <button type="button" id="closeDrawerOrder"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
+        {{-- Body Content --}}
+        <div class="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar" id="order-detail-body">
+            {{-- Loaded via AJAX --}}
+        </div>
 
-        <div id="order-detail-body"></div>
-
-        <div id="order-status-box" class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-            <label for="order-next-status" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Chuyển
-                trạng thái</label>
-            <div class="flex gap-2">
+        {{-- Status Transition Footer --}}
+        <div id="order-status-box" class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 sticky bottom-0">
+            <label for="order-next-status" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                Chuyển trạng thái đơn
+            </label>
+            <div class="flex items-center gap-3">
                 <select id="order-next-status"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                    class="block w-full text-sm rounded-xl bg-white border-slate-300 p-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></select>
                 <button type="button" id="btn-update-status"
-                    class="px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800 whitespace-nowrap">
+                    class="px-5 py-2.5 text-sm font-semibold text-white rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 whitespace-nowrap shadow-sm transition-all">
                     Cập nhật
                 </button>
             </div>
-            <p id="order-status-hint" class="mt-2 text-xs text-gray-500 dark:text-gray-400"></p>
+            <p id="order-status-hint" class="mt-2 text-xs text-slate-500 dark:text-slate-400"></p>
         </div>
     </div>
 
+    {{-- Scripts --}}
     <script>
         $(document).ready(function() {
             let currentOrderId = null;
+            const money = (n) => window.nhomNghin(n) + ' ₫';
 
-            const money = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
-
-            const openDrawer = () => $('#drawer-order-detail').removeClass('translate-x-full').attr('aria-hidden',
-                'false');
-            const closeDrawer = () => $('#drawer-order-detail').addClass('translate-x-full').attr('aria-hidden',
-                'true');
+            const openDrawer = () => $('#drawer-order-detail').removeClass('translate-x-full');
+            const closeDrawer = () => $('#drawer-order-detail').addClass('translate-x-full');
             $('#closeDrawerOrder').click(closeDrawer);
 
             const reloadOrders = () => {
@@ -166,133 +210,158 @@
                     },
                     success: function(data) {
                         $('#orderTable').html(data);
-                        // Phân trang không còn khớp sau khi lọc bằng AJAX nên ẩn đi.
-                        $('#orderPagination').hide();
                     }
                 });
             };
 
-            $('#filter-keyword').on('input', reloadOrders);
+            // Search with Debounce
+            $('#filter-keyword').on('input', window.debounce(function() {
+                const val = $(this).val();
+                if (val) $('#clearKeyword').removeClass('hidden');
+                else $('#clearKeyword').addClass('hidden');
+                reloadOrders();
+            }, 300));
+
+            $('#clearKeyword').on('click', function() {
+                $('#filter-keyword').val('');
+                $(this).addClass('hidden');
+                reloadOrders();
+            });
+
             $('#filter-status').on('change', reloadOrders);
 
+            $('.status-filter-pill').on('click', function() {
+                $('.status-filter-pill').removeClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').addClass('text-slate-600 font-medium');
+                $(this).addClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').removeClass('text-slate-600 font-medium');
+                const st = $(this).data('status-pill');
+                $('#filter-status').val(st);
+                reloadOrders();
+            });
+
+            // View Order Detail
             $(document).on('click', '.viewOrderButton', function() {
                 currentOrderId = $(this).data('order-id');
-                $('#order-detail-body').html(
-                    '<p class="text-sm text-gray-500 dark:text-gray-400">Đang tải...</p>');
+                $('#order-detail-body').html('<div class="py-12 text-center text-slate-400 text-sm">Đang tải thông tin đơn hàng...</div>');
                 openDrawer();
 
                 $.ajax({
                     url: '/order/' + currentOrderId,
                     type: 'GET',
                     success: function(o) {
-                        const items = o.items.map(i => `
-                            <tr>
-                                <td class="py-2 text-sm text-gray-900 dark:text-white">
-                                    ${i.product}<div class="text-xs text-gray-500 dark:text-gray-400">${i.variant}</div>
+                        const items = (o.items || []).map(i => `
+                            <tr class="text-xs">
+                                <td class="py-2.5">
+                                    <div class="font-bold text-slate-900 dark:text-white">${i.product}</div>
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">${i.variant}</div>
                                 </td>
-                                <td class="py-2 text-sm text-center text-gray-900 dark:text-white">${i.quantity}</td>
-                                <td class="py-2 text-sm text-right text-gray-900 dark:text-white">${money(i.unit_price)}</td>
-                                <td class="py-2 text-sm text-right text-gray-900 dark:text-white">${money(i.line_total)}</td>
-                            </tr>`).join('');
+                                <td class="py-2.5 text-center font-semibold text-slate-800 dark:text-slate-200">${i.quantity}</td>
+                                <td class="py-2.5 text-right text-slate-600 dark:text-slate-400">${money(i.unit_price)}</td>
+                                <td class="py-2.5 text-right font-bold text-slate-900 dark:text-white">${money(i.line_total)}</td>
+                            </tr>
+                        `).join('');
 
                         $('#order-detail-body').html(`
-                            <div class="mb-4">
-                                <div class="text-lg font-bold text-gray-900 dark:text-white">${o.order_code || '#' + o.id}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">${o.created_at} · ${o.status_label || 'Chưa có trạng thái'} · NV: ${o.seller || '—'}</div>
+                            {{-- Header summary card --}}
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-700 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-base font-bold text-slate-900 dark:text-white">${o.order_code || '#' + o.id}</span>
+                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                        ${o.status_label || 'Chưa có trạng thái'}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">
+                                    Tạo lúc: ${o.created_at} · Người lập: ${o.seller || 'Hệ thống'}
+                                </div>
                             </div>
-                            <div class="p-3 mb-4 text-sm rounded-lg bg-gray-50 dark:bg-gray-700">
-                                <div class="font-medium text-gray-900 dark:text-white">${o.shipping_name || o.customer || 'Khách lẻ'}</div>
-                                <div class="text-gray-500 dark:text-gray-400">${o.shipping_phone || '—'}</div>
-                                <div class="text-gray-500 dark:text-gray-400">${o.shipping_address || 'Không có địa chỉ giao'}</div>
-                                <div class="mt-1 text-gray-500 dark:text-gray-400">Thanh toán: ${o.payment_method || '—'}</div>
+
+                            {{-- Customer Information --}}
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Thông tin người nhận</div>
+                                <div class="p-3.5 rounded-xl bg-white dark:bg-slate-700/30 border border-slate-200/80 dark:border-slate-700 text-xs space-y-1">
+                                    <div class="font-bold text-slate-900 dark:text-white text-sm">${o.shipping_name || o.customer || 'Khách lẻ'}</div>
+                                    <div class="text-slate-600 dark:text-slate-300">📞 ${o.shipping_phone || 'Chưa cung cấp SĐT'}</div>
+                                    <div class="text-slate-600 dark:text-slate-300">📍 ${o.shipping_address || 'Nhận trực tiếp tại cửa hàng'}</div>
+                                    <div class="text-slate-600 dark:text-slate-300">💳 Thanh toán: ${o.payment_method || 'Tiền mặt'}</div>
+                                </div>
                             </div>
-                            <table class="w-full mb-4">
-                                <thead>
-                                    <tr class="text-xs text-gray-500 uppercase border-b dark:text-gray-400 dark:border-gray-700">
-                                        <th class="py-2 text-left">Sản phẩm</th>
-                                        <th class="py-2 text-center">SL</th>
-                                        <th class="py-2 text-right">Đơn giá</th>
-                                        <th class="py-2 text-right">Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y dark:divide-gray-700">${items}</tbody>
-                            </table>
-                            <div class="text-sm text-right text-gray-900 dark:text-white">
-                                <div>Tiền hàng: ${money(o.subtotal)}</div>
-                                <div>Phí giao: ${money(o.shipping_fee)}</div>
-                                <div>Chiết khấu: ${money(o.discount)}</div>
-                                <div class="mt-1 text-lg font-bold">Tổng: ${money(o.total_amount)}</div>
+
+                            {{-- Items Table --}}
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Danh sách sản phẩm</div>
+                                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                    <table class="w-full text-left p-3">
+                                        <thead class="bg-slate-50 dark:bg-slate-700/60 text-[11px] uppercase font-bold text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                            <tr>
+                                                <th class="py-2 px-3">Sản phẩm</th>
+                                                <th class="py-2 text-center">SL</th>
+                                                <th class="py-2 text-right">Đơn giá</th>
+                                                <th class="py-2 px-3 text-right">Tổng</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700 px-3">
+                                            ${items}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            ${o.note ? `<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Ghi chú: ${o.note}</p>` : ''}
+
+                            {{-- Payment Calculation --}}
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs">
+                                <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                                    <span>Tiền hàng:</span>
+                                    <span class="font-medium text-slate-900 dark:text-white">${money(o.subtotal)}</span>
+                                </div>
+                                <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                                    <span>Phí giao hàng:</span>
+                                    <span class="font-medium text-slate-900 dark:text-white">${money(o.shipping_fee || 0)}</span>
+                                </div>
+                                <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                                    <span>Chiết khấu:</span>
+                                    <span class="font-medium text-rose-600">-${money(o.discount || 0)}</span>
+                                </div>
+                                <div class="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-600">
+                                    <span>Tổng thanh toán:</span>
+                                    <span class="text-base text-indigo-600 dark:text-indigo-400">${money(o.total_amount)}</span>
+                                </div>
+                            </div>
+
+                            ${o.note ? `<div class="text-xs p-3 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-xl border border-amber-200 dark:border-amber-800"><strong>Ghi chú:</strong> ${o.note}</div>` : ''}
                         `);
 
-                        // Chỉ hiện những trạng thái server cho phép chuyển sang.
                         const sel = $('#order-next-status').empty();
-                        if (o.next_statuses.length) {
-                            o.next_statuses.forEach(s => sel.append($('<option>').val(s.value).text(s
-                                .label)));
+                        if (o.next_statuses && o.next_statuses.length) {
+                            o.next_statuses.forEach(s => sel.append($('<option>').val(s.value).text(s.label)));
                             $('#order-status-box').show();
                             $('#order-status-hint').text(
-                                o.next_statuses.some(n => ['cancelled', 'returned'].includes(n
-                                    .value)) ?
-                                'Hủy đơn hoặc hoàn hàng sẽ cộng trả hàng về kho.' : '');
+                                o.next_statuses.some(n => ['cancelled', 'returned'].includes(n.value)) ?
+                                '💡 Lưu ý: Hủy đơn hoặc hoàn hàng sẽ tự động cộng trả lại tồn kho sản phẩm.' : ''
+                            );
                         } else {
                             $('#order-status-box').hide();
                         }
                     },
-                    error: showAjaxError
+                    error: window.showAjaxError
                 });
             });
 
-            // Vẽ lại các ô số liệu từ dữ liệu máy chủ vừa gửi kèm.
-            const veLaiSoLieu = (summary) => {
-                if (!summary) return;
-                const dem = summary.by_status || {};
-                $('#tk-tong').text(summary.total_orders ?? 0);
-                $('#tk-cho-xac-nhan').text(dem.pending ?? 0);
-                $('#tk-dang-giao').text(dem.shipping ?? 0);
-                $('#tk-hoan').text(dem.returned ?? 0);
-                $('#tk-huy').text(dem.cancelled ?? 0);
-                $('#tk-doanh-thu').text(money(summary.revenue ?? 0));
-            };
-
-            /**
-             * Đổi trạng thái một đơn.
-             *
-             * Nút bị khoá và thay bằng vòng quay trong lúc chờ: gọi tới máy chủ đặt
-             * ở xa mất cả giây, không có dấu hiệu gì thì nhân viên bấm tiếp lần hai
-             * và đơn nhảy thêm một bước nữa.
-             */
+            // Fast Status Change
             const doiTrangThai = ($nut, orderId, status) => {
                 if ($nut.prop('disabled')) return;
-
                 const chuCu = $nut.html();
-                $nut.prop('disabled', true)
-                    .addClass('opacity-60 cursor-not-allowed')
-                    .html(
-                        '<svg class="inline w-4 h-4 mr-2 -mt-0.5 animate-spin" viewBox="0 0 24 24" fill="none">' +
-                        '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
-                        '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>' +
-                        '</svg>Đang lưu...');
+                $nut.prop('disabled', true).addClass('opacity-50 cursor-not-allowed').text('Đang xử lý...');
 
                 return $.ajax({
                     url: '/order/' + orderId + '/status',
                     type: 'POST',
-                    data: {
-                        order_status: status
-                    },
+                    data: { order_status: status },
                     success: function(response) {
-                        showToast(response.success);
-                        veLaiSoLieu(response.summary);
+                        window.showToast(response.success);
                         reloadOrders();
                     },
                     error: function(xhr) {
-                        // Dòng vẫn còn nguyên trên màn hình nên phải trả nút về như cũ.
-                        $nut.prop('disabled', false)
-                            .removeClass('opacity-60 cursor-not-allowed')
-                            .html(chuCu);
-                        showAjaxError(xhr);
-                    },
+                        $nut.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed').html(chuCu);
+                        window.showAjaxError(xhr);
+                    }
                 });
             };
 
@@ -305,10 +374,8 @@
                 if (!currentOrderId) return;
                 const status = $('#order-next-status').val();
                 if (!status) return;
-
-                // Bấm khi đang gửi thì hàm bỏ qua và không trả về gì.
-                const yeuCau = doiTrangThai($(this), currentOrderId, status);
-                if (yeuCau) yeuCau.done(closeDrawer);
+                const req = doiTrangThai($(this), currentOrderId, status);
+                if (req) req.done(closeDrawer);
             });
         });
     </script>

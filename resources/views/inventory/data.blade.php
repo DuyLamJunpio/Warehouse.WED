@@ -2,57 +2,77 @@
     @php
         $isOut = $v->quantity <= 0;
         $isLow = !$isOut && $v->quantity <= $threshold;
+        $stockBadgeVariant = $isOut ? 'danger' : ($isLow ? 'warning' : 'success');
+        $stockBadgeLabel = $isOut ? 'Hết hàng' : ($isLow ? 'Sắp hết' : 'Còn hàng');
     @endphp
-    <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-        <td class="p-4 text-sm whitespace-nowrap">
-            <div class="text-base font-semibold text-gray-900 dark:text-white">
+    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
+        {{-- Product Info --}}
+        <td class="p-4">
+            <div class="text-sm font-semibold text-slate-900 dark:text-white">
                 {{ $v->product->product_name ?? 'Sản phẩm đã xóa' }}
             </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">
-                {{ $v->product->category->name ?? 'Chưa có danh mục' }}
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {{ $v->product->category->name ?? 'Chưa phân loại' }}
             </div>
         </td>
-        <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $v->label }}</td>
-        <td class="p-4 text-sm text-gray-500 whitespace-nowrap dark:text-gray-400">{{ $v->sku }}</td>
-        <td
-            class="p-4 text-base font-bold whitespace-nowrap {{ $isOut ? 'text-red-600' : ($isLow ? 'text-yellow-500' : 'text-gray-900 dark:text-white') }}">
-            {{ $v->quantity }}
-        </td>
+
+        {{-- Variant (Size / Color) --}}
         <td class="p-4 whitespace-nowrap">
-            @if ($isOut)
-                <span
-                    class="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded dark:bg-red-900 dark:text-red-300">Hết
-                    hàng</span>
-            @elseif ($isLow)
-                <span
-                    class="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded dark:bg-yellow-900 dark:text-yellow-300">Sắp
-                    hết</span>
-            @else
-                <span
-                    class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded dark:bg-green-900 dark:text-green-300">Còn
-                    hàng</span>
-            @endif
+            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                {{ $v->label }}
+            </span>
         </td>
-        <td class="p-4 text-base text-gray-900 whitespace-nowrap dark:text-white">
+
+        {{-- SKU --}}
+        <td class="p-4 text-xs font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
+            {{ $v->sku ?? '—' }}
+        </td>
+
+        {{-- Quantity --}}
+        <td class="p-4 whitespace-nowrap">
+            <span class="text-sm font-bold {{ $isOut ? 'text-rose-600 dark:text-rose-400' : ($isLow ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white') }}">
+                {{ $v->quantity }}
+            </span>
+        </td>
+
+        {{-- Status Badge --}}
+        <td class="p-4 whitespace-nowrap">
+            <x-badge :variant="$stockBadgeVariant" size="xs">
+                {{ $stockBadgeLabel }}
+            </x-badge>
+        </td>
+
+        {{-- Stock Value --}}
+        <td class="p-4 whitespace-nowrap text-xs font-medium text-slate-700 dark:text-slate-300">
             {{ number_format($v->quantity * ($v->product->import_price ?? 0), 0, ',', '.') }} ₫
         </td>
-        <td class="p-4 space-x-2 whitespace-nowrap">
-            <button type="button" data-variant-id="{{ $v->id }}" data-quantity="{{ $v->quantity }}"
-                data-label="{{ ($v->product->product_name ?? '') . ' — ' . $v->label }}"
-                class="adjustStockButton inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
-                Điều chỉnh
-            </button>
-            <button type="button" data-variant-id="{{ $v->id }}"
-                data-label="{{ ($v->product->product_name ?? '') . ' — ' . $v->label }}"
-                class="historyStockButton inline-flex items-center px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-                Lịch sử
-            </button>
+
+        {{-- Actions --}}
+        <td class="p-4 whitespace-nowrap text-right">
+            <div class="inline-flex items-center gap-1.5">
+                <button type="button" data-variant-id="{{ $v->id }}" data-quantity="{{ $v->quantity }}"
+                    data-label="{{ ($v->product->product_name ?? '') . ' — ' . $v->label }}"
+                    class="adjustStockButton inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Kiểm kho
+                </button>
+                <button type="button" data-variant-id="{{ $v->id }}"
+                    data-label="{{ ($v->product->product_name ?? '') . ' — ' . $v->label }}"
+                    class="historyStockButton p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    title="Xem lịch sử điều chỉnh">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+            </div>
         </td>
     </tr>
 @empty
     <tr>
-        <td colspan="7" class="p-4 text-sm text-center text-gray-500 dark:text-gray-400">
-            Không có biến thể nào khớp bộ lọc.
+        <td colspan="7" class="p-0">
+            <x-empty-state icon="box" title="Không có biến thể tồn kho" description="Không tìm thấy mặt hàng nào khớp bộ lọc." />
         </td>
     </tr>
 @endforelse

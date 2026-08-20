@@ -1,280 +1,204 @@
 <x-app-layout>
-    <div class="grid grid-cols-1 px-4 pt-6 xl:grid-cols-3 xl:gap-4 dark:bg-gray-900">
-        <div class="mb-4 col-span-full xl:mb-2">
-            <nav class="flex mb-5" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
-                    <li class="inline-flex items-center">
-                        <a href="{{ route('dashboard') }}"
-                            class="inline-flex items-center text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-white">
-                            <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
-                                </path>
-                            </svg>
-                            Home
-                        </a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <a href="{{ route('profile.edit') }}"
-                                class="ml-1 text-gray-700 hover:text-primary-600 md:ml-2 dark:text-gray-300 dark:hover:text-white">Tài khoản</a>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Hồ sơ quản trị</h1>
-        </div>
-        <!-- Right Content -->
-        <div class="col-span-full xl:col-auto">
-            <div
-                class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
-                <div
-                    class="flex flex-col justify-center items-center sm:flex-row xl:flex-col 2xl:flex-row sm:space-x-4 xl:space-x-0 2xl:space-x-4">
-                    <img class="mb-4 rounded-lg w-28 h-28 sm:mb-0 xl:mb-4 2xl:mb-0" id="preview-image"
-                        src="{{ $user->avatar == null ? 'https://www.androidponsel.com/wp-content/uploads/2023/04/profil-kosong-bulat-dua.jpg' : Storage::url($user->avatar) }}"
-                        alt=" picture">
-                    <div>
-                        <h3 class="text-center mb-1 text-xl font-bold text-gray-900 dark:text-white">{{ $user->name }}
-                        </h3>
-                        <div class="mb-4 text-sm text-gray-500 dark:text-gray-400"></div>
-                        <div class="flex items-center space-x-4 justify-center w-full">
-                            <form action="{{ route('profile.upload') }}" method="post" enctype="multipart/form-data"
-                                class="w-full">
-                                @csrf
-                                <input type="file" name="avatar" hidden id="avatar">
-                                <div class="text-center"> <!-- Bọc nút và thẻ p trong một div với text-center -->
-                                    <button type="submit"
-                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                                        <svg class="w-4 h-4 mr-2 -ml-1" fill="currentColor" viewBox="0 0 20 20"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z">
-                                            </path>
-                                            <path d="M9 13h2v5a1 1 0 11-2 0v-5z"></path>
-                                        </svg>
-                                        Tải lên picture
-                                    </button>
-                                </div>
-                                <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
-                                @if (session('status') === 'profile-upload')
-                                    <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-                                        class="mt-2 text-sm text-green-500 dark:text-green-400 text-center mx-auto">
-                                        {{ __('Successfully!') }}
-                                    </p>
-                                @endif
-                            </form>
-                        </div>
+    {{-- Header & Breadcrumb --}}
+    <div class="mb-6">
+        <nav class="flex mb-2" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
+                <li class="inline-flex items-center">
+                    <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
+                </li>
+                <li>
+                    <span class="mx-1 text-slate-400">/</span>
+                    <span class="text-slate-800 dark:text-slate-200 font-medium">Hồ sơ cá nhân</span>
+                </li>
+            </ol>
+        </nav>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Hồ sơ & Tài khoản
+        </h1>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Quản lý thông tin cá nhân, ảnh đại diện và bảo mật tài khoản quản trị.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- Left Column: Avatar & Password --}}
+        <div class="space-y-6">
+            {{-- Avatar Card --}}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-6 shadow-xs text-center">
+                <div class="relative inline-block mx-auto mb-4 group cursor-pointer" onclick="$('#avatar').click()">
+                    <img id="preview-image"
+                        class="w-28 h-28 rounded-2xl object-cover border-2 border-indigo-100 dark:border-indigo-900/60 shadow-sm"
+                        src="{{ $user->avatar ? Storage::url($user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=6366f1&color=fff&size=128' }}"
+                        alt="{{ $user->name }}">
+                    <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
                     </div>
                 </div>
-            </div>
-            <div
-                class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
-                <div class="flow-root">
-                    <h3 class="mb-4 text-xl font-semibold dark:text-white">Đổi mật khẩu</h3>
-                    <form method="post" action="{{ route('password.update') }}">
-                        @csrf
-                        @method('put')
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-6">
-                                <x-input-label for="update_password_current_password" :value="__('Current Password')" />
-                                <x-text-input id="update_password_current_password" name="current_password"
-                                    type="password" class="mt-1 block w-full" autocomplete="off" />
-                                <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
-                            </div>
-                            <div class="col-span-6 sm:col-span-6">
-                                <x-input-label for="update_password_password" :value="__('New Password')" />
-                                <x-text-input id="update_password_password" name="password" type="password"
-                                    class="mt-1 block w-full" autocomplete="off" />
-                                <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
-                            </div>
-                            <div class="col-span-6 sm:col-span-6">
-                                <x-input-label for="update_password_password_confirmation" :value="__('Confirm Password')" />
-                                <x-text-input id="update_password_password_confirmation" name="password_confirmation"
-                                    type="password" class="mt-1 block w-full" autocomplete="off" />
-                                <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <x-flowbie-button>{{ __('Save Password') }}</x-flowbie-button>
-                                @if (session('status') === 'password-updated')
-                                    <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-                                        class="text-sm text-green-500 dark:text-green-400">{{ __('Successfully!') }}
-                                    </p>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
+
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ $user->name }}</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $user->email }}</p>
+                <div class="mt-2">
+                    <x-badge :variant="$user->role == 1 ? 'purple' : 'info'" size="xs">
+                        {{ $user->role == 1 ? 'Quản trị viên (Admin)' : 'Nhân viên' }}
+                    </x-badge>
                 </div>
-            </div>
-        </div>
-        <div class="col-span-2">
-            <div
-                class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
-                <h3 class="mb-4 text-xl font-semibold dark:text-white">Thông tin quản trị</h3>
-                <form method="post" action="{{ route('profile.update') }}">
+
+                <form action="{{ route('profile.upload') }}" method="post" enctype="multipart/form-data" class="mt-5">
                     @csrf
-                    @method('patch')
-                    <div class="grid grid-cols-6 gap-6">
-                        <div class="col-span-6 sm:col-span-3">
-                            <x-input-label for="firstname" :value="__('Firstname')" />
-                            <x-text-input id="firstname" name="firstname" type="text" :value="old('firstname', $firstName)"
-                                placeholder="Nhập tên" autofocus autocomplete="firstname" />
-                            <x-input-error class="mt-2" :messages="$errors->get('firstname')" />
-                        </div>
-                        <div class="col-span-6 sm:col-span-3">
-                            <x-input-label for="lastname" :value="__('Lastname')" />
-                            <x-text-input id="lastname" name="lastname" type="text" :value="old('lastname', $lastName)"
-                                placeholder="Nhập họ" autofocus autocomplete="lastname" />
-                            <x-input-error class="mt-2" :messages="$errors->get('lastname')" />
-                        </div>
-                        <div class="col-span-6 sm:col-span-3">
-                            <x-input-label for="email" :value="__('Email')" />
-                            <x-text-input id="email" name="email" type="email" :value="old('email', $user->email)" readonly
-                                autofocus autocomplete="email" />
-                            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-                        </div>
-                        <div class="col-span-6 sm:col-span-3">
-                            <x-input-label for="address" :value="__('Address')" />
-                            <x-text-input id="address" name="address" type="text" :value="old('address', $user->address)"
-                                placeholder="Nhập địa chỉ" autofocus autocomplete="address" />
-                            <x-input-error class="mt-2" :messages="$errors->get('address')" />
-                        </div>
-                        <div class="col-span-6 sm:col-span-3">
-                            <x-input-label for="phone_number" :value="__('Phone Number')" />
-                            <x-text-input id="phone_number" name="phone_number" type="text" :value="old('phone_number', $user->phone_number)"
-                                placeholder="Nhập số điện thoại" autofocus autocomplete="phone_number" />
-                            <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
-                        </div>
-                        <div class="col-span-6 sm:col-span-3">
-                            <x-input-label for="birthday" :value="__('Birthday')" />
-                            <x-text-input datepicker datepicker-autohide datepicker-format="dd-mm-yyyy" id="birthday"
-                                name="birthday" type="text" :value="old('birthday', $user->birthday)" placeholder="Select date" autofocus
-                                autocomplete="birthday" />
-                            <x-input-error class="mt-2" :messages="$errors->get('birthday')" />
-                        </div>
-                        <x-text-input id="name" name="name" style="width: 200px" type="hidden"
-                            :value="old('name', $user->name)" autofocus autocomplete="name" />
-                        <div class="col-span-6 sm:col-full">
-                            <div class="flex items-center gap-4">
-                                <x-flowbie-button>{{ __('Save Infomation') }}</x-flowbie-button>
-                                @if (session('status') === 'profile-updated')
-                                    <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-                                        class="text-sm text-green-500 dark:text-green-400">{{ __('Successfully!') }}
-                                    </p>
-                                @endif
-                            </div>
-                        </div>
+                    <input type="file" name="avatar" hidden id="avatar" accept="image/*">
+                    <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span>Cập nhật ảnh đại diện</span>
+                    </button>
+                    <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
+                    @if (session('status') === 'profile-upload')
+                        <p class="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">Đã cập nhật ảnh thành công!</p>
+                    @endif
+                </form>
+            </div>
+
+            {{-- Change Password Card --}}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-6 shadow-xs">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Đổi mật khẩu</h3>
+                <form method="post" action="{{ route('password.update') }}" class="space-y-4">
+                    @csrf
+                    @method('put')
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mật khẩu hiện tại</label>
+                        <input type="password" name="current_password" required autocomplete="current-password"
+                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-1" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mật khẩu mới</label>
+                        <input type="password" name="password" required autocomplete="new-password"
+                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-1" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Xác nhận mật khẩu mới</label>
+                        <input type="password" name="password_confirmation" required autocomplete="new-password"
+                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-1" />
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600 transition-all">
+                            <span>Lưu mật khẩu mới</span>
+                        </button>
+                        @if (session('status') === 'password-updated')
+                            <p class="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 text-center">Đã đổi mật khẩu thành công!</p>
+                        @endif
                     </div>
                 </form>
             </div>
-            <div
-                class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
-                <div class="flow-root">
-                    <h3 class="text-xl font-semibold dark:text-white">Phiên đăng nhập</h3>
-                    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <li class="py-4">
-                            <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-6 h-6 dark:text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-base font-semibold text-gray-900 truncate dark:text-white">
-                                        California 123.123.123.123
-                                    </p>
-                                    <p class="text-sm font-normal text-gray-500 truncate dark:text-gray-400">
-                                        Chrome on macOS
-                                    </p>
-                                </div>
-                                <div class="inline-flex items-center">
-                                    <a href="#"
-                                        class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Thu hồi</a>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="pt-4 pb-6">
-                            <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-6 h-6 dark:text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-base font-semibold text-gray-900 truncate dark:text-white">
-                                        Rome 24.456.355.98
-                                    </p>
-                                    <p class="text-sm font-normal text-gray-500 truncate dark:text-gray-400">
-                                        Safari on iPhone
-                                    </p>
-                                </div>
-                                <div class="inline-flex items-center">
-                                    <a href="#"
-                                        class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Thu hồi</a>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                    <div>
-                        <button
-                            class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">See
-                            more</button>
+        </div>
+
+        {{-- Right Column: Profile Info Form --}}
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-6 shadow-xs">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Thông tin chi tiết</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Cập nhật họ tên, địa chỉ và thông tin liên hệ của bạn.</p>
+
+                <form method="post" action="{{ route('profile.update') }}" class="space-y-4">
+                    @csrf
+                    @method('patch')
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Họ</label>
+                            <input type="text" id="lastname" name="lastname" value="{{ old('lastname', $lastName) }}" placeholder="Nguyễn"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <x-input-error class="mt-1" :messages="$errors->get('lastname')" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tên</label>
+                            <input type="text" id="firstname" name="firstname" value="{{ old('firstname', $firstName) }}" placeholder="Văn A"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <x-input-error class="mt-1" :messages="$errors->get('firstname')" />
+                        </div>
                     </div>
-                </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ Email</label>
+                            <input type="email" name="email" value="{{ old('email', $user->email)" readonly
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-slate-100 px-3.5 py-2.5 shadow-xs text-slate-500 cursor-not-allowed dark:bg-slate-700/50 dark:border-slate-600 dark:text-slate-400">
+                            <p class="mt-1 text-[11px] text-slate-400">Email dùng làm tên đăng nhập cố định.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Số điện thoại</label>
+                            <input type="text" name="phone_number" value="{{ old('phone_number', $user->phone_number) }}" placeholder="0901234567"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <x-input-error class="mt-1" :messages="$errors->get('phone_number')" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ</label>
+                            <input type="text" name="address" value="{{ old('address', $user->address) }}" placeholder="Hà Nội / TP.HCM"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <x-input-error class="mt-1" :messages="$errors->get('address')" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ngày sinh</label>
+                            <input type="date" name="birthday" value="{{ old('birthday', $user->birthday) }}"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <x-input-error class="mt-1" :messages="$errors->get('birthday')" />
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="name" name="name" value="{{ old('name', $user->name) }}">
+
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/80 dark:border-slate-700/80">
+                        @if (session('status') === 'profile-updated')
+                            <p class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Đã lưu thông tin!</p>
+                        @endif
+                        <button type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                            <span>Lưu thông tin hồ sơ</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            // Lắng nghe sự kiện input trên cả hai trường first-name và last-name
-            $('#firstname, #lastname').on('input', function() {
-                // Lấy giá trị từ mỗi trường
-                var firstName = $('#firstname').val();
-                var lastName = $('#lastname').val();
 
-                // Cập nhật giá trị của trường name với firstName và lastName
-                // Bạn có thể thêm một khoảng trắng giữa firstName và lastName nếu muốn
-                $('#name').val(firstName + ' ' + lastName);
-            });
-        });
-    </script>
     <script>
         $(document).ready(function() {
-            // Lấy các phần tử DOM cần thiết
+            $('#firstname, #lastname').on('input', function() {
+                var firstName = $('#firstname').val().trim();
+                var lastName = $('#lastname').val().trim();
+                $('#name').val((lastName + ' ' + firstName).trim());
+            });
+
             var imageInput = $("#avatar");
             var previewImage = $("#preview-image");
 
-            // Sự kiện click cho button "Choose image"
-            previewImage.on("click", function() {
-                imageInput.click(); // Kích hoạt sự kiện click trên input type=file
-            });
-
-            // Sự kiện khi có thay đổi trong input type=file
             imageInput.on("change", function() {
-                var file = this.files[0]; // Lấy file đầu tiên từ danh sách các file được chọn
+                var file = this.files[0];
                 if (file) {
-                    // Đọc file hình ảnh dưới dạng URL
                     var reader = new FileReader();
                     reader.onload = function(event) {
-                        // Hiển thị hình ảnh đã chọn lên thẻ <img>
                         previewImage.attr("src", event.target.result);
                     };
-                    reader.readAsDataURL(file); // Đọc file dưới dạng URL Data
+                    reader.readAsDataURL(file);
                 }
             });
         });
     </script>
-
 </x-app-layout>

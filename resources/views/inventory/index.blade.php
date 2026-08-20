@@ -1,196 +1,259 @@
 <x-app-layout>
-    <div
-        class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="mb-4">
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Quản lý tồn kho</h1>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Tồn kho tính theo từng biến thể size/màu. Dưới {{ $threshold }} sản phẩm là sắp hết hàng.
-                </p>
+    {{-- Header & Breadcrumb --}}
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
+                        <li class="inline-flex items-center">
+                            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
+                        </li>
+                        <li>
+                            <span class="mx-1 text-slate-400">/</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">Tồn kho</span>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Quản lý tồn kho &amp; Kiểm kê
+                </h1>
+            </div>
+        </div>
+    </div>
+
+    {{-- KPI Summary Cards --}}
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+        <x-stat-card label="Tổng sản phẩm tồn" :value="number_format($summary['total_quantity'], 0, ',', '.')" color="indigo">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </x-slot:icon>
+            <span class="text-xs text-slate-400 dark:text-slate-500">{{ $summary['total_variants'] }} biến thể</span>
+        </x-stat-card>
+
+        <x-stat-card label="Sắp hết hàng (≤ {{ $threshold }})" :value="$summary['low_stock']" color="amber">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </x-slot:icon>
+            <span class="text-xs text-amber-600 dark:text-amber-400">Cần nhập thêm</span>
+        </x-stat-card>
+
+        <x-stat-card label="Hết hàng (0)" :value="$summary['out_of_stock']" color="rose">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            </x-slot:icon>
+            <span class="text-xs text-rose-600 dark:text-rose-400">Tạm ngừng bán</span>
+        </x-stat-card>
+
+        <x-stat-card label="Tổng giá trị vốn kho" :value="number_format($summary['stock_value'], 0, ',', '.') . ' ₫'" color="emerald">
+            <x-slot:icon>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </x-slot:icon>
+            <span class="text-xs text-slate-400 dark:text-slate-500">Tính theo giá nhập</span>
+        </x-stat-card>
+    </div>
+
+    {{-- Filter & Search Bar --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs mb-4 p-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            {{-- Search & Category Filter --}}
+            <div class="flex flex-1 flex-col sm:flex-row items-center gap-3">
+                <div class="relative w-full sm:max-w-xs">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="filter-keyword"
+                        class="block w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white placeholder-slate-400"
+                        placeholder="Tìm tên sản phẩm, SKU...">
+                    <button type="button" id="clearKeyword" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                <div class="w-full sm:w-56">
+                    <select id="filter-category"
+                        class="block w-full py-2 px-3 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white">
+                        <option value="">Tất cả danh mục</option>
+                        @foreach ($categories as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
-            {{-- Số liệu tổng quan --}}
-            <div class="grid grid-cols-2 gap-4 mb-4 lg:grid-cols-4">
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Tổng tồn</div>
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                        {{ number_format($summary['total_quantity'], 0, ',', '.') }}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $summary['total_variants'] }} biến thể
+            {{-- Quick Filter Pills --}}
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button type="button" data-stock-filter="" class="stock-filter-pill px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 transition-all">
+                    Tất cả ({{ $summary['total_variants'] }})
+                </button>
+                <button type="button" data-stock-filter="low" class="stock-filter-pill px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Sắp hết ({{ $summary['low_stock'] }})
+                </button>
+                <button type="button" data-stock-filter="out" class="stock-filter-pill px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Hết hàng ({{ $summary['out_of_stock'] }})
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- Inventory Table Card --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th scope="col" class="p-4">Sản phẩm &amp; Danh mục</th>
+                        <th scope="col" class="p-4">Biến thể (Size/Màu)</th>
+                        <th scope="col" class="p-4">Mã SKU</th>
+                        <th scope="col" class="p-4">Số lượng tồn</th>
+                        <th scope="col" class="p-4">Tình trạng</th>
+                        <th scope="col" class="p-4">Giá trị tồn kho</th>
+                        <th scope="col" class="p-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable" class="divide-y divide-slate-200/80 dark:divide-slate-700/80">
+                    @include('inventory.data')
+                </tbody>
+            </table>
+        </div>
+
+        <div id="inventoryPagination">
+            {{ $variants->links('vendor.pagination.tailwind') }}
+        </div>
+    </div>
+
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: ĐIỀU CHỈNH TỒN KHO (ADJUST STOCK)                                 --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-adjust-stock" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        {{-- Drawer Header --}}
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Kiểm kê / Điều chỉnh kho</h3>
+            </div>
+            <button type="button" id="closeDrawerAdjust"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+                ✕
+            </button>
+        </div>
+
+        {{-- Form Content --}}
+        <form id="formAdjust" class="flex-1 flex flex-col justify-between">
+            @csrf
+            <div class="p-6 space-y-5 flex-1 overflow-y-auto custom-scrollbar">
+
+                {{-- Target item info --}}
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-700 space-y-1">
+                    <div id="adjust-label" class="text-sm font-bold text-slate-900 dark:text-white"></div>
+                    <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+                        <span>Tồn kho trên hệ thống:</span>
+                        <span id="adjust-current" class="font-bold text-indigo-600 dark:text-indigo-400 text-sm"></span>
                     </div>
                 </div>
-                <div class="p-4 rounded-lg bg-yellow-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Sắp hết hàng</div>
-                    <div class="text-2xl font-bold text-yellow-500">{{ $summary['low_stock'] }}</div>
+
+                {{-- Actual Quantity Input --}}
+                <div>
+                    <label for="adjust-quantity" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Số lượng thực tế sau kiểm đếm <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="number" min="0" id="adjust-quantity" name="quantity" required
+                        class="block w-full text-base font-bold rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    
+                    {{-- Difference Preview --}}
+                    <div id="adjust-diff-preview" class="mt-2 text-xs flex items-center justify-between font-medium">
+                        <span class="text-slate-500">Chênh lệch:</span>
+                        <span id="adjust-diff-val" class="font-bold">0</span>
+                    </div>
                 </div>
-                <div class="p-4 rounded-lg bg-red-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Hết hàng</div>
-                    <div class="text-2xl font-bold text-red-600">{{ $summary['out_of_stock'] }}</div>
+
+                {{-- Reason Select --}}
+                <div>
+                    <label for="adjust-reason" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Lý do điều chỉnh <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="adjust-reason" name="reason" required
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        @foreach ($reasons as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div class="text-xs text-gray-500 uppercase dark:text-gray-400">Giá trị tồn kho</div>
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                        {{ number_format($summary['stock_value'], 0, ',', '.') }} ₫</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">theo giá nhập</div>
+
+                {{-- Note Textarea --}}
+                <div>
+                    <label for="adjust-note" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Ghi chú chi tiết
+                    </label>
+                    <textarea id="adjust-note" name="note" rows="3" placeholder="Nhập lý do kiểm đếm, người chịu trách nhiệm..."
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                 </div>
+
             </div>
 
-            {{-- Bộ lọc --}}
-            <div class="flex flex-col gap-2 sm:flex-row">
-                <input type="text" id="filter-keyword" placeholder="Tìm theo tên sản phẩm hoặc SKU"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <select id="filter-category"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 sm:w-64 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="">Tất cả danh mục</option>
-                    @foreach ($categories as $c)
-                        <option value="{{ $c->id }}">{{ $c->name }}</option>
-                    @endforeach
-                </select>
-                <select id="filter-stock"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 sm:w-56 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="">Tất cả tình trạng</option>
-                    <option value="low">Sắp hết hàng</option>
-                    <option value="out">Hết hàng</option>
-                </select>
+            {{-- Sticky Footer --}}
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" data-drawer-dismiss="drawer-adjust-stock"
+                    class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
+                    Hủy bỏ
+                </button>
+                <button type="submit"
+                    class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    Lưu điều chỉnh
+                </button>
             </div>
-        </div>
-    </div>
-
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Sản phẩm</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Biến thể</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    SKU</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Tồn</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Tình trạng</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Giá trị</th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventoryTable"
-                            class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @include('inventory.data')
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="inventoryPagination">
-        {{ $variants->links('vendor.pagination.tailwind') }}
-    </div>
-
-    {{-- Ngăn điều chỉnh tồn kho --}}
-    <div id="drawer-adjust-stock"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-hidden="true">
-        <h5 class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Điều chỉnh tồn kho</h5>
-        <button type="button" id="closeDrawerAdjust"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
-
-        <form id="formAdjust" class="space-y-4">
-            @csrf
-            <p id="adjust-label" class="text-sm font-medium text-gray-900 dark:text-white"></p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Tồn hiện tại: <span id="adjust-current"
-                    class="font-bold"></span></p>
-
-            <div>
-                <label for="adjust-quantity" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Số
-                    lượng thực tế</label>
-                <input type="number" min="0" id="adjust-quantity" name="quantity" required
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nhập số lượng sau khi kiểm, không phải mức
-                    chênh lệch.</p>
-            </div>
-
-            <div>
-                <label for="adjust-reason"
-                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Lý do</label>
-                <select id="adjust-reason" name="reason" required
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    @foreach ($reasons as $key => $label)
-                        <option value="{{ $key }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label for="adjust-note" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ghi
-                    chú</label>
-                <textarea id="adjust-note" name="note" rows="3"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-            </div>
-
-            <button type="submit"
-                class="w-full text-white bg-primary-700 hover:bg-primary-800 font-medium rounded-lg text-sm px-5 py-2.5">
-                Lưu điều chỉnh
-            </button>
         </form>
     </div>
 
-    {{-- Ngăn lịch sử điều chỉnh --}}
-    <div id="drawer-stock-history"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-md p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-hidden="true">
-        <h5 class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Lịch sử điều chỉnh</h5>
-        <button type="button" id="closeDrawerHistory"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Đóng</span>
-        </button>
-        <p id="history-label" class="mb-4 text-sm font-medium text-gray-900 dark:text-white"></p>
-        <div id="history-body" class="space-y-3"></div>
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: LỊCH SỬ ĐIỀU CHỈNH TỒN KHO (STOCK HISTORY)                        --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-stock-history" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        {{-- Drawer Header --}}
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Lịch sử kiểm kê</h3>
+            </div>
+            <button type="button" id="closeDrawerHistory"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+                ✕
+            </button>
+        </div>
+
+        {{-- Body Content --}}
+        <div class="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+            <p id="history-label" class="text-xs font-semibold text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-100 dark:border-slate-700"></p>
+            <div id="history-body" class="space-y-3">
+                {{-- Audit rows loaded via AJAX --}}
+            </div>
+        </div>
     </div>
 
+    {{-- Scripts --}}
     <script>
         $(document).ready(function() {
             let adjustingVariantId = null;
+            let currentStockQty = 0;
+            let stockFilter = '';
 
-            const showAjaxError = (xhr) => {
-                const res = xhr.responseJSON || {};
-                if (res.errors) {
-                    alert(Object.keys(res.errors).map(k => res.errors[k].join('\n')).join('\n'));
-                } else {
-                    alert(res.error || res.message || 'Lỗi: ' + xhr.statusText);
-                }
-            };
+            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full');
+            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full');
 
-            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full').attr('aria-hidden', 'false');
-            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full').attr('aria-hidden', 'true');
-
-            $('#closeDrawerAdjust').click(() => closeDrawer('drawer-adjust-stock'));
+            $('#closeDrawerAdjust, [data-drawer-dismiss="drawer-adjust-stock"]').click(() => closeDrawer('drawer-adjust-stock'));
             $('#closeDrawerHistory').click(() => closeDrawer('drawer-stock-history'));
 
             const reloadInventory = () => {
@@ -200,26 +263,65 @@
                     data: {
                         keyword: $('#filter-keyword').val(),
                         categories_id: $('#filter-category').val(),
-                        stock: $('#filter-stock').val()
+                        stock: stockFilter
                     },
                     success: function(data) {
                         $('#inventoryTable').html(data);
-                        // Phân trang không còn khớp sau khi lọc bằng AJAX nên ẩn đi.
-                        $('#inventoryPagination').hide();
                     }
                 });
             };
 
-            $('#filter-keyword').on('input', reloadInventory);
-            $('#filter-category, #filter-stock').on('change', reloadInventory);
+            // Search with debounce
+            $('#filter-keyword').on('input', window.debounce(function() {
+                const val = $(this).val();
+                if (val) $('#clearKeyword').removeClass('hidden');
+                else $('#clearKeyword').addClass('hidden');
+                reloadInventory();
+            }, 300));
 
+            $('#clearKeyword').on('click', function() {
+                $('#filter-keyword').val('');
+                $(this).addClass('hidden');
+                reloadInventory();
+            });
+
+            $('#filter-category').on('change', reloadInventory);
+
+            $('.stock-filter-pill').on('click', function() {
+                $('.stock-filter-pill').removeClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').addClass('text-slate-600 font-medium');
+                $(this).addClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').removeClass('text-slate-600 font-medium');
+                stockFilter = $(this).data('stock-filter');
+                reloadInventory();
+            });
+
+            // Adjust Stock Modal Trigger
             $(document).on('click', '.adjustStockButton', function() {
                 adjustingVariantId = $(this).data('variant-id');
+                currentStockQty = parseInt($(this).data('quantity') || '0', 10);
+                
                 $('#adjust-label').text($(this).data('label'));
-                $('#adjust-current').text($(this).data('quantity'));
-                $('#adjust-quantity').val($(this).data('quantity'));
+                $('#adjust-current').text(currentStockQty);
+                $('#adjust-quantity').val(currentStockQty);
                 $('#adjust-note').val('');
+                updateDiffPreview(currentStockQty);
                 openDrawer('drawer-adjust-stock');
+            });
+
+            const updateDiffPreview = (newVal) => {
+                const diff = newVal - currentStockQty;
+                const diffEl = $('#adjust-diff-val');
+                if (diff > 0) {
+                    diffEl.text(`+${diff} (Tăng thêm)`).removeClass('text-rose-600 text-slate-500').addClass('text-emerald-600');
+                } else if (diff < 0) {
+                    diffEl.text(`${diff} (Giảm bớt)`).removeClass('text-emerald-600 text-slate-500').addClass('text-rose-600');
+                } else {
+                    diffEl.text('0 (Không thay đổi)').removeClass('text-emerald-600 text-rose-600').addClass('text-slate-500');
+                }
+            };
+
+            $('#adjust-quantity').on('input', function() {
+                const val = parseInt($(this).val() || '0', 10);
+                updateDiffPreview(val);
             });
 
             $('#formAdjust').submit(function(e) {
@@ -234,18 +336,18 @@
                     },
                     data: $(this).serialize(),
                     success: function(response) {
-                        alert(response.success);
+                        window.showToast(response.success);
                         closeDrawer('drawer-adjust-stock');
                         reloadInventory();
                     },
-                    error: showAjaxError
+                    error: window.showAjaxError
                 });
             });
 
+            // Stock History Modal Trigger
             $(document).on('click', '.historyStockButton', function() {
                 $('#history-label').text($(this).data('label'));
-                $('#history-body').html(
-                    '<p class="text-sm text-gray-500 dark:text-gray-400">Đang tải...</p>');
+                $('#history-body').html('<div class="py-12 text-center text-slate-400 text-xs">Đang tải lịch sử điều chỉnh...</div>');
                 openDrawer('drawer-stock-history');
 
                 $.ajax({
@@ -253,28 +355,27 @@
                     type: 'GET',
                     success: function(rows) {
                         if (!rows.length) {
-                            $('#history-body').html(
-                                '<p class="text-sm text-gray-500 dark:text-gray-400">Chưa có lần điều chỉnh nào.</p>'
-                            );
+                            $('#history-body').html('<div class="p-6 text-center text-slate-400 text-xs">Chưa có lịch sử điều chỉnh nào cho biến thể này.</div>');
                             return;
                         }
                         const html = rows.map(r => `
-                            <div class="p-3 text-sm border border-gray-200 rounded-lg dark:border-gray-700">
-                                <div class="flex justify-between">
-                                    <span class="font-medium text-gray-900 dark:text-white">${r.reason}</span>
-                                    <span class="font-bold ${r.change > 0 ? 'text-green-600' : 'text-red-600'}">
+                            <div class="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-700/40 text-xs space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-slate-900 dark:text-white">${r.reason}</span>
+                                    <span class="px-2 py-0.5 rounded-md font-bold text-xs ${r.change > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'}">
                                         ${r.change > 0 ? '+' : ''}${r.change}
                                     </span>
                                 </div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    ${r.before} → ${r.after} · ${r.time} · ${r.user}
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                                    <span>${r.before} ➔ ${r.after}</span>
+                                    <span>${r.time} · ${r.user}</span>
                                 </div>
-                                ${r.note ? `<div class="mt-1 text-xs text-gray-600 dark:text-gray-300">${r.note}</div>` : ''}
+                                ${r.note ? `<div class="text-[11px] text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-700">${r.note}</div>` : ''}
                             </div>
                         `).join('');
                         $('#history-body').html(html);
                     },
-                    error: showAjaxError
+                    error: window.showAjaxError
                 });
             });
         });

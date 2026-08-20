@@ -61,11 +61,33 @@ function setupAdminHelpers($) {
         });
     };
 
-    // ----- Thông báo -----
-    const TOAST_STYLE = {
-        success: { bg: '#047857', icon: '✓' },
-        error: { bg: '#b91c1c', icon: '!' },
-        info: { bg: '#1d4ed8', icon: 'i' },
+    // ----- Helper Debounce -----
+    window.debounce = function (func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait || 300);
+        };
+    };
+
+    // ----- Phân cách số tiền hàng nghìn -----
+    window.nhomNghin = function (v) {
+        if (v === null || v === undefined) return '';
+        return String(v).replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    $(document).on('input', '.o-tien', function () {
+        const cu = $(this).val();
+        const moi = window.nhomNghin(cu);
+        if (cu !== moi) $(this).val(moi);
+    });
+
+    // ----- Thông báo Toast hiện đại -----
+    const TOAST_ICONS = {
+        success: '<svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+        error: '<svg class="w-5 h-5 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+        info: '<svg class="w-5 h-5 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
     };
 
     const toastHost = function () {
@@ -74,13 +96,15 @@ function setupAdminHelpers($) {
         if (!host.length) {
             host = $('<div id="admin-toast-host"></div>').css({
                 position: 'fixed',
-                top: '1rem',
-                right: '1rem',
-                zIndex: 9999,
+                top: '1.25rem',
+                right: '1.25rem',
+                zIndex: 99999,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.5rem',
+                gap: '0.625rem',
                 maxWidth: '24rem',
+                width: 'calc(100vw - 2.5rem)',
+                pointerEvents: 'none',
             });
             $('body').append(host);
         }
@@ -89,44 +113,44 @@ function setupAdminHelpers($) {
     };
 
     /**
-     * Thông báo không chặn thao tác, thay cho alert().
-     * Dùng style nội tuyến để không phụ thuộc việc Tailwind có giữ lại class hay không.
+     * Thông báo toast hiện đại, chuyên nghiệp.
      */
     window.showToast = function (message, type) {
         if (!message) return;
 
-        const style = TOAST_STYLE[type || 'success'] || TOAST_STYLE.info;
+        const toastType = type || 'success';
+        const iconSvg = TOAST_ICONS[toastType] || TOAST_ICONS.info;
 
-        const toast = $('<div></div>')
-            .text(style.icon + '  ' + message)
-            .css({
-                background: style.bg,
-                color: '#fff',
-                padding: '0.75rem 1rem',
-                borderRadius: '0.5rem',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,.25)',
-                fontSize: '0.875rem',
-                lineHeight: '1.25rem',
-                whiteSpace: 'pre-line',
-                cursor: 'pointer',
-                opacity: 0,
-            });
+        const borderClass = toastType === 'error' ? 'border-rose-200 dark:border-rose-800' :
+                           toastType === 'warning' ? 'border-amber-200 dark:border-amber-800' :
+                           toastType === 'info' ? 'border-indigo-200 dark:border-indigo-800' :
+                           'border-emerald-200 dark:border-emerald-800';
+
+        const toast = $(`
+            <div class="pointer-events-auto flex items-start gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border ${borderClass} text-slate-800 dark:text-slate-100 text-sm transform transition-all duration-200 translate-y-2 opacity-0 cursor-pointer select-none">
+                ${iconSvg}
+                <div class="flex-1 text-xs sm:text-sm font-medium leading-5 whitespace-pre-line">${message}</div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs shrink-0 ml-1">✕</button>
+            </div>
+        `);
 
         toast.on('click', function () {
-            toast.remove();
+            toast.addClass('opacity-0 translate-x-4');
+            setTimeout(() => toast.remove(), 200);
         });
 
         toastHost().append(toast);
-        toast.animate({ opacity: 1 }, 150);
+        
+        requestAnimationFrame(() => {
+            toast.removeClass('translate-y-2 opacity-0');
+        });
 
-        // Lỗi để lâu hơn vì thường có nhiều dòng cần đọc.
         setTimeout(
             function () {
-                toast.fadeOut(200, function () {
-                    toast.remove();
-                });
+                toast.addClass('opacity-0 translate-x-4');
+                setTimeout(() => toast.remove(), 200);
             },
-            type === 'error' ? 6000 : 3500
+            toastType === 'error' ? 6000 : 3500
         );
     };
 

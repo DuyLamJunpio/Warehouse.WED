@@ -1,135 +1,189 @@
-{{-- Bảng lập đơn cho khách mua trực tiếp tại quầy, xổ ra ngay trong trang đơn hàng. --}}
+{{-- Bảng lập đơn POS cho khách mua trực tiếp tại quầy --}}
 <div id="order-create-panel"
-    class="hidden p-4 border-b border-gray-200 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
+    class="hidden mb-6 p-5 rounded-2xl border border-indigo-100 bg-indigo-50/40 dark:bg-slate-800/90 dark:border-slate-700 shadow-sm transition-all">
 
-    <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
-        Dành cho khách mua trực tiếp tại cửa hàng. Đơn lập xong là hoàn thành và đã thu tiền, trừ kho ngay.
-    </p>
+    <div class="flex items-center justify-between pb-3 mb-4 border-b border-indigo-100 dark:border-slate-700">
+        <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-indigo-600 text-white shadow-xs">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+            </span>
+            <div>
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white">Bán hàng tại quầy (POS)</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Tạo đơn trực tiếp, tự động trừ tồn kho và hoàn tất tức thì.</p>
+            </div>
+        </div>
+        <button type="button" id="btn-close-pos" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg">
+            ✕ Đóng POS
+        </button>
+    </div>
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-        {{-- Cột trái: chọn hàng --}}
-        <div class="lg:col-span-2">
-            <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-                <label for="co-search" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                    Tìm sản phẩm
-                </label>
-                <input type="text" id="co-search" autocomplete="off"
-                    placeholder="Gõ tên sản phẩm hoặc SKU, rồi bấm vào dòng để thêm"
-                    class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        {{-- CỘT TRÁI: TÌM SẢN PHẨM & GIỎ HÀNG (8/12) --}}
+        <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+            {{-- Search Box --}}
+            <div class="relative bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="co-search" autocomplete="off"
+                        placeholder="Tìm tên sản phẩm hoặc mã SKU (Enter để chọn nhanh)..."
+                        class="block w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-slate-50 border-slate-200 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
 
-                <div id="co-results" class="mt-3 overflow-y-auto max-h-72"></div>
+                {{-- Dropdown Instant Results --}}
+                <div id="co-results" class="hidden absolute top-full left-0 right-0 mt-1 z-30 max-h-72 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700 custom-scrollbar"></div>
             </div>
 
-            <div class="mt-4 bg-white rounded-lg shadow dark:bg-gray-800">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-                    <thead class="bg-gray-100 dark:bg-gray-700">
-                        <tr>
-                            <th class="p-3 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                Sản phẩm</th>
-                            <th class="p-3 text-xs font-medium text-center text-gray-500 uppercase dark:text-gray-400">
-                                Số lượng</th>
-                            <th class="p-3 text-xs font-medium text-right text-gray-500 uppercase dark:text-gray-400">
-                                Đơn giá</th>
-                            <th class="p-3 text-xs font-medium text-right text-gray-500 uppercase dark:text-gray-400">
-                                Thành tiền</th>
-                            <th class="p-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="co-cart" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-                </table>
-                <p id="co-empty" class="p-4 text-sm text-center text-gray-500 dark:text-gray-400">
-                    Chưa chọn sản phẩm nào.
-                </p>
+            {{-- Cart Items Table --}}
+            <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/75 dark:bg-slate-800/75 border-b border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <th class="p-3">Sản phẩm</th>
+                                <th class="p-3 text-center w-28">Số lượng</th>
+                                <th class="p-3 text-right">Đơn giá</th>
+                                <th class="p-3 text-right">Thành tiền</th>
+                                <th class="p-3 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="co-cart" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></tbody>
+                    </table>
+                </div>
+
+                <div id="co-empty" class="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                    <svg class="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    Giỏ hàng đang trống. Gõ tìm kiếm sản phẩm ở trên để thêm vào giỏ.
+                </div>
             </div>
         </div>
 
-        {{-- Cột phải: thanh toán --}}
-        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800 h-fit">
-            <h2 class="mb-3 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">Thanh toán</h2>
+        {{-- CỘT PHẢI: THÔNG TIN KHÁCH & THANH TOÁN (4/12) --}}
+        <div class="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Thông tin thanh toán
+            </h3>
 
             <div class="space-y-3">
                 <div>
-                    <label for="co-phone" class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                        Số điện thoại khách <span class="text-xs font-normal text-gray-500">(không bắt buộc)</span>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Số điện thoại khách hàng
                     </label>
-                    <input type="text" id="co-phone" placeholder="Bỏ trống nếu khách vãng lai"
-                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nhập số điện thoại để cộng dồn vào hồ sơ
-                        khách quen.</p>
+                    <input type="tel" id="co-phone" placeholder="09xxxx (khách quen)"
+                        class="block w-full text-xs rounded-lg bg-slate-50 border-slate-200 px-3 py-2 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
 
                 <div>
-                    <label for="co-name"
-                        class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Tên khách</label>
-                    <input type="text" id="co-name" placeholder="Khách lẻ"
-                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Tên khách hàng
+                    </label>
+                    <input type="text" id="co-name" placeholder="Khách lẻ tại quầy"
+                        class="block w-full text-xs rounded-lg bg-slate-50 border-slate-200 px-3 py-2 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
 
                 <div>
-                    <label for="co-payment"
-                        class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Hình thức</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Hình thức thanh toán
+                    </label>
                     <select id="co-payment"
-                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        @foreach ($paymentMethods as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
-                        @endforeach
+                        class="block w-full text-xs font-medium rounded-lg bg-slate-50 border-slate-200 px-3 py-2 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <option value="cash">💵 Tiền mặt</option>
+                        <option value="bank_transfer">🏦 Chuyển khoản ngân hàng</option>
+                        <option value="credit_card">💳 Quẹt thẻ</option>
                     </select>
                 </div>
 
                 <div>
-                    <label for="co-discount"
-                        class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Giảm giá (đ)</label>
-                    <input type="number" id="co-discount" min="0" value="0"
-                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Chiết khấu / Giảm giá (VNĐ)
+                    </label>
+                    <input type="text" inputmode="numeric" id="co-discount" value="0" placeholder="0"
+                        class="o-tien block w-full text-xs rounded-lg bg-slate-50 border-slate-200 px-3 py-2 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
 
                 <div>
-                    <label for="co-note"
-                        class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Ghi chú</label>
-                    <textarea id="co-note" rows="2"
-                        class="block w-full text-sm rounded-lg bg-gray-50 border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Ghi chú đơn hàng
+                    </label>
+                    <input type="text" id="co-note" placeholder="VD: Khách lấy túi to, đổi size trong 3 ngày..."
+                        class="block w-full text-xs rounded-lg bg-slate-50 border-slate-200 px-3 py-2 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
             </div>
 
-            <div class="pt-3 mt-4 space-y-1 text-sm border-t border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between text-gray-600 dark:text-gray-300">
-                    <span>Tiền hàng</span><span id="co-subtotal">0 ₫</span>
+            {{-- Summary & Calculator --}}
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                    <span>Tổng tiền hàng:</span>
+                    <span id="co-subtotal" class="font-semibold text-slate-900 dark:text-white">0 ₫</span>
                 </div>
-                <div class="flex justify-between text-gray-600 dark:text-gray-300">
-                    <span>Giảm giá</span><span id="co-discount-view">0 ₫</span>
+                <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                    <span>Giảm giá:</span>
+                    <span id="co-discount-view" class="font-semibold text-rose-600">-0 ₫</span>
                 </div>
-                <div class="flex justify-between pt-2 text-lg font-bold text-gray-900 dark:text-white">
-                    <span>Khách trả</span><span id="co-total">0 ₫</span>
+                <div class="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <span>Khách cần trả:</span>
+                    <span id="co-total" class="text-base text-indigo-600 dark:text-indigo-400">0 ₫</span>
+                </div>
+
+                {{-- Cash Tendered & Change --}}
+                <div class="pt-2">
+                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tiền khách đưa (tính tiền thối):</label>
+                    <input type="text" inputmode="numeric" id="co-cash-tendered" placeholder="0"
+                        class="o-tien block w-full text-xs rounded-lg bg-slate-50 border-slate-200 px-3 py-1.5 focus:bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    <div class="flex justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                        <span>Tiền thối lại:</span>
+                        <span id="co-change">0 ₫</span>
+                    </div>
                 </div>
             </div>
 
-            <button type="button" id="co-submit"
-                class="w-full mt-4 px-5 py-3 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800 disabled:opacity-50">
-                Lập đơn &amp; thu tiền
-            </button>
-            <button type="button" id="co-clear"
-                class="w-full mt-2 px-5 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-                Xoá hết
-            </button>
+            <div class="space-y-2 pt-2">
+                <button type="button" id="co-submit" disabled
+                    class="w-full py-3 text-sm font-bold text-white rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all">
+                    Hoàn thành &amp; Thu tiền (F9)
+                </button>
+                <button type="button" id="co-clear"
+                    class="w-full py-2 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    Làm mới giỏ hàng
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     $(document).ready(function() {
-        // Giỏ hàng đang lập: variantId -> { product, label, price, stock, qty }
         const cart = new Map();
-        const money = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
-
+        const money = (n) => window.nhomNghin(n) + ' ₫';
         const panel = $('#order-create-panel');
 
-        $('#btn-toggle-create').click(function() {
+        $('#btn-toggle-create, #btn-topbar-pos, #btn-close-pos').click(function() {
             panel.toggleClass('hidden');
             const opened = !panel.hasClass('hidden');
-            $('#btn-toggle-create-label').text(opened ? 'Đóng bảng tạo đơn' : 'Tạo đơn');
+            $('#btn-toggle-create-label').text(opened ? 'Đóng POS' : 'Bán hàng (POS)');
             if (opened) {
+                $('html, body').animate({ scrollTop: panel.offset().top - 70 }, 200);
                 $('#co-search').focus();
+            }
+        });
+
+        // Global hotkey F2 for POS, F9 for checkout
+        $(document).on('keydown', function(e) {
+            if (e.key === 'F2') {
+                e.preventDefault();
+                $('#btn-toggle-create').click();
+            }
+            if (e.key === 'F9' && !panel.hasClass('hidden') && cart.size > 0) {
+                e.preventDefault();
+                $('#co-submit').click();
             }
         });
 
@@ -141,39 +195,48 @@
                 const lineTotal = item.price * item.qty;
                 subtotal += lineTotal;
                 rows.push(`
-                    <tr>
-                        <td class="p-3 text-sm">
-                            <div class="font-medium text-gray-900 dark:text-white">${item.product}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">${item.label} · còn ${item.stock}</div>
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-700/40 transition-colors">
+                        <td class="p-3">
+                            <div class="font-semibold text-slate-900 dark:text-white text-xs">${item.product}</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 font-medium">${item.label}</span>
+                                <span>· Còn ${item.stock}</span>
+                            </div>
                         </td>
-                        <td class="p-3 text-center">
-                            <input type="number" min="1" max="${item.stock}" value="${item.qty}"
-                                data-id="${id}"
-                                class="co-qty w-20 text-sm text-center rounded-lg bg-gray-50 border-gray-300 p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <td class="p-3">
+                            <div class="flex items-center justify-center gap-1">
+                                <button type="button" class="btn-qty-minus w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold" data-id="${id}">-</button>
+                                <input type="number" min="1" max="${item.stock}" value="${item.qty}" data-id="${id}"
+                                    class="co-qty w-12 text-center text-xs font-bold rounded border-slate-200 p-1 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <button type="button" class="btn-qty-plus w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold" data-id="${id}">+</button>
+                            </div>
                         </td>
-                        <td class="p-3 text-sm text-right text-gray-900 dark:text-white">${money(item.price)}</td>
-                        <td class="p-3 text-sm font-medium text-right text-gray-900 dark:text-white">${money(lineTotal)}</td>
+                        <td class="p-3 text-right text-xs text-slate-700 dark:text-slate-300 font-medium">${money(item.price)}</td>
+                        <td class="p-3 text-right text-xs font-bold text-slate-900 dark:text-white">${money(lineTotal)}</td>
                         <td class="p-3 text-right">
-                            <button type="button" data-id="${id}"
-                                class="co-remove px-2 py-1 text-sm text-white bg-red-700 rounded hover:bg-red-800">×</button>
+                            <button type="button" data-id="${id}" class="co-remove p-1 text-slate-400 hover:text-rose-600 rounded">✕</button>
                         </td>
-                    </tr>`);
+                    </tr>
+                `);
             });
 
             $('#co-cart').html(rows.join(''));
             $('#co-empty').toggle(cart.size === 0);
 
-            // Giảm giá không được vượt tiền hàng, nếu không "khách trả" thành số âm.
-            let discount = Math.max(0, parseInt($('#co-discount').val() || '0', 10) || 0);
-            if (discount > subtotal) {
-                discount = subtotal;
-                $('#co-discount').val(discount);
-            }
+            // Discount calculation
+            const rawDiscount = $('#co-discount').val() ? parseInt($('#co-discount').val().replace(/\D/g, ''), 10) : 0;
+            const discount = Math.min(subtotal, Math.max(0, rawDiscount));
+            const finalTotal = subtotal - discount;
 
             $('#co-subtotal').text(money(subtotal));
             $('#co-discount-view').text('-' + money(discount));
-            $('#co-total').text(money(subtotal - discount));
+            $('#co-total').text(money(finalTotal));
             $('#co-submit').prop('disabled', cart.size === 0);
+
+            // Change calculation
+            const cashTendered = $('#co-cash-tendered').val() ? parseInt($('#co-cash-tendered').val().replace(/\D/g, ''), 10) : 0;
+            const change = Math.max(0, cashTendered - finalTotal);
+            $('#co-change').text(money(change));
         };
 
         const addToCart = (v) => {
@@ -181,49 +244,79 @@
             const qty = (existing ? existing.qty : 0) + 1;
 
             if (qty > v.stock) {
-                alert(`${v.product} (${v.label}) chỉ còn ${v.stock} sản phẩm.`);
+                window.showToast(`${v.product} (${v.label}) chỉ còn ${v.stock} trong kho.`, 'danger');
                 return;
             }
             cart.set(v.id, Object.assign({}, v, { qty }));
             renderCart();
+            $('#co-results').addClass('hidden');
+            $('#co-search').val('').focus();
         };
 
         let searchTimer = null;
         const doSearch = () => {
+            const kw = $('#co-search').val().trim();
+            if (!kw) {
+                $('#co-results').addClass('hidden').empty();
+                return;
+            }
+
             $.ajax({
                 url: '{{ route('order.variants') }}',
                 type: 'GET',
-                data: {
-                    keyword: $('#co-search').val()
-                },
+                data: { keyword: kw },
                 success: function(list) {
                     if (!list.length) {
-                        $('#co-results').html(
-                            '<p class="p-3 text-sm text-gray-500 dark:text-gray-400">Không tìm thấy sản phẩm còn hàng.</p>'
-                        );
+                        $('#co-results').removeClass('hidden').html('<div class="p-3 text-xs text-slate-400 text-center">Không tìm thấy sản phẩm có sẵn trong kho</div>');
                         return;
                     }
-                    $('#co-results').html(list.map(v => `
-                        <button type="button" data-variant='${JSON.stringify(v)}'
-                            class="co-pick flex items-center justify-between w-full p-2 text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <span>
-                                <span class="text-sm font-medium text-gray-900 dark:text-white">${v.product}</span>
-                                <span class="block text-xs text-gray-500 dark:text-gray-400">${v.label} · ${v.sku} · còn ${v.stock}</span>
-                            </span>
-                            <span class="text-sm font-medium text-gray-900 dark:text-white">${money(v.price)}</span>
-                        </button>`).join(''));
+                    $('#co-results').removeClass('hidden').html(list.map(v => `
+                        <div class="co-pick flex items-center justify-between p-2.5 hover:bg-indigo-50/60 dark:hover:bg-slate-700/60 cursor-pointer transition-colors" data-variant='${JSON.stringify(v)}'>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 dark:text-white">${v.product}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    ${v.label} · <span class="text-indigo-600 dark:text-indigo-400 font-medium">Còn ${v.stock}</span>
+                                </div>
+                            </div>
+                            <div class="text-xs font-bold text-slate-900 dark:text-white">${money(v.price)}</div>
+                        </div>
+                    `).join(''));
                 },
-                error: showAjaxError
+                error: window.showAjaxError
             });
         };
 
         $('#co-search').on('input focus', function() {
             clearTimeout(searchTimer);
-            searchTimer = setTimeout(doSearch, 250);
+            searchTimer = setTimeout(doSearch, 200);
         });
 
         $(document).on('click', '.co-pick', function() {
             addToCart($(this).data('variant'));
+        });
+
+        $(document).on('click', '.btn-qty-plus', function() {
+            const id = $(this).data('id');
+            const item = cart.get(id);
+            if (!item) return;
+            if (item.qty >= item.stock) {
+                window.showToast(`Chỉ còn ${item.stock} sản phẩm.`, 'danger');
+                return;
+            }
+            item.qty++;
+            renderCart();
+        });
+
+        $(document).on('click', '.btn-qty-minus', function() {
+            const id = $(this).data('id');
+            const item = cart.get(id);
+            if (!item) return;
+            if (item.qty > 1) {
+                item.qty--;
+            } else {
+                cart.delete(id);
+            }
+            renderCart();
         });
 
         $(document).on('input', '.co-qty', function() {
@@ -233,7 +326,7 @@
 
             let qty = parseInt($(this).val() || '1', 10) || 1;
             if (qty > item.stock) {
-                alert(`${item.product} (${item.label}) chỉ còn ${item.stock} sản phẩm.`);
+                window.showToast(`Chỉ còn ${item.stock} sản phẩm.`, 'danger');
                 qty = item.stock;
             }
             item.qty = Math.max(1, qty);
@@ -245,13 +338,13 @@
             renderCart();
         });
 
-        $('#co-discount').on('input', renderCart);
+        $('#co-discount, #co-cash-tendered').on('input', renderCart);
 
         $('#co-clear').click(function() {
             cart.clear();
-            $('#co-phone, #co-name, #co-note').val('');
+            $('#co-phone, #co-name, #co-note, #co-cash-tendered').val('');
             $('#co-discount').val(0);
-            $('#co-results').empty();
+            $('#co-results').addClass('hidden').empty();
             $('#co-search').val('');
             renderCart();
         });
@@ -260,6 +353,8 @@
             if (cart.size === 0) return;
             const button = $(this).prop('disabled', true);
 
+            const rawDiscount = $('#co-discount').val() ? parseInt($('#co-discount').val().replace(/\D/g, ''), 10) : 0;
+
             $.ajax({
                 url: '{{ route('order.store') }}',
                 type: 'POST',
@@ -267,7 +362,6 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 data: {
-                    // Chỉ gửi id biến thể và số lượng, giá do máy chủ tự tính.
                     items: [...cart.entries()].map(([id, item]) => ({
                         variant_id: id,
                         quantity: item.qty
@@ -275,18 +369,18 @@
                     customer_phone: $('#co-phone').val(),
                     customer_name: $('#co-name').val(),
                     payment_method: $('#co-payment').val(),
-                    discount: $('#co-discount').val() || 0,
+                    discount: rawDiscount,
                     note: $('#co-note').val()
                 },
                 success: function(res) {
-                    if (confirm(res.success + '\n\nIn phiếu cho khách?')) {
+                    window.showToast(res.success, 'success');
+                    if (confirm('Lập đơn thành công!\n\nBạn có muốn in phiếu bán lẻ cho khách ngay bây giờ không?')) {
                         window.open(res.print_url, '_blank');
                     }
-                    // Nạp lại trang để danh sách đơn và các số liệu tổng quan khớp ngay.
                     window.location.reload();
                 },
                 error: function(xhr) {
-                    showAjaxError(xhr);
+                    window.showAjaxError(xhr);
                     button.prop('disabled', false);
                 }
             });

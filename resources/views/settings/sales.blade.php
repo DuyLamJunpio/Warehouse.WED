@@ -1,106 +1,175 @@
 <x-app-layout>
-    <div class="p-4 bg-white border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Cài đặt bán hàng</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Hình thức thanh toán và cách tính phí giao hàng trên web bán hàng. Lưu xong web tự cập nhật.
-        </p>
+    {{-- Header & Breadcrumb --}}
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
+                        <li class="inline-flex items-center">
+                            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
+                        </li>
+                        <li>
+                            <span class="mx-1 text-slate-400">/</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">Cài đặt bán hàng</span>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Cài đặt thanh toán & vận chuyển
+                </h1>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Cấu hình các phương thức thanh toán và quy tắc tính phí giao hàng hiển thị cho khách trên website bán lẻ.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <button type="submit" form="formSales"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Lưu cài đặt</span>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <form id="formSales" class="p-4 space-y-4">
+    <form id="formSales" class="space-y-6 max-w-5xl">
         @csrf
 
         @foreach ($methods as $key => $label)
             @php($config = $sales[$key])
-            <div class="bg-white rounded-lg shadow dark:bg-gray-800" data-method="{{ $key }}">
-                <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $label }}</h2>
-                    <label class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
-                        <input type="checkbox" name="sales[{{ $key }}][enabled]" value="1" @checked($config['enabled'])
-                            class="w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
-                        Cho khách chọn hình thức này
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden" data-method="{{ $key }}">
+                {{-- Header of Method Card --}}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                            @if($key === 'bank_transfer')
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                            @else
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            @endif
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white">{{ $label }}</h2>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">
+                                {{ $key === 'bank_transfer' ? 'Chuyển khoản QR code / Ngân hàng nội địa' : 'Nhận hàng kiểm tra xong mới trả tiền mặt' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="sales[{{ $key }}][enabled]" value="1" @checked($config['enabled']) class="sr-only peer phuong-thuc-switch">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                        <span class="ml-3 text-xs font-semibold text-slate-700 dark:text-slate-300">Bật hình thức này</span>
                     </label>
                 </div>
 
-                <div class="grid grid-cols-6 gap-4 p-4">
-                    <div class="col-span-6">
-                        <label class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
-                            <input type="checkbox" name="sales[{{ $key }}][free_shipping]" value="1"
-                                @checked($config['free_shipping']) class="mien-phi w-4 h-4 mr-2 border-gray-300 rounded bg-gray-50 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600">
-                            Miễn phí giao hàng
-                        </label>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Bỏ chọn nếu đơn hàng có tính phí giao.</p>
+                {{-- Body configuration --}}
+                <div class="p-6 space-y-5 method-content-body">
+                    {{-- Free shipping checkbox --}}
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-3">
+                        <input type="checkbox" name="sales[{{ $key }}][free_shipping]" value="1" id="free_ship_{{ $key }}"
+                            @checked($config['free_shipping']) class="mien-phi mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                        <div>
+                            <label for="free_ship_{{ $key }}" class="text-sm font-bold text-slate-900 dark:text-white cursor-pointer">
+                                Miễn phí giao hàng toàn bộ đơn
+                            </label>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Áp dụng 0 đ phí ship cho mọi đơn hàng sử dụng hình thức thanh toán này.
+                            </p>
+                        </div>
                     </div>
 
-                    {{-- Khối phí chỉ có nghĩa khi không miễn phí; JS làm mờ nó cho khỏi điền nhầm. --}}
-                    <div class="col-span-6 grid grid-cols-6 gap-4 khoi-phi">
-                        <div class="col-span-6 sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">PHÍ GIAO HÀNG (₫)</label>
-                            <input type="text" inputmode="numeric" name="sales[{{ $key }}][shipping_fee]"
-                                value="{{ number_format($config['shipping_fee'], 0, ',', '.') }}" placeholder="0"
-                                class="o-tien bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    {{-- Dynamic fee configuration --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 khoi-phi transition-opacity">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Phí vận chuyển mặc định (₫)
+                            </label>
+                            <div class="relative">
+                                <input type="text" inputmode="numeric" name="sales[{{ $key }}][shipping_fee]"
+                                    value="{{ number_format($config['shipping_fee'], 0, ',', '.') }}" placeholder="0"
+                                    class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs text-slate-400 pointer-events-none">đ</span>
+                            </div>
+                            <p class="mt-1 text-[11px] text-slate-400">Khoản phí giao hàng áp dụng thông thường.</p>
                         </div>
 
-                        <div class="col-span-6 sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">AI TRẢ PHÍ</label>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Bên chi trả phí vận chuyển
+                            </label>
                             <select name="sales[{{ $key }}][fee_payer]"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="customer" @selected($config['fee_payer'] === 'customer')>Khách trả</option>
-                                <option value="shop" @selected($config['fee_payer'] === 'shop')>Shop trả</option>
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <option value="customer" @selected($config['fee_payer'] === 'customer')>Khách hàng trả</option>
+                                <option value="shop" @selected($config['fee_payer'] === 'shop')>Shop trợ giá / Shop trả</option>
                             </select>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Shop trả thì đơn của khách không cộng
-                                phí, nhưng đơn vẫn ghi lại khoản shop bỏ ra.</p>
+                            <p class="mt-1 text-[11px] text-slate-400">Nếu Shop trả, đơn của khách sẽ không cộng thêm phí ship.</p>
                         </div>
 
-                        <div class="col-span-6 sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">MIỄN PHÍ TỪ (SẢN PHẨM)</label>
-                            <input type="number" min="1" name="sales[{{ $key }}][free_shipping_min_items]"
-                                value="{{ $config['free_shipping_min_items'] }}" placeholder="Bỏ trống nếu không áp dụng"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Mua từ ngần này món trở lên thì
-                                không tính phí giao.</p>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Miễn phí ship từ (Số sản phẩm)
+                            </label>
+                            <div class="relative">
+                                <input type="number" min="1" name="sales[{{ $key }}][free_shipping_min_items]"
+                                    value="{{ $config['free_shipping_min_items'] }}" placeholder="VD: 2"
+                                    class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs text-slate-400 pointer-events-none">món</span>
+                            </div>
+                            <p class="mt-1 text-[11px] text-slate-400">Để trống nếu không áp dụng chính sách mua nhiều freeship.</p>
                         </div>
                     </div>
                 </div>
             </div>
         @endforeach
 
-        <button type="submit"
-            class="px-5 py-2.5 text-sm font-medium text-white rounded-lg bg-primary-700 hover:bg-primary-800">
-            Lưu cài đặt
-        </button>
+        <div class="flex justify-end pt-2">
+            <button type="submit"
+                class="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Lưu thay đổi cài đặt</span>
+            </button>
+        </div>
     </form>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(function() {
-            const nhomNghin = (v) => String(v).replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
+            // Money format helper
             $('.o-tien').on('input', function() {
                 const cu = $(this).val();
-                const moi = nhomNghin(cu);
+                const moi = window.nhomNghin(cu);
                 if (moi !== cu) $(this).val(moi);
             });
 
-            // Miễn phí giao hàng thì mọi ô phí bên dưới không còn ý nghĩa.
+            // Toggle Free Shipping state
             const dongBoKhoiPhi = ($the) => {
+                const isEnabled = $the.find('.phuong-thuc-switch').is(':checked');
                 const mienPhi = $the.find('.mien-phi').is(':checked');
-                // Chỉ làm mờ, KHÔNG disable: trường bị disable thì trình duyệt không
-                // gửi lên, mà máy chủ vẫn cần biết ai trả phí để lưu lại nguyên vẹn.
-                $the.find('.khoi-phi').toggleClass('opacity-40 pointer-events-none', mienPhi);
+
+                $the.find('.method-content-body').toggleClass('opacity-50 pointer-events-none', !isEnabled);
+                $the.find('.khoi-phi').toggleClass('opacity-40 pointer-events-none', mienPhi || !isEnabled);
             };
 
             $('[data-method]').each(function() {
                 dongBoKhoiPhi($(this));
             });
 
-            $('.mien-phi').on('change', function() {
+            $('.phuong-thuc-switch, .mien-phi').on('change', function() {
                 dongBoKhoiPhi($(this).closest('[data-method]'));
             });
 
             $('#formSales').submit(function(e) {
                 e.preventDefault();
-                submitFormWithProgress($(this), '{{ route('settings.sales.save') }}', function(response) {
-                    showToast(response.success);
+                window.submitFormWithProgress($(this), '{{ route('settings.sales.save') }}', function(response) {
+                    window.showToast(response.success);
                 });
             });
         });
