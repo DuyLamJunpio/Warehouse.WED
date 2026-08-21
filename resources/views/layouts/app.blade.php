@@ -45,8 +45,13 @@
             margin-left: 0 !important;
         }
 
-        /* Hệ thống Side Drawer toàn cục: Ẩn tuyệt đối khi chưa mở, trượt mượt mà khi mở */
+        /* Hệ thống Side Drawer toàn cục: Ẩn tuyệt đối khi chưa mở, trượt mượt mà từ bên phải khi mở */
         [id^="drawer-"]:not(#sidebar) {
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            left: auto !important;
+            height: 100vh !important;
             transform: translateX(100%) !important;
             visibility: hidden !important;
             pointer-events: none !important;

@@ -529,9 +529,16 @@ function setupAdminHelpers($) {
         });
 
         // Mở drawer mục tiêu
-        $drawer.css('z-index', '60')
-            .addClass('drawer-open')
-            .attr('aria-hidden', 'false');
+        $drawer.css({
+            'position': 'fixed',
+            'top': '0',
+            'right': '0',
+            'left': 'auto',
+            'height': '100vh',
+            'z-index': '60'
+        }).addClass('drawer-open')
+          .attr('aria-hidden', 'false');
+
 
         // Tạo / hiện backdrop toàn cục (z-index 50)
         let $backdrop = $('#global-drawer-backdrop');

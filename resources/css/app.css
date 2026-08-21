@@ -61,9 +61,14 @@
 
 /* ========================================================================= */
 /* HỆ THỐNG SIDE DRAWER TOÀN CỤC                                             */
-/* Ẩn tuyệt đối khỏi màn hình khi chưa mở, trượt mượt mà khi mở                */
+/* Ẩn tuyệt đối khỏi màn hình khi chưa mở, trượt mượt mà từ bên phải khi mở    */
 /* ========================================================================= */
 [id^="drawer-"]:not(#sidebar) {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    height: 100vh !important;
     transform: translateX(100%) !important;
     visibility: hidden !important;
     pointer-events: none !important;
@@ -75,5 +80,6 @@
     visibility: visible !important;
     pointer-events: auto !important;
 }
+
 
 
