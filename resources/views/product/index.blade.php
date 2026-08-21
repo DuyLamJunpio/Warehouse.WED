@@ -609,17 +609,23 @@
             const addPicker = createMediaPicker('#dropzone-file', '#image-preview', '#choose-image');
             const editPicker = createMediaPicker('#dropzone-file-edit', '#image-preview-edit-new', '#choose-image-edit');
 
-            const reloadDataTable = () => {
+            const reloadDataTable = (url) => {
                 const keyword = $('#search-product').val();
                 const category = $('#filter-category').val();
                 
                 $.ajax({
-                    url: '{{ route('product.data') }}',
+                    url: url || '{{ route('product.data') }}',
                     type: 'GET',
                     data: { keyword: keyword, category_id: category, filter: currentFilter },
                     success: function(data) {
                         $('#productTable').html(data);
-                    }
+                        const newPagination = $('#productTable').find('#new-pagination-html').html();
+                        if (newPagination !== undefined) {
+                            $('#productPagination').html(newPagination);
+                            $('#productTable').find('#ajax-pagination-data').remove();
+                        }
+                    },
+                    error: window.showAjaxError
                 });
             };
 
@@ -637,7 +643,9 @@
                 reloadDataTable();
             });
 
-            $('#filter-category').on('change', reloadDataTable);
+            $('#filter-category').on('change', function() {
+                reloadDataTable();
+            });
 
             $('.quick-filter-btn').on('click', function() {
                 $('.quick-filter-btn').removeClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').addClass('text-slate-600 font-medium');
@@ -645,6 +653,13 @@
                 currentFilter = $(this).data('filter');
                 reloadDataTable();
             });
+
+            $(document).on('click', '#productPagination a', function(e) {
+                e.preventDefault();
+                const targetUrl = $(this).attr('href');
+                if (targetUrl) reloadDataTable(targetUrl);
+            });
+
 
             // Form Add Submit
             $('#formAdd').submit(function(e) {

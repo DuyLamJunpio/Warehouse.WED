@@ -121,3 +121,12 @@
         </td>
     </tr>
 @endforelse
+
+<tr id="ajax-pagination-data" class="hidden">
+    <td colspan="7">
+        <div id="new-pagination-html">
+            {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
+        </div>
+    </td>
+</tr>
+

@@ -26,42 +26,73 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = 10;
-        $categories = Categories::where('status', 1)->get();
-        $supplier = Supplier::where('status', 1)->get();
-        $products = Product::with(['supplier', 'category', 'productImage'])
-            ->withSum('variants', 'quantity')->paginate($perPage);
+        $categories = Categories::where('status', 1)->orderBy('name')->get();
+        $supplier = Supplier::where('status', 1)->orderBy('supplier_name')->get();
+        $products = $this->buildFilterQuery($request)->paginate(15)->withQueryString();
 
         return view("product.index", compact("products", "categories", "supplier"));
     }
 
-    public function getData()
+    public function getData(Request $request)
     {
-        $perPage = 10;
-        $products = Product::with(['supplier', 'category', 'productImage'])
-            ->withSum('variants', 'quantity')->paginate($perPage);
+        $products = $this->buildFilterQuery($request)->paginate(15)->withQueryString();
 
         return view("product.data", compact("products"));
     }
 
     public function search(Request $request)
     {
-        $keyword = trim($request->input('keyword')); // Lấy từ khóa từ request và loại bỏ khoảng trắng thừa
+        return $this->getData($request);
+    }
 
-        $query = Product::with(['supplier', 'category', 'productImage'])
-            ->withSum('variants', 'quantity');
+    /**
+     * Xây dựng câu truy vấn lọc sản phẩm theo từ khóa, danh mục và trạng thái tồn kho / nổi bật.
+     */
+    private function buildFilterQuery(Request $request)
+    {
+        $keyword = trim((string) $request->input('keyword'));
+        $categoryId = $request->input('category_id') ?: $request->input('categories_id');
+        $filter = $request->input('filter'); // all, in_stock, out_of_stock, featured
 
-        // Không cache kết quả tìm kiếm: dữ liệu sản phẩm thay đổi liên tục,
-        // cache theo từ khóa sẽ trả về tồn kho/giá đã cũ.
-        if (!empty($keyword)) {
-            $products = $query->where('product_name', 'ilike', "%{$keyword}%")->get();
-        } else {
-            $perPage = 15;
-            $products = $query->paginate($perPage);
+        $query = Product::with(['supplier', 'category', 'productImage', 'variants'])
+            ->withSum('variants', 'quantity')
+            ->latest('id');
+
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('product_name', 'ilike', "%{$keyword}%")
+                  ->orWhere('brand', 'ilike', "%{$keyword}%")
+                  ->orWhere('material', 'ilike', "%{$keyword}%")
+                  ->orWhere('audience', 'ilike', "%{$keyword}%")
+                  ->orWhereHas('variants', function ($vq) use ($keyword) {
+                      $vq->where('sku', 'ilike', "%{$keyword}%")
+                         ->orWhere('size', 'ilike', "%{$keyword}%")
+                         ->orWhere('color', 'ilike', "%{$keyword}%");
+                  });
+            });
         }
 
-        return view("product.data", compact("products"));
+        if (!empty($categoryId)) {
+            $query->where('categories_id', $categoryId);
+        }
+
+        if ($filter === 'featured') {
+            $query->where('is_featured', true);
+        } elseif ($filter === 'in_stock') {
+            // Còn hàng: Không quản lý tồn hoặc có biến thể số lượng > 0
+            $query->where(function ($q) {
+                $q->where('manage_stock', false)
+                  ->orWhereHas('variants', fn($vq) => $vq->where('quantity', '>', 0));
+            });
+        } elseif ($filter === 'out_of_stock') {
+            // Hết hàng: Quản lý tồn và không có biến thể nào có số lượng > 0
+            $query->where('manage_stock', true)
+                  ->whereDoesntHave('variants', fn($vq) => $vq->where('quantity', '>', 0));
+        }
+
+        return $query;
     }
+
 
     public function getProductById(string $id)
     {
