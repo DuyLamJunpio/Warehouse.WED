@@ -162,8 +162,8 @@
                 </div>
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">Chi tiết đơn hàng</h3>
             </div>
-            <button type="button" id="closeDrawerOrder"
-                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+            <button type="button" id="closeDrawerOrder" data-drawer-dismiss="drawer-order-detail" data-drawer-hide="drawer-order-detail"
+                class="btn-close-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
                 ✕
             </button>
         </div>
@@ -196,9 +196,9 @@
             let currentOrderId = null;
             const money = (n) => window.nhomNghin(n) + ' ₫';
 
-            const openDrawer = () => $('#drawer-order-detail').removeClass('translate-x-full');
-            const closeDrawer = () => $('#drawer-order-detail').addClass('translate-x-full');
-            $('#closeDrawerOrder').click(closeDrawer);
+            const openDrawer = () => window.openDrawer('drawer-order-detail');
+            const closeDrawer = () => window.closeDrawer('drawer-order-detail');
+
 
             const reloadOrders = () => {
                 $.ajax({

@@ -285,14 +285,9 @@
             let profileCustomerId = null;
             const money = (n) => window.nhomNghin(n) + ' ₫';
 
-            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full');
-            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full');
+            const openDrawer = (id) => window.openDrawer(id);
+            const closeDrawer = (id) => window.closeDrawer(id);
 
-            $('.close-customer-drawer').click(function() {
-                closeDrawer('drawer-create-customer');
-                closeDrawer('drawer-update-customer');
-                closeDrawer('drawer-customer-profile');
-            });
 
             window.reloadCustomerTable = function() {
                 $.get('{{ route('customer.data') }}', { keyword: $('#search-customer').val() }, function(data) {
@@ -448,28 +443,4 @@
         });
     </script>
 </x-app-layout>
-or: function(xhr) {
-                        showToast((xhr.responseJSON || {}).error || 'Không tải được hồ sơ khách hàng.', 'error');
-                    }
-                });
-            });
 
-            $('#btn-save-note').click(function() {
-                if (!profileCustomerId) return;
-                $.ajax({
-                    url: '/customer/' + profileCustomerId + '/note',
-                    type: 'POST',
-                    data: {
-                        note: $('#profile-note').val()
-                    },
-                    success: function(r) {
-                        showToast(r.success);
-                    },
-                    error: function(xhr) {
-                        showToast((xhr.responseJSON || {}).error || 'Không lưu được ghi chú.', 'error');
-                    }
-                });
-            });
-        });
-    </script>
-</x-app-layout>

@@ -228,13 +228,9 @@
             let editCategoryId = null;
             let deleteCategoryId = null;
 
-            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full');
-            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full');
+            const openDrawer = (id) => window.openDrawer(id);
+            const closeDrawer = (id) => window.closeDrawer(id);
 
-            $('.close-category-drawer').click(function() {
-                closeDrawer('drawer-create-category');
-                closeDrawer('drawer-update-category');
-            });
 
             // Search with debounce
             $('#search-categories').on('input', window.debounce(function() {

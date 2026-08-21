@@ -460,9 +460,10 @@
         $(document).ready(function() {
             let idDangSua = null;
             const csrf = () => ({ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') });
-            const moDrawer = () => $('#drawer-slide').removeClass('translate-x-full');
-            const dongDrawer = () => $('#drawer-slide').addClass('translate-x-full');
+            const moDrawer = () => window.openDrawer('drawer-slide');
+            const dongDrawer = () => window.closeDrawer('drawer-slide');
             $('#dong-drawer').click(dongDrawer);
+
 
             // ── Slide ────────────────────────────────────────────────
             $('#btn-them-slide').click(function() {
@@ -636,9 +637,10 @@
             // ── Bộ sưu tập ───────────────────────────────────────────
             let idBst = null;
             const demDaChon = () => $('#so-da-chon').text($('.chon-sp:checked').length);
-            const moBst = () => $('#drawer-bst').removeClass('translate-x-full');
-            $('#dong-drawer-bst').click(() => $('#drawer-bst').addClass('translate-x-full'));
+            const moBst = () => window.openDrawer('drawer-bst');
+            $('#dong-drawer-bst').click(() => window.closeDrawer('drawer-bst'));
             $(document).on('change', '.chon-sp', demDaChon);
+
 
             $('#loc-sp').on('input', function() {
                 const tu = $(this).val().trim().toLowerCase();

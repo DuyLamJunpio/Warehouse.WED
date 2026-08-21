@@ -139,8 +139,8 @@
                 </div>
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">Kiểm kê / Điều chỉnh kho</h3>
             </div>
-            <button type="button" id="closeDrawerAdjust"
-                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+            <button type="button" id="closeDrawerAdjust" data-drawer-dismiss="drawer-adjust-stock" data-drawer-hide="drawer-adjust-stock"
+                class="btn-close-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
                 ✕
             </button>
         </div>
@@ -200,8 +200,8 @@
 
             {{-- Sticky Footer --}}
             <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
-                <button type="button" data-drawer-dismiss="drawer-adjust-stock"
-                    class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
+                <button type="button" data-drawer-dismiss="drawer-adjust-stock" data-drawer-hide="drawer-adjust-stock"
+                    class="btn-close-drawer px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
                     Hủy bỏ
                 </button>
                 <button type="submit"
@@ -228,8 +228,8 @@
                 </div>
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">Lịch sử kiểm kê</h3>
             </div>
-            <button type="button" id="closeDrawerHistory"
-                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+            <button type="button" id="closeDrawerHistory" data-drawer-dismiss="drawer-stock-history" data-drawer-hide="drawer-stock-history"
+                class="btn-close-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
                 ✕
             </button>
         </div>
@@ -250,11 +250,9 @@
             let currentStockQty = 0;
             let stockFilter = '';
 
-            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full');
-            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full');
+            const openDrawer = (id) => window.openDrawer(id);
+            const closeDrawer = (id) => window.closeDrawer(id);
 
-            $('#closeDrawerAdjust, [data-drawer-dismiss="drawer-adjust-stock"]').click(() => closeDrawer('drawer-adjust-stock'));
-            $('#closeDrawerHistory').click(() => closeDrawer('drawer-stock-history'));
 
             const reloadInventory = () => {
                 $.ajax({

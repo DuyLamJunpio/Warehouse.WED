@@ -214,13 +214,9 @@
             let editSupplierId = null;
             let deleteSupplierId = null;
 
-            const openDrawer = (id) => $('#' + id).removeClass('translate-x-full');
-            const closeDrawer = (id) => $('#' + id).addClass('translate-x-full');
+            const openDrawer = (id) => window.openDrawer(id);
+            const closeDrawer = (id) => window.closeDrawer(id);
 
-            $('.close-supplier-drawer').click(function() {
-                closeDrawer('drawer-create-supplier');
-                closeDrawer('drawer-update-supplier');
-            });
 
             // Search
             $('#search-supplier').on('input', window.debounce(function() {

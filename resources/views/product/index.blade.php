@@ -742,7 +742,7 @@
                             previewEdit.append(card);
                         });
 
-                        $('#drawer-update-product-default').removeClass('translate-x-full');
+                        window.openDrawer('drawer-update-product-default');
                     },
                     error: window.showAjaxError
                 });
@@ -774,12 +774,7 @@
             $('.btn-cancel-modal, [data-modal-hide]').on('click', function() {
                 $('#modal-delete-product').addClass('hidden').removeClass('flex');
             });
-
-            // Handle drawer close buttons
-            $(document).on('click', '[data-drawer-dismiss]', function() {
-                const target = $(this).data('drawer-dismiss');
-                $('#' + target).addClass('translate-x-full');
-            });
         });
     </script>
+
 </x-app-layout>
