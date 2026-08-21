@@ -39,17 +39,17 @@
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 antialiased font-sans flex flex-col min-h-screen">
 
     {{-- Topbar Header --}}
-    <header class="fixed top-0 left-0 right-0 z-30 h-16 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80">
+    <header class="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80">
         <div class="px-3 sm:px-4 h-full flex items-center justify-between gap-2">
             
             {{-- Left: Mobile hamburger & Brand --}}
             <div class="flex items-center gap-2 sm:gap-3">
-                <button id="toggleSidebarMobile" type="button" aria-label="Mở menu"
-                    class="p-2 text-slate-600 rounded-lg lg:hidden hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 focus:outline-none">
-                    <svg id="toggleSidebarMobileHamburger" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button id="toggleSidebarMobile" type="button" aria-label="Mở menu" aria-controls="sidebar" aria-expanded="false"
+                    class="p-2 text-slate-600 rounded-lg lg:hidden hover:bg-slate-100 active:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:active:bg-slate-600 focus:outline-none cursor-pointer select-none">
+                    <svg id="toggleSidebarMobileHamburger" class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
-                    <svg id="toggleSidebarMobileClose" class="hidden w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg id="toggleSidebarMobileClose" class="hidden w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -162,7 +162,7 @@
 
         {{-- Sidebar Navigation --}}
         <aside id="sidebar" aria-label="Sidebar"
-            class="fixed top-0 left-0 z-20 flex flex-col flex-shrink-0 hidden w-64 h-full pt-16 duration-150 lg:flex transition-all">
+            class="fixed top-0 left-0 z-40 flex flex-col flex-shrink-0 w-64 h-full pt-16 duration-200 ease-in-out transition-transform -translate-x-full lg:translate-x-0 bg-white border-r border-slate-200/80 dark:bg-slate-800 dark:border-slate-700/80">
             <div class="relative flex flex-col flex-1 min-h-0 bg-white border-r border-slate-200/80 dark:bg-slate-800 dark:border-slate-700/80">
                 <div class="flex flex-col flex-1 pt-3 pb-4 overflow-y-auto custom-scrollbar px-3 space-y-4">
                     
@@ -297,7 +297,7 @@
         </aside>
 
         {{-- Backdrop for Mobile --}}
-        <div id="sidebarBackdrop" class="fixed inset-0 z-10 hidden bg-slate-900/60 backdrop-blur-xs"></div>
+        <div id="sidebarBackdrop" class="fixed inset-0 z-30 hidden bg-slate-900/60 backdrop-blur-xs lg:hidden transition-opacity"></div>
 
         {{-- Main Page Content --}}
         <div id="main-content" class="relative flex flex-col flex-1 w-full h-full min-h-[calc(100vh-4rem)] overflow-y-auto bg-slate-50 lg:ml-64 dark:bg-slate-900">
@@ -309,71 +309,102 @@
 
     </div>
 
-    {{-- Dark Mode Script --}}
+    {{-- Dark Mode & Mobile Sidebar Script --}}
     <script>
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        (function() {
+            try {
+                const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+                const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+                const themeToggleBtn = document.getElementById('theme-toggle');
 
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            themeToggleLightIcon.classList.remove('hidden');
-        } else {
-            themeToggleDarkIcon.classList.remove('hidden');
-        }
-
-        const themeToggleBtn = document.getElementById('theme-toggle');
-
-        themeToggleBtn.addEventListener('click', function() {
-            themeToggleDarkIcon.classList.toggle('hidden');
-            themeToggleLightIcon.classList.toggle('hidden');
-
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
+                if (themeToggleDarkIcon && themeToggleLightIcon) {
+                    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        themeToggleLightIcon.classList.remove('hidden');
+                    } else {
+                        themeToggleDarkIcon.classList.remove('hidden');
+                    }
                 }
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
+
+                if (themeToggleBtn) {
+                    themeToggleBtn.addEventListener('click', function() {
+                        if (themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden');
+                        if (themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden');
+
+                        if (localStorage.getItem('color-theme')) {
+                            if (localStorage.getItem('color-theme') === 'light') {
+                                document.documentElement.classList.add('dark');
+                                localStorage.setItem('color-theme', 'dark');
+                            } else {
+                                document.documentElement.classList.remove('dark');
+                                localStorage.setItem('color-theme', 'light');
+                            }
+                        } else {
+                            if (document.documentElement.classList.contains('dark')) {
+                                document.documentElement.classList.remove('dark');
+                                localStorage.setItem('color-theme', 'light');
+                            } else {
+                                document.documentElement.classList.add('dark');
+                                localStorage.setItem('color-theme', 'dark');
+                            }
+                        }
+                    });
                 }
+            } catch (err) {
+                console.warn('Theme toggle error:', err);
             }
-        });
 
-        // Mobile Sidebar Toggle
-        const sidebar = document.getElementById('sidebar');
-        const toggleSidebarBtn = document.getElementById('toggleSidebarMobile');
-        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-        const hamburgerIcon = document.getElementById('toggleSidebarMobileHamburger');
-        const closeIcon = document.getElementById('toggleSidebarMobileClose');
+            // Fallback Mobile Sidebar Toggle
+            try {
+                const sidebar = document.getElementById('sidebar');
+                const toggleSidebarBtn = document.getElementById('toggleSidebarMobile');
+                const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+                const hamburgerIcon = document.getElementById('toggleSidebarMobileHamburger');
+                const closeIcon = document.getElementById('toggleSidebarMobileClose');
 
-        function toggleMobileSidebar() {
-            const isHidden = sidebar.classList.contains('hidden');
-            if (isHidden) {
-                sidebar.classList.remove('hidden');
-                sidebarBackdrop.classList.remove('hidden');
-                hamburgerIcon.classList.add('hidden');
-                closeIcon.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('hidden');
-                sidebarBackdrop.classList.add('hidden');
-                hamburgerIcon.classList.remove('hidden');
-                closeIcon.classList.add('hidden');
+                function toggleMobile() {
+                    if (window.toggleMobileSidebar) {
+                        window.toggleMobileSidebar();
+                        return;
+                    }
+                    if (!sidebar) return;
+                    const isOpen = sidebar.classList.contains('translate-x-0') || !sidebar.classList.contains('-translate-x-full');
+                    if (!isOpen) {
+                        sidebar.classList.remove('-translate-x-full');
+                        sidebar.classList.add('translate-x-0');
+                        if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
+                        if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
+                        if (closeIcon) closeIcon.classList.remove('hidden');
+                        if (toggleSidebarBtn) toggleSidebarBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        sidebar.classList.add('-translate-x-full');
+                        sidebar.classList.remove('translate-x-0');
+                        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
+                        if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+                        if (closeIcon) closeIcon.classList.add('hidden');
+                        if (toggleSidebarBtn) toggleSidebarBtn.setAttribute('aria-expanded', 'false');
+                    }
+                }
+
+                if (toggleSidebarBtn) {
+                    toggleSidebarBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleMobile();
+                    });
+                }
+                if (sidebarBackdrop) {
+                    sidebarBackdrop.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (window.toggleMobileSidebar) window.toggleMobileSidebar(false);
+                        else toggleMobile();
+                    });
+                }
+            } catch (err) {
+                console.warn('Sidebar toggle error:', err);
             }
-        }
-
-        if (toggleSidebarBtn) {
-            toggleSidebarBtn.addEventListener('click', toggleMobileSidebar);
-        }
-        if (sidebarBackdrop) {
-            sidebarBackdrop.addEventListener('click', toggleMobileSidebar);
-        }
+        })();
     </script>
 </body>
 
 </html>
+

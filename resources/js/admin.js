@@ -441,4 +441,58 @@ function setupAdminHelpers($) {
 
         return picker;
     };
+
+    // ----- Quản lý mở/đóng Sidebar trên di động (Mobile Drawer) -----
+    window.toggleMobileSidebar = function (forceState) {
+        const $sidebar = $('#sidebar');
+        const $backdrop = $('#sidebarBackdrop');
+        const $hamburger = $('#toggleSidebarMobileHamburger');
+        const $close = $('#toggleSidebarMobileClose');
+        const $btn = $('#toggleSidebarMobile');
+
+        if (!$sidebar.length) return;
+
+        const isCurrentlyOpen = $sidebar.hasClass('translate-x-0') || !$sidebar.hasClass('-translate-x-full');
+        const shouldOpen = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
+
+        if (shouldOpen) {
+            $sidebar.removeClass('-translate-x-full hidden').addClass('translate-x-0');
+            $backdrop.removeClass('hidden');
+            $hamburger.addClass('hidden');
+            $close.removeClass('hidden');
+            $btn.attr('aria-expanded', 'true');
+        } else {
+            $sidebar.addClass('-translate-x-full').removeClass('translate-x-0');
+            $backdrop.addClass('hidden');
+            $hamburger.removeClass('hidden');
+            $close.addClass('hidden');
+            $btn.attr('aria-expanded', 'false');
+        }
+    };
+
+    $(document).on('click', '#toggleSidebarMobile', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.toggleMobileSidebar();
+    });
+
+    $(document).on('click', '#sidebarBackdrop', function (e) {
+        e.preventDefault();
+        window.toggleMobileSidebar(false);
+    });
+
+    // Tự động đóng sidebar mobile khi chọn link menu
+    $(document).on('click', '#sidebar a', function () {
+        if (window.innerWidth < 1024) {
+            window.toggleMobileSidebar(false);
+        }
+    });
+
+    // Đóng bằng phím Escape
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && window.innerWidth < 1024) {
+            window.toggleMobileSidebar(false);
+        }
+    });
 }
+
