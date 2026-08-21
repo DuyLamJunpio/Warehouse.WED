@@ -442,49 +442,65 @@ function setupAdminHelpers($) {
         return picker;
     };
 
-    // ----- Quản lý mở/đóng Sidebar trên di động (Mobile Drawer) -----
-    window.toggleMobileSidebar = function (forceState) {
+    // ----- Quản lý mở/đóng Sidebar (Hỗ trợ cả Máy tính & Di động) -----
+    window.toggleSidebar = function (forceState) {
+        const isDesktop = window.innerWidth >= 1024;
         const $sidebar = $('#sidebar');
         const $backdrop = $('#sidebarBackdrop');
         const $hamburger = $('#toggleSidebarMobileHamburger');
         const $close = $('#toggleSidebarMobileClose');
-        const $btn = $('#toggleSidebarMobile');
+        const $btn = $('#toggleSidebarMobile, #toggleSidebar');
 
-        if (!$sidebar.length) return;
+        if (isDesktop) {
+            const isCurrentlyCollapsed = $('html').hasClass('sidebar-collapsed');
+            const shouldCollapse = typeof forceState === 'boolean' ? !forceState : !isCurrentlyCollapsed;
 
-        const isCurrentlyOpen = $sidebar.hasClass('translate-x-0') || !$sidebar.hasClass('-translate-x-full');
-        const shouldOpen = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
-
-        if (shouldOpen) {
-            $sidebar.removeClass('-translate-x-full hidden').addClass('translate-x-0');
-            $backdrop.removeClass('hidden');
-            $hamburger.addClass('hidden');
-            $close.removeClass('hidden');
-            $btn.attr('aria-expanded', 'true');
-        } else {
-            $sidebar.addClass('-translate-x-full').removeClass('translate-x-0');
+            if (shouldCollapse) {
+                $('html').addClass('sidebar-collapsed');
+                $btn.attr('aria-expanded', 'false');
+                localStorage.setItem('sidebar-desktop-collapsed', 'true');
+            } else {
+                $('html').removeClass('sidebar-collapsed');
+                $btn.attr('aria-expanded', 'true');
+                localStorage.setItem('sidebar-desktop-collapsed', 'false');
+            }
             $backdrop.addClass('hidden');
-            $hamburger.removeClass('hidden');
-            $close.addClass('hidden');
-            $btn.attr('aria-expanded', 'false');
+        } else {
+            const isCurrentlyOpen = $sidebar.hasClass('translate-x-0') && !$sidebar.hasClass('-translate-x-full');
+            const shouldOpen = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
+
+            if (shouldOpen) {
+                $sidebar.removeClass('-translate-x-full hidden').addClass('translate-x-0');
+                $backdrop.removeClass('hidden');
+                $hamburger.addClass('hidden');
+                $close.removeClass('hidden');
+                $btn.attr('aria-expanded', 'true');
+            } else {
+                $sidebar.addClass('-translate-x-full').removeClass('translate-x-0');
+                $backdrop.addClass('hidden');
+                $hamburger.removeClass('hidden');
+                $close.addClass('hidden');
+                $btn.attr('aria-expanded', 'false');
+            }
         }
     };
+    window.toggleMobileSidebar = window.toggleSidebar; // Alias
 
-    $(document).on('click', '#toggleSidebarMobile', function (e) {
+    $(document).on('click', '#toggleSidebarMobile, #toggleSidebar', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        window.toggleMobileSidebar();
+        window.toggleSidebar();
     });
 
     $(document).on('click', '#sidebarBackdrop', function (e) {
         e.preventDefault();
-        window.toggleMobileSidebar(false);
+        window.toggleSidebar(false);
     });
 
     // Tự động đóng sidebar mobile khi chọn link menu
     $(document).on('click', '#sidebar a', function () {
         if (window.innerWidth < 1024) {
-            window.toggleMobileSidebar(false);
+            window.toggleSidebar(false);
         }
     });
 
@@ -492,61 +508,54 @@ function setupAdminHelpers($) {
     window.openDrawer = function (drawerId) {
         if (!drawerId) return;
         const id = String(drawerId).replace(/^#/, '');
-        if (id === 'sidebar') {
-            window.toggleMobileSidebar(true);
+        if (id === 'sidebar' || id === 'toggleSidebarMobile' || id === 'toggleSidebar') {
+            window.toggleSidebar();
             return;
         }
 
         const $drawer = $('#' + id);
         if (!$drawer.length) return;
 
+        // Đưa drawer ra trực tiếp dưới <body> để tránh bị #main-content hay stacking context trên desktop chặn
+        if (!$drawer.parent().is('body')) {
+            $('body').append($drawer);
+        }
+
         // Đóng các drawer khác đang mở trước
         $('[id^="drawer-"]:not(#sidebar)').each(function () {
             if ($(this).attr('id') !== id) {
-                $(this).addClass('translate-x-full').removeClass('translate-x-0 transform-none drawer-open');
+                $(this).removeClass('drawer-open').attr('aria-hidden', 'true');
             }
         });
 
-        $drawer.removeClass('translate-x-full hidden')
-            .addClass('translate-x-0 transform-none drawer-open')
+        // Mở drawer mục tiêu
+        $drawer.css('z-index', '60')
+            .addClass('drawer-open')
             .attr('aria-hidden', 'false');
 
-        // Tạo / hiện backdrop chung
+        // Tạo / hiện backdrop toàn cục (z-index 50)
         let $backdrop = $('#global-drawer-backdrop');
         if (!$backdrop.length) {
-            $backdrop = $('<div id="global-drawer-backdrop" class="fixed inset-0 z-30 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200 cursor-pointer"></div>');
+            $backdrop = $('<div id="global-drawer-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200 cursor-pointer"></div>');
             $('body').append($backdrop);
         }
-        $backdrop.removeClass('hidden opacity-0').data('target-drawer', id);
+        $backdrop.css({ 'z-index': '50', 'display': 'block' }).removeClass('hidden opacity-0').data('target-drawer', id);
         $('body').addClass('overflow-hidden');
     };
 
     window.closeDrawer = function (drawerId) {
-        let $target;
         if (drawerId) {
             const id = String(drawerId).replace(/^#/, '');
-            $target = $('#' + id);
-        } else {
-            $target = $('.drawer-open, [id^="drawer-"]:not(#sidebar):not(.translate-x-full)');
-        }
-
-        if ($target && $target.length) {
-            $target.addClass('translate-x-full')
-                .removeClass('translate-x-0 transform-none drawer-open')
-                .attr('aria-hidden', 'true');
+            $('#' + id).removeClass('drawer-open').attr('aria-hidden', 'true');
         }
 
         // Đảm bảo tất cả các drawer (ngoại trừ sidebar) đều bị đóng
-        $('[id^="drawer-"]:not(#sidebar)').each(function() {
-            if (!$(this).hasClass('translate-x-full')) {
-                $(this).addClass('translate-x-full').removeClass('translate-x-0 transform-none drawer-open').attr('aria-hidden', 'true');
-            }
-        });
+        $('[id^="drawer-"]:not(#sidebar)').removeClass('drawer-open').attr('aria-hidden', 'true');
 
         // Ẩn backdrop toàn cục
         const $backdrop = $('#global-drawer-backdrop');
         if ($backdrop.length) {
-            $backdrop.addClass('hidden opacity-0');
+            $backdrop.addClass('hidden opacity-0').css('display', 'none');
         }
         // Xóa sạch các backdrop do Flowbite sinh ra nếu có
         $('[drawer-backdrop]').remove();
@@ -554,10 +563,18 @@ function setupAdminHelpers($) {
         $('body').removeClass('overflow-hidden');
     };
 
+    // Khởi tạo ban đầu: Đảm bảo toàn bộ drawer luôn đóng khi vừa load trang
+    $('[id^="drawer-"]:not(#sidebar)').removeClass('drawer-open').attr('aria-hidden', 'true');
+
+    // Ngăn chặn sự kiện click bên trong drawer nổi bọt ra ngoài backdrop
+    $(document).on('click', '[id^="drawer-"]:not(#sidebar)', function(e) {
+        e.stopPropagation();
+    });
+
     // Bắt sự kiện bấm nút MỞ Drawer
     $(document).on('click', '[data-drawer-target], [data-drawer-show], [data-drawer-toggle]', function (e) {
         const targetId = $(this).attr('data-drawer-target') || $(this).attr('data-drawer-show') || $(this).attr('data-drawer-toggle');
-        if (!targetId || targetId === 'sidebar') return; // Bỏ qua sidebar mobile
+        if (!targetId || targetId === 'sidebar' || targetId === 'toggleSidebarMobile' || targetId === 'toggleSidebar') return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -582,13 +599,15 @@ function setupAdminHelpers($) {
     // Đóng Drawer hoặc Sidebar khi bấm phím Escape
     $(document).on('keydown', function (e) {
         if (e.key === 'Escape') {
-            const hasOpenDrawer = $('[id^="drawer-"]:not(#sidebar):not(.translate-x-full)').length > 0;
+            const hasOpenDrawer = $('[id^="drawer-"]:not(#sidebar).drawer-open').length > 0;
             if (hasOpenDrawer) {
                 window.closeDrawer();
             } else if (window.innerWidth < 1024) {
-                window.toggleMobileSidebar(false);
+                window.toggleSidebar(false);
             }
         }
     });
 }
+
+
 

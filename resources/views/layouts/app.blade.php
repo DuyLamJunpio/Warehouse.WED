@@ -33,8 +33,34 @@
         } else {
             document.documentElement.classList.remove('dark');
         }
+        if (localStorage.getItem('sidebar-desktop-collapsed') === 'true' && window.innerWidth >= 1024) {
+            document.documentElement.classList.add('sidebar-collapsed');
+        }
     </script>
+    <style>
+        html.sidebar-collapsed #sidebar {
+            transform: translateX(-100%) !important;
+        }
+        html.sidebar-collapsed #main-content {
+            margin-left: 0 !important;
+        }
+
+        /* Hệ thống Side Drawer toàn cục: Ẩn tuyệt đối khi chưa mở, trượt mượt mà khi mở */
+        [id^="drawer-"]:not(#sidebar) {
+            transform: translateX(100%) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s !important;
+        }
+
+        [id^="drawer-"]:not(#sidebar).drawer-open {
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+    </style>
 </head>
+
 
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 antialiased font-sans flex flex-col min-h-screen">
 
@@ -42,10 +68,10 @@
     <header class="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80">
         <div class="px-3 sm:px-4 h-full flex items-center justify-between gap-2">
             
-            {{-- Left: Mobile hamburger & Brand --}}
+            {{-- Left: Hamburger & Brand --}}
             <div class="flex items-center gap-2 sm:gap-3">
-                <button id="toggleSidebarMobile" type="button" aria-label="Mở menu" aria-controls="sidebar" aria-expanded="false"
-                    class="p-2 text-slate-600 rounded-lg lg:hidden hover:bg-slate-100 active:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:active:bg-slate-600 focus:outline-none cursor-pointer select-none">
+                <button id="toggleSidebarMobile" type="button" aria-label="Đóng/Mở menu" aria-controls="sidebar" aria-expanded="true"
+                    class="p-2 text-slate-600 rounded-lg hover:bg-slate-100 active:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:active:bg-slate-600 focus:outline-none cursor-pointer select-none">
                     <svg id="toggleSidebarMobileHamburger" class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -53,6 +79,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
+
 
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 group">
                     <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
@@ -162,9 +189,10 @@
 
         {{-- Sidebar Navigation --}}
         <aside id="sidebar" aria-label="Sidebar"
-            class="fixed top-0 left-0 z-40 flex flex-col flex-shrink-0 w-64 h-full pt-16 duration-200 ease-in-out transition-transform -translate-x-full lg:translate-x-0 bg-white border-r border-slate-200/80 dark:bg-slate-800 dark:border-slate-700/80">
+            class="fixed top-0 left-0 z-40 flex flex-col flex-shrink-0 w-64 h-full pt-16 duration-200 ease-in-out transition-all -translate-x-full lg:translate-x-0 bg-white border-r border-slate-200/80 dark:bg-slate-800 dark:border-slate-700/80">
             <div class="relative flex flex-col flex-1 min-h-0 bg-white border-r border-slate-200/80 dark:bg-slate-800 dark:border-slate-700/80">
                 <div class="flex flex-col flex-1 pt-3 pb-4 overflow-y-auto custom-scrollbar px-3 space-y-4">
+
                     
                     {{-- Nhóm: BÁN HÀNG & ĐƠN --}}
                     <div>
@@ -300,7 +328,7 @@
         <div id="sidebarBackdrop" class="fixed inset-0 z-30 hidden bg-slate-900/60 backdrop-blur-xs lg:hidden transition-opacity"></div>
 
         {{-- Main Page Content --}}
-        <div id="main-content" class="relative flex flex-col flex-1 w-full h-full min-h-[calc(100vh-4rem)] overflow-y-auto bg-slate-50 lg:ml-64 dark:bg-slate-900">
+        <div id="main-content" class="relative flex flex-col flex-1 w-full h-full min-h-[calc(100vh-4rem)] overflow-y-auto bg-slate-50 lg:ml-64 dark:bg-slate-900 transition-all duration-200 ease-in-out">
             <main class="flex-1 p-3 sm:p-4 md:p-6 pb-12">
                 {{ $slot }}
             </main>
@@ -309,7 +337,7 @@
 
     </div>
 
-    {{-- Dark Mode & Mobile Sidebar Script --}}
+    {{-- Dark Mode & Sidebar Toggle Script --}}
     <script>
         (function() {
             try {
@@ -353,7 +381,7 @@
                 console.warn('Theme toggle error:', err);
             }
 
-            // Fallback Mobile Sidebar Toggle
+            // Fallback Sidebar Toggle (Desktop + Mobile)
             try {
                 const sidebar = document.getElementById('sidebar');
                 const toggleSidebarBtn = document.getElementById('toggleSidebarMobile');
@@ -361,27 +389,32 @@
                 const hamburgerIcon = document.getElementById('toggleSidebarMobileHamburger');
                 const closeIcon = document.getElementById('toggleSidebarMobileClose');
 
-                function toggleMobile() {
-                    if (window.toggleMobileSidebar) {
-                        window.toggleMobileSidebar();
+                function toggleSidebarFallback() {
+                    if (window.toggleSidebar) {
+                        window.toggleSidebar();
                         return;
                     }
-                    if (!sidebar) return;
-                    const isOpen = sidebar.classList.contains('translate-x-0') || !sidebar.classList.contains('-translate-x-full');
-                    if (!isOpen) {
-                        sidebar.classList.remove('-translate-x-full');
-                        sidebar.classList.add('translate-x-0');
-                        if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
-                        if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
-                        if (closeIcon) closeIcon.classList.remove('hidden');
-                        if (toggleSidebarBtn) toggleSidebarBtn.setAttribute('aria-expanded', 'true');
+                    if (window.innerWidth >= 1024) {
+                        const isCollapsed = document.documentElement.classList.toggle('sidebar-collapsed');
+                        localStorage.setItem('sidebar-desktop-collapsed', isCollapsed ? 'true' : 'false');
                     } else {
-                        sidebar.classList.add('-translate-x-full');
-                        sidebar.classList.remove('translate-x-0');
-                        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-                        if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
-                        if (closeIcon) closeIcon.classList.add('hidden');
-                        if (toggleSidebarBtn) toggleSidebarBtn.setAttribute('aria-expanded', 'false');
+                        if (!sidebar) return;
+                        const isOpen = sidebar.classList.contains('translate-x-0') && !sidebar.classList.contains('-translate-x-full');
+                        if (!isOpen) {
+                            sidebar.classList.remove('-translate-x-full');
+                            sidebar.classList.add('translate-x-0');
+                            if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
+                            if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
+                            if (closeIcon) closeIcon.classList.remove('hidden');
+                            if (toggleSidebarBtn) toggleSidebarBtn.setAttribute('aria-expanded', 'true');
+                        } else {
+                            sidebar.classList.add('-translate-x-full');
+                            sidebar.classList.remove('translate-x-0');
+                            if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
+                            if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+                            if (closeIcon) closeIcon.classList.add('hidden');
+                            if (toggleSidebarBtn) toggleSidebarBtn.setAttribute('aria-expanded', 'false');
+                        }
                     }
                 }
 
@@ -389,14 +422,14 @@
                     toggleSidebarBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        toggleMobile();
+                        toggleSidebarFallback();
                     });
                 }
                 if (sidebarBackdrop) {
                     sidebarBackdrop.addEventListener('click', function(e) {
                         e.preventDefault();
-                        if (window.toggleMobileSidebar) window.toggleMobileSidebar(false);
-                        else toggleMobile();
+                        if (window.toggleSidebar) window.toggleSidebar(false);
+                        else toggleSidebarFallback();
                     });
                 }
             } catch (err) {
