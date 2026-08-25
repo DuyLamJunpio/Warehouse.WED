@@ -17,6 +17,41 @@
         };
     </script>
 
+    <script>
+        // Phiên hết hạn (hoặc máy chủ vừa khởi động lại) thì thẻ meta csrf-token
+        // trong trang đã cũ, mọi lệnh POST trả về 419 "CSRF token mismatch" -
+        // thông báo đó vô nghĩa với người dùng. Bọc fetch/ajax để nói đúng bản
+        // chất rồi đưa về trang đăng nhập thay vì bắt họ đoán.
+        (() => {
+            "use strict";
+            let handling = false;
+
+            window.handleSessionExpired = function () {
+                if (handling) return;
+                handling = true;
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Phiên làm việc đã hết hạn. Đang tải lại trang...', 'error');
+                }
+                setTimeout(() => location.reload(), 1500);
+            };
+
+            const nativeFetch = window.fetch.bind(window);
+            window.fetch = async function (...args) {
+                const res = await nativeFetch(...args);
+                if (res.status === 419) window.handleSessionExpired();
+                return res;
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.jQuery) {
+                    jQuery(document).ajaxError((_e, xhr) => {
+                        if (xhr && xhr.status === 419) window.handleSessionExpired();
+                    });
+                }
+            });
+        })();
+    </script>
+
     <title>{{ config('app.name', 'Kho Hàng Phương Lê') }} - Quản Trị</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
