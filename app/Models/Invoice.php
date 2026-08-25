@@ -76,10 +76,18 @@ class Invoice extends Model
         'shop_shipping_fee',
         'payment_method',
         'payment_expires_at',
+        // Tiền in của cả đơn, cộng dồn từ mọi mẫu. Tách riêng khỏi tiền hàng để
+        // lúc tính lãi còn phân biệt được hai khoản.
+        'print_fee',
+        // Tài khoản nhận hoàn tiền, khách để lại lúc đặt đơn in.
+        'refund_bank_name',
+        'refund_account_number',
+        'refund_account_name',
     ];
 
     protected $casts = [
         'payment_expires_at' => 'datetime',
+        'print_fee' => 'integer',
     ];
 
     protected $dates = ['deleted_at'];
@@ -87,6 +95,17 @@ class Invoice extends Model
     public function user()
     {
         return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    /**
+     * Các mẫu áo khách đã thiết kế trong đơn này.
+     *
+     * Nhiều chứ không phải một: mỗi mẫu là một món trong giỏ, nên đơn áo lớp có
+     * thể gồm cùng một hình trên ba size khác nhau, mỗi size một mẫu.
+     */
+    public function printDesigns()
+    {
+        return $this->hasMany(PrintDesign::class, 'invoice_id');
     }
 
     public function customer()

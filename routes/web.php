@@ -8,6 +8,11 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PrintAssetController;
+use App\Http\Controllers\PrintBlankController;
+use App\Http\Controllers\PrintDesignController;
+use App\Http\Controllers\PrintPricingController;
+use App\Http\Controllers\PrintTechniqueController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
@@ -64,6 +69,67 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Cài đặt bán hàng: hình thức thanh toán và phí giao hàng.
     Route::get('/settings/sales', [SettingController::class, 'index'])->name('settings.sales');
     Route::post('/settings/sales', [SettingController::class, 'saveSales'])->name('settings.sales.save');
+
+    /*
+     * Module in áo theo yêu cầu.
+     *
+     * Bảng giá sửa vào bản nháp, chỉ có hiệu lực với khách sau khi bấm Xuất bản
+     * — xem App\Services\PrintPricing. Kỹ thuật và bậc khổ chỉ bật/tắt, không
+     * có route xoá: đơn cũ và quy tắc giá cũ đang trỏ vào chúng.
+     */
+    Route::prefix('print')->name('print.')->group(function () {
+        Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
+        Route::post('/pricing/draft', [PrintPricingController::class, 'saveDraft'])->name('pricing.draft');
+        Route::post('/pricing/publish', [PrintPricingController::class, 'publish'])->name('pricing.publish');
+        Route::post('/pricing/simulate', [PrintPricingController::class, 'simulate'])->name('pricing.simulate');
+
+        Route::get('/techniques', [PrintTechniqueController::class, 'index'])->name('techniques');
+        Route::post('/techniques', [PrintTechniqueController::class, 'store'])->name('techniques.store');
+        Route::post('/techniques/{technique}', [PrintTechniqueController::class, 'update'])->name('techniques.update');
+        Route::post('/techniques/{technique}/toggle', [PrintTechniqueController::class, 'toggle'])->name('techniques.toggle');
+
+        Route::post('/tiers', [PrintTechniqueController::class, 'storeTier'])->name('tiers.store');
+        Route::post('/tiers/{tier}', [PrintTechniqueController::class, 'updateTier'])->name('tiers.update');
+        Route::post('/tiers/{tier}/toggle', [PrintTechniqueController::class, 'toggleTier'])->name('tiers.toggle');
+
+        Route::get('/blanks', [PrintBlankController::class, 'index'])->name('blanks');
+        Route::post('/blanks', [PrintBlankController::class, 'store'])->name('blanks.store');
+        Route::post('/blanks/{blank}', [PrintBlankController::class, 'update'])->name('blanks.update');
+        Route::post('/blanks/{blank}/toggle', [PrintBlankController::class, 'toggle'])->name('blanks.toggle');
+        Route::post('/blanks/{blank}/zones', [PrintBlankController::class, 'storeZone'])->name('blanks.zones.store');
+        Route::post('/blanks/{blank}/mockups', [PrintBlankController::class, 'uploadMockup'])->name('blanks.mockups.store');
+        Route::post('/zones/{zone}', [PrintBlankController::class, 'updateZone'])->name('zones.update');
+        Route::post('/zones/{zone}/toggle', [PrintBlankController::class, 'toggleZone'])->name('zones.toggle');
+        Route::delete('/mockups/{mockup}', [PrintBlankController::class, 'destroyMockup'])->name('mockups.destroy');
+
+        Route::get('/designs', [PrintDesignController::class, 'index'])->name('designs');
+        Route::get('/designs/{design}', [PrintDesignController::class, 'show'])->name('designs.show');
+        Route::get('/designs/{design}/svg', [PrintDesignController::class, 'svg'])->name('designs.svg');
+        Route::post('/designs/{design}/review', [PrintDesignController::class, 'review'])->name('designs.review');
+
+        Route::get('/library', [PrintAssetController::class, 'index'])->name('library');
+        Route::post('/library', [PrintAssetController::class, 'store'])->name('library.store');
+        Route::post('/library/{asset}', [PrintAssetController::class, 'update'])->name('library.update');
+        Route::post('/library/{asset}/toggle', [PrintAssetController::class, 'toggle'])->name('library.toggle');
+
+        Route::post('/fonts', [PrintAssetController::class, 'storeFont'])->name('fonts.store');
+        Route::post('/fonts/{font}', [PrintAssetController::class, 'updateFont'])->name('fonts.update');
+        Route::post('/fonts/{font}/toggle', [PrintAssetController::class, 'toggleFont'])->name('fonts.toggle');
+
+        // Hàng đợi duyệt thiết kế — chốt chặn trước khi đưa vào xưởng.
+        Route::get('/designs', [PrintDesignController::class, 'index'])->name('designs');
+        Route::get('/designs/{design}', [PrintDesignController::class, 'show'])->name('designs.show');
+        Route::post('/designs/{design}/review', [PrintDesignController::class, 'review'])->name('designs.review');
+
+        Route::get('/library', [PrintAssetController::class, 'index'])->name('library');
+        Route::post('/library', [PrintAssetController::class, 'store'])->name('library.store');
+        Route::post('/library/{asset}', [PrintAssetController::class, 'update'])->name('library.update');
+        Route::post('/library/{asset}/toggle', [PrintAssetController::class, 'toggle'])->name('library.toggle');
+
+        Route::post('/fonts', [PrintAssetController::class, 'storeFont'])->name('fonts.store');
+        Route::post('/fonts/{font}', [PrintAssetController::class, 'updateFont'])->name('fonts.update');
+        Route::post('/fonts/{font}/toggle', [PrintAssetController::class, 'toggleFont'])->name('fonts.toggle');
+    });
 
     Route::get('/content', [ContentController::class, 'index'])->name('content');
     Route::post('/content/banner', [ContentController::class, 'storeBanner'])->name('content.banner.store');

@@ -305,6 +305,15 @@
                                 </a>
                             </li>
                             <li>
+                                <a href="{{ route('print.pricing') }}"
+                                    class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('print.*') ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-white font-medium' }}">
+                                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('print.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 4h6v3H9V4zM7 7h10l1 5H6l1-5zM6 12h12v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6z" />
+                                    </svg>
+                                    <span>In áo theo yêu cầu</span>
+                                </a>
+                            </li>
+                            <li>
                                 <a href="{{ route('settings.sales') }}"
                                     class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('settings*') ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-white font-medium' }}">
                                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('settings*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\PrintDesign;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
@@ -43,10 +44,68 @@ class CheckoutController extends Controller
             'note' => 'nullable|string|max:1000',
             'payment_method' => 'nullable|string|max:50',
 
-            'items' => 'required|array|min:1',
+            /*
+             * `items` được phép rỗng KHI đơn có mã thiết kế in: khách đặt in áo
+             * thường không mua kèm hàng bán sẵn, và bắt họ thêm một món vô nghĩa
+             * chỉ để đơn hợp lệ là bắt sai chỗ.
+             */
+            'items' => 'present|array',
             'items.*.variant_id' => 'required|integer|exists:product_variants,id',
             'items.*.quantity' => 'required|integer|min:1|max:100',
+
+            /*
+             * Mã các mẫu áo khách đã thiết kế. Nhiều mẫu trong một đơn là chuyện
+             * bình thường: mỗi mẫu là một món trong giỏ, nên đơn áo lớp có thể
+             * gồm cùng một hình trên ba size, mỗi size một mẫu.
+             *
+             * Giá từng mẫu đã đóng băng lúc chốt thiết kế nên bên này chỉ đọc
+             * lại, không tính lại.
+             */
+            'print_design_codes' => 'nullable|array|max:20',
+            'print_design_codes.*' => 'string|max:24',
+
+            /*
+             * Tài khoản nhận hoàn tiền. Đơn in có thể bị từ chối sau khi đã thu
+             * tiền, mà lúc đó hỏi lại khách qua điện thoại thì vừa chậm vừa dễ
+             * nghe nhầm số tài khoản.
+             */
+            'refund_bank_name' => 'nullable|string|max:100',
+            'refund_account_number' => 'nullable|string|max:40',
+            'refund_account_name' => 'nullable|string|max:120',
         ]);
+
+        $codes = array_values(array_unique($data['print_design_codes'] ?? []));
+        $printDesigns = collect();
+
+        if ($codes) {
+            $printDesigns = PrintDesign::with('blank.product')->whereIn('code', $codes)->get();
+
+            if ($printDesigns->count() !== count($codes)) {
+                $missing = array_diff($codes, $printDesigns->pluck('code')->all());
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Không tìm thấy mẫu thiết kế ' . implode(', ', $missing) . '. Vui lòng thiết kế lại.',
+                ], 422);
+            }
+
+            /*
+             * Một mẫu chỉ đi được vào MỘT đơn. Không chặn thì khách mở lại tab cũ
+             * bấm đặt lần nữa là bị tính tiền hai lần cho cùng một thiết kế.
+             */
+            $taken = $printDesigns->filter(fn (PrintDesign $d) => $d->invoice_id !== null);
+
+            if ($taken->isNotEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Mẫu ' . $taken->pluck('code')->implode(', ') . ' đã được đặt rồi. Vui lòng thiết kế mẫu mới.',
+                ], 409);
+            }
+        }
+
+        if (!$data['items'] && $printDesigns->isEmpty()) {
+            return response()->json(['success' => false, 'error' => 'Đơn hàng đang trống.'], 422);
+        }
 
         // Thả hàng của những đơn bỏ ngang TRƯỚC khi kiểm tồn, để đơn chưa thanh
         // toán không chặn được khách đang thật sự muốn mua.
@@ -71,8 +130,9 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        // Ngưỡng miễn phí giao hàng đếm theo số món trong đơn.
-        $itemCount = array_sum($wanted);
+        // Ngưỡng miễn phí giao hàng đếm theo số món trong đơn. Áo in cũng là món
+        // phải giao, nên số lượng của nó được tính vào ngưỡng như mọi món khác.
+        $itemCount = array_sum($wanted) + (int) $printDesigns->sum('qty');
         $shippingFee = Setting::shippingFeeFor($methodKey, $itemCount, $salesSettings);
         $shopShippingFee = Setting::shopShippingCost($methodKey, $itemCount, $salesSettings);
 
@@ -87,6 +147,11 @@ class CheckoutController extends Controller
 
             $lines = [];
             $subtotal = 0;
+
+            // Giá in đã đóng băng lúc khách chốt thiết kế, kèm id phiên bản bảng
+            // giá đã dùng. Đọc lại chứ KHÔNG tính lại: chủ shop có thể đã sửa
+            // bảng giá trong lúc khách còn đang điền địa chỉ.
+            $printFee = (int) $printDesigns->sum('total_price');
 
             foreach ($wanted as $variantId => $quantity) {
                 $variant = $variants->get($variantId);
@@ -131,7 +196,11 @@ class CheckoutController extends Controller
                 'order_status' => Invoice::STATUS_PENDING,
                 'customer_id' => $customer->id,
                 'user_id' => $this->systemUserId(),
-                'total_amount' => $subtotal + $shippingFee,
+                'total_amount' => $subtotal + $printFee + $shippingFee,
+                // Tách riêng tiền in khỏi tiền hàng: lúc tính lãi phải biết
+                // khoản nào là phôi và khoản nào là công in. Đầu mối tới từng
+                // mẫu đi chiều ngược lại, gắn ngay sau khi có id hoá đơn.
+                'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
                 // Khoản shop tự gánh: không cộng vào tiền khách trả, nhưng vẫn phải
                 // lưu lại, nếu không thì lúc tính lãi khoản này biến mất.
@@ -177,14 +246,54 @@ class CheckoutController extends Controller
                     ->update(['status' => $total > 0 ? 1 : 2]);
             }
 
+            /*
+             * Phôi in có nối kho thì vẫn phải trừ tồn — nó là chiếc áo thật đi
+             * ra khỏi kệ. Cố ý KHÔNG thêm nó vào $lines: tiền phôi đã nằm trong
+             * giá thiết kế rồi, chèn thêm một dòng hàng nữa là tính tiền hai lần.
+             * Ở đây tồn kho và tiền là hai việc tách rời.
+             */
+            foreach ($printDesigns as $printDesign) {
+                // Gắn mẫu vào hoá đơn. Đây cũng chính là dấu "đã đặt rồi" mà lần
+                // đặt sau đọc để chặn tính tiền hai lần.
+                $printDesign->update(['invoice_id' => $invoice->id]);
+
+                if (!$printDesign->blank?->product_id) {
+                    continue;
+                }
+
+                $blankVariant = ProductVariant::where('product_id', $printDesign->blank->product_id)
+                    ->where('size', $printDesign->size)
+                    ->where('color', $printDesign->color_name)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($blankVariant) {
+                    $blankVariant->quantity = max(0, $blankVariant->quantity - $printDesign->qty);
+                    $blankVariant->save();
+                    continue;
+                }
+
+                // Không tìm thấy biến thể khớp thì bỏ qua trong im lặng là sai,
+                // nhưng chặn đơn cũng sai: khách đã thiết kế xong và đang trả
+                // tiền. Ghi log để nhân viên chỉnh tồn tay.
+                Log::warning(sprintf(
+                    'Đơn in %s: không tìm thấy biến thể %s/%s của sản phẩm #%d để trừ tồn.',
+                    $printDesign->code,
+                    $printDesign->size,
+                    $printDesign->color_name,
+                    $printDesign->blank->product_id,
+                ));
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'order_code' => $invoice->order_code,
                 'subtotal' => $subtotal,
+                'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
-                'total_amount' => $subtotal + $shippingFee,
+                'total_amount' => $subtotal + $printFee + $shippingFee,
                 'message' => 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
             ], 201);
         } catch (\RuntimeException $e) {

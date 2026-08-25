@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CheckoutController;
+use App\Http\Controllers\API\PrintStorefrontController;
 use App\Http\Controllers\API\StorefrontController;
 use App\Http\Controllers\API\StorefrontOrderController;
 use App\Http\Controllers\API\CustomerController;
@@ -143,7 +144,33 @@ Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
     Route::get('/products/{slug}', [StorefrontController::class, 'product']);
     Route::get('/categories', [StorefrontController::class, 'categoriesIndex']);
     Route::get('/content', [StorefrontController::class, 'content']);
+
+    /*
+     * Studio đặt in. Hai đường này chỉ đọc và không mang dữ liệu khách nào:
+     * catalogue là phôi và bảng giá đang áp dụng, quote là báo giá lại từ máy
+     * chủ. Studio tự tính giá bằng TypeScript cho mượt tay, nhưng con số tính
+     * tiền thật luôn dựng lại ở đây.
+     */
+    Route::get('/print/catalogue', [PrintStorefrontController::class, 'catalogue']);
+    Route::post('/print/quote', [PrintStorefrontController::class, 'quote']);
 });
+
+/*
+ * Ghi của module in: nhận file thiết kế và chốt một mẫu áo.
+ *
+ * Nằm sau bí mật dùng chung vì chúng ghi file lên Supabase và tạo bản ghi chờ
+ * duyệt - để ngỏ là ai cũng đổ rác vào kho ảnh được. Web bán hàng gọi từ route
+ * handler của Next, không phải từ trình duyệt.
+ */
+Route::middleware(['throttle:60,1', 'storefront.secret'])
+    ->prefix('storefront/print')
+    ->group(function () {
+        Route::post('/assets', [PrintStorefrontController::class, 'storeAsset']);
+        Route::post('/designs', [PrintStorefrontController::class, 'storeDesign']);
+        // Giá đã đóng băng của một mẫu — web bán hàng đọc lại lúc dựng giỏ hàng
+        // và lúc thanh toán thay vì tin con số nào trong localStorage.
+        Route::get('/designs/{code}', [PrintStorefrontController::class, 'showDesign']);
+    });
 
 /*
  * Cho web bán hàng lưu đơn của trang thanh toán: mã trên URL, mã QR, hạn chuyển
