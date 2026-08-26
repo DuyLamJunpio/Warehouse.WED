@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PrintBlank extends Model
 {
     protected $fillable = [
-        'product_id', 'name', 'slug', 'description', 'base_price',
+        'product_id', 'categories_id', 'name', 'slug', 'description', 'base_price',
         'frame_width_mm', 'frame_height_mm', 'positions', 'moq', 'lead_days',
         'template_path', 'sort_order', 'is_active',
     ];
@@ -38,6 +38,18 @@ class PrintBlank extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Danh mục phôi — dùng chung bảng `categories` với hàng bán sẵn.
+     *
+     * `withTrashed` cùng lý do như Product::category(): danh mục xoá mềm rồi thì
+     * thẻ phôi bên trang quản trị vẫn phải đọc được tên nó, chứ không hiện một ô
+     * trống bí hiểm. Bên web bán hàng thì chỉ danh mục còn sống mới thành chip lọc.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Categories::class, 'categories_id')->withTrashed();
     }
 
     public function colors(): HasMany

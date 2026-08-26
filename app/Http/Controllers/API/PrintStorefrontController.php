@@ -32,7 +32,7 @@ class PrintStorefrontController extends Controller
     {
         $pricing = PrintPricing::current();
 
-        $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants'])
+        $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants', 'category'])
             ->where('is_active', true)
             ->orderBy('sort_order')->orderBy('id')
             ->get()
@@ -81,6 +81,24 @@ class PrintStorefrontController extends Controller
             'description' => $blank->description,
             'base_price' => $blank->effectiveBasePrice(),
             'product_id' => $blank->product_id,
+            /*
+             * Danh mục để web bán hàng dựng hàng nút lọc trên trang In áo.
+             *
+             * Bên đó KHÔNG có danh sách danh mục riêng: nó gom từ chính các phôi
+             * gửi sang, nên chip lọc nào hiện ra cũng chắc chắn có phôi đặt được
+             * đằng sau. Phôi chưa xếp danh mục trả `null` và rơi vào nhóm "Khác".
+             *
+             * Danh mục xoá mềm coi như chưa xếp: quan hệ category() cố ý
+             * `withTrashed` để trang quản trị còn đọc được tên cũ, nhưng bày một
+             * chip trỏ vào danh mục đã xoá thì khách bấm vào một cái tên chết.
+             */
+            'category' => $blank->category && !$blank->category->trashed()
+                ? [
+                    'id' => $blank->category->id,
+                    'name' => $blank->category->name,
+                    'slug' => $blank->category->slug,
+                ]
+                : null,
             'frame_width_mm' => $blank->frame_width_mm,
             'frame_height_mm' => $blank->frame_height_mm,
             'moq' => $blank->moq,

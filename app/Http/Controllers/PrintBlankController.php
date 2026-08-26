@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Categories;
 use App\Models\PrintBlank;
 use App\Models\PrintBlankColor;
 use App\Models\PrintDesign;
@@ -31,11 +32,17 @@ class PrintBlankController extends Controller
     public function index()
     {
         return view('print.blanks', [
-            'blanks' => PrintBlank::with(['colors', 'mockups', 'techniques', 'product'])
+            'blanks' => PrintBlank::with(['colors', 'mockups', 'techniques', 'product', 'category'])
                 ->orderBy('sort_order')->orderBy('id')->get(),
             'techniques' => PrintTechnique::where('is_active', true)->orderBy('sort_order')->get(),
             // Chỉ sản phẩm còn sống mới nối được; danh sách gọn để chọn nhanh.
             'products' => Product::orderBy('product_name')->get(['id', 'product_name', 'sell_price']),
+            // Cùng bảng danh mục với hàng bán sẵn — xem migration
+            // add_category_to_print_blanks. Kèm parent_id để dựng nhóm cha-con
+            // trong ô chọn; danh mục tắt không cho chọn mới.
+            'categories' => Categories::where('status', 1)
+                ->orderBy('sort_order')->orderBy('name')
+                ->get(['id', 'parent_id', 'name']),
         ]);
     }
 
@@ -176,6 +183,9 @@ class PrintBlankController extends Controller
             'name' => 'required|string|max:150',
             'description' => 'nullable|string|max:1000',
             'product_id' => 'nullable|exists:products,id',
+            // Để trống được: phôi chưa xếp danh mục vẫn bán bình thường, chỉ là
+            // không rơi vào chip lọc nào bên web.
+            'categories_id' => 'nullable|exists:categories,id',
             'base_price' => 'required|integer|min:0',
             'frame_width_mm' => 'required|integer|min:50|max:2000',
             'frame_height_mm' => 'required|integer|min:50|max:2000',
@@ -204,6 +214,7 @@ class PrintBlankController extends Controller
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'product_id' => $data['product_id'] ?? null,
+            'categories_id' => $data['categories_id'] ?? null,
             'base_price' => (int) $data['base_price'],
             'frame_width_mm' => (int) $data['frame_width_mm'],
             'frame_height_mm' => (int) $data['frame_height_mm'],
