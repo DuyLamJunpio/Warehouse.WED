@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\PrintDesign;
 use App\Services\PrintReviewMailer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Hàng đợi duyệt thiết kế.
@@ -98,10 +99,73 @@ class PrintDesignController extends Controller
         // hiểu vì sao — im lặng ở đúng chỗ này là họ phải tự gọi lên hỏi.
         $this->mailer->queue($design);
 
+        if ($data['decision'] === PrintDesign::STATUS_REJECTED) {
+            return response()->json([
+                'success' => 'Đã từ chối thiết kế ' . $design->code
+                    . '. Đã gửi thư báo khách. Nhớ liên hệ và hoàn tiền.',
+            ]);
+        }
+
         return response()->json([
-            'success' => $data['decision'] === PrintDesign::STATUS_APPROVED
-                ? 'Đã duyệt thiết kế ' . $design->code . '. Có thể đưa vào xưởng.'
-                : 'Đã từ chối thiết kế ' . $design->code . '. Nhớ liên hệ khách và hoàn tiền.',
+            'success' => 'Đã duyệt thiết kế ' . $design->code . '. ' . $this->confirmOrder($design),
         ]);
+    }
+
+    /**
+     * Kéo đơn gắn với mẫu vừa duyệt sang "Đã xác nhận".
+     *
+     * Duyệt thiết kế LÀ khâu xác nhận của một đơn in: sau bước này không còn gì
+     * để nhân viên cân nhắc nữa, nên bắt họ mở tiếp trang đơn hàng bấm thêm một
+     * nút là thừa — và là chỗ dễ quên, để đơn nằm ở "chờ xác nhận" trong khi
+     * xưởng đã in xong.
+     *
+     * Thư báo khách không gửi ở đây: OrderStatusObserver bắt mọi lần đơn đổi
+     * trạng thái, kể cả lần này. Đơn đã trả tiền thì observer tự im vì thư
+     * "đã duyệt thiết kế" vừa gửi xong đã nói đúng việc đó rồi.
+     *
+     * Trả về câu mô tả kết quả để hiện cho nhân viên.
+     */
+    private function confirmOrder(PrintDesign $design): string
+    {
+        if (!$design->invoice_id) {
+            return 'Mẫu chưa gắn đơn nào — khách chốt thiết kế nhưng chưa đặt hàng.';
+        }
+
+        return DB::transaction(function () use ($design) {
+            // Khoá dòng đơn: hai nhân viên có thể đang duyệt hai mẫu của cùng
+            // một đơn, và cả hai đều thấy "mẫu cuối cùng" nếu không khoá.
+            $order = Invoice::orders()->whereKey($design->invoice_id)->lockForUpdate()->first();
+
+            if (!$order) {
+                return 'Không tìm thấy đơn gắn với mẫu này.';
+            }
+
+            /*
+             * Một đơn có thể gồm nhiều mẫu — đơn áo lớp là cùng một hình trên ba
+             * size, mỗi size một mẫu. Chỉ xác nhận khi TẤT CẢ đã duyệt: còn một
+             * mẫu chờ duyệt thì đơn chưa chắc đi được, còn một mẫu bị từ chối thì
+             * đơn phải do người xử lý tay (hoàn một phần hay huỷ hẳn).
+             */
+            $pending = $order->printDesigns()
+                ->where('review_status', '!=', PrintDesign::STATUS_APPROVED)
+                ->count();
+
+            if ($pending > 0) {
+                return 'Đơn ' . $order->order_code . ' còn ' . $pending
+                    . ' mẫu chưa duyệt xong nên giữ nguyên trạng thái.';
+            }
+
+            // pending → confirmed là bước duy nhất hợp lệ; đơn đã huỷ, đã xác
+            // nhận hay đang giao đều rơi vào đây và không bị đụng tới.
+            if (!$order->canTransitionTo(Invoice::STATUS_CONFIRMED)) {
+                return 'Đơn ' . $order->order_code . ' đang ở "'
+                    . $order->order_status_label . '" nên giữ nguyên.';
+            }
+
+            $order->order_status = Invoice::STATUS_CONFIRMED;
+            $order->save();
+
+            return 'Đơn ' . $order->order_code . ' đã chuyển sang "Đã xác nhận" và khách đã được báo.';
+        });
     }
 }

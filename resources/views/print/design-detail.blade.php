@@ -125,6 +125,10 @@
                             <dd class="text-slate-700 dark:text-slate-200">{{ $invoice->shipping_name }} · {{ $invoice->shipping_phone }}</dd>
                         </div>
                         <div class="flex justify-between gap-3">
+                            <dt class="text-slate-500 dark:text-slate-400">Trạng thái</dt>
+                            <dd class="font-semibold text-slate-700 dark:text-slate-200">{{ $invoice->order_status_label }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
                             <dt class="text-slate-500 dark:text-slate-400">Đã thanh toán</dt>
                             <dd>
                                 @if ((int) $invoice->pay_status === 1)
@@ -278,7 +282,7 @@
                 <div class="mt-3 flex flex-wrap gap-2">
                     <button type="button" data-decision="approved"
                         class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors">
-                        Duyệt — đưa vào xưởng
+                        Duyệt — xác nhận đơn, đưa vào xưởng
                     </button>
                     <button type="button" data-decision="rejected"
                         class="px-5 py-2.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors">
@@ -286,8 +290,13 @@
                     </button>
                 </div>
 
-                <p class="mt-3 text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 border-l-2 border-amber-500 pl-3">
-                    Từ chối một đơn <b>đã thu tiền</b> thì nhớ hoàn tiền cho khách — hệ thống không tự làm việc đó.
+                <p class="mt-3 text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 border-l-2 border-emerald-500 pl-3">
+                    Duyệt xong, đơn tự sang <b>"Đã xác nhận"</b> bên Quản lý đơn hàng và khách nhận thư báo —
+                    không phải mở trang đơn bấm thêm lần nữa. Đơn nhiều mẫu thì chỉ sang khi mẫu cuối được duyệt.
+                </p>
+                <p class="mt-2 text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 border-l-2 border-amber-500 pl-3">
+                    Từ chối cũng gửi thư báo khách kèm lý do ở trên. Đơn <b>giữ nguyên trạng thái</b> để bạn tự
+                    quyết huỷ hay giao phần còn lại — và nếu <b>đã thu tiền</b> thì nhớ hoàn tiền, hệ thống không tự làm.
                 </p>
             </section>
         </div>
