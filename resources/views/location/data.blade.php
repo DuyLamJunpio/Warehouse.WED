@@ -14,7 +14,7 @@
             <td class="flex items-center p-4 mr-12 space-x-6 whitespace-nowrap">
                 <img class="w-10 h-10 rounded-lg" @php $pinImage = $item->product->productImage->first(); @endphp
                     @if ($pinImage) src="{{ Storage::url($pinImage->path) }}"
-                    @else src="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+                    @else src="{{ asset('images/no-photo.svg') }}" @endif
                     alt="{{ $item->product_name }}">
                 <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
                     <div class="text-base font-semibold text-gray-9000 dark:text-white">

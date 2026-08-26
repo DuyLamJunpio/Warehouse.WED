@@ -1,1002 +1,795 @@
 <x-app-layout>
-    <style>
-        .selected {
-            border: 4px solid green;
-        }
-
-        html,
-
-        swiper-container {
-            width: 100%;
-            height: 100%;
-        }
-
-        swiper-slide {
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        swiper-slide img {
-            display: block;
-            width: 100%;
-            height: 125px;
-            object-fit: cover;
-        }
-
-        .append-buttons {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .append-buttons button {
-            display: inline-block;
-            cursor: pointer;
-            border: 1px solid #007aff;
-            color: #007aff;
-            text-decoration: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            margin: 0 10px;
-            font-size: 13px;
-        }
-    </style>
-    </style>
-
-    <div
-        class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="mb-4">
-                <nav class="flex mb-5" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
+    {{-- Page Header & Breadcrumb --}}
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
                         <li class="inline-flex items-center">
-                            <a href="{{ route('dashboard') }}"
-                                class="inline-flex items-center text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-white">
-                                <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
-                                    </path>
-                                </svg>
-                                Home
-                            </a>
+                            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
                         </li>
                         <li>
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Products</span>
-                            </div>
+                            <span class="mx-1 text-slate-400">/</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">Sản phẩm</span>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL PRODUCTS</h1>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Quản lý sản phẩm
+                </h1>
             </div>
-            <div class="sm:flex">
-                <div
-                    class="items-center hidden mb-3 sm:flex sm:divide-x sm:divide-gray-100 sm:mb-0 dark:divide-gray-700">
-                    <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Search</label>
-                        <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
-                            <input type="text" name="search" id="search-product"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for products">
-                        </div>
-                    </form>
-                    <div class="flex pl-0 mt-3 space-x-1 sm:pl-2 sm:mt-0">
-                        <a href="#"
-                            class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                    d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                        </a>
-                        <a href="#"
-                            class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                        </a>
-                        <a href="#"
-                            class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                        </a>
-                        <a href="#"
-                            class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z">
-                                </path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-                <div class="flex items-center ml-auto space-x-2 sm:space-x-3">
-                    <button id="createProductButton"
-                        class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800"
-                        type="button" data-drawer-target="drawer-create-product-default"
-                        data-drawer-show="drawer-create-product-default" aria-controls="drawer-create-product-default"
-                        data-drawer-placement="right">
-                        Add new product
-                    </button>
-                    <a href="#"
-                        class="inline-flex items-center justify-center w-1/2 px-3 py-2 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 sm:w-auto dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
-                        <svg class="w-5 h-5 mr-2 -ml-1" fill="currentColor" viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd"
-                                d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
-                                clip-rule="evenodd"></path>
+
+            <div class="flex items-center gap-2.5">
+                <button type="button" data-drawer-target="drawer-create-product-default" data-drawer-show="drawer-create-product-default"
+                    id="createProductButton"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Thêm sản phẩm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Filter & Search Bar --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs mb-4 p-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            {{-- Search & Category Filter --}}
+            <div class="flex flex-1 flex-col sm:flex-row items-center gap-3">
+                <div class="relative w-full sm:max-w-xs">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        Export
-                    </a>
+                    </div>
+                    <input type="text" id="search-product"
+                        class="block w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white placeholder-slate-400"
+                        placeholder="Tìm theo tên, mã sản phẩm...">
+                    <button type="button" id="clearSearch" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                <div class="w-full sm:w-48">
+                    <select id="filter-category"
+                        class="block w-full py-2 px-3 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white">
+                        <option value="">Tất cả danh mục</option>
+                        @foreach ($categories as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col" class="p-4">
-                                    <div class="flex items-center">
-                                        <input id="checkbox-all" aria-describedby="checkbox-1" type="checkbox"
-                                            class="w-4 h-4 border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600">
-                                        <label for="checkbox-all" class="sr-only">checkbox</label>
-                                    </div>
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    PRODUCT NAME
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    PRICE
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    IMPORT PRICE
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    INVENTORY
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    SUPPLIER
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    CATEGORIES
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    UNIT
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    STATUS
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    ACTIONS
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="productTable"
-                            class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @include('product.data')
-                        </tbody>
-                    </table>
-                </div>
+
+            {{-- Quick Filter Pills --}}
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button type="button" data-filter="all" class="quick-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 transition-all">
+                    Tất cả ({{ $products->total() }})
+                </button>
+                <button type="button" data-filter="in_stock" class="quick-filter-btn px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Còn hàng
+                </button>
+                <button type="button" data-filter="out_of_stock" class="quick-filter-btn px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Hết hàng
+                </button>
+                <button type="button" data-filter="featured" class="quick-filter-btn px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Nổi bật
+                </button>
             </div>
+
         </div>
     </div>
-    {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
-    {{-- add --}}
-    <div id="drawer-create-product-default"
-        class="fixed top-0 right-0 z-40 w-1/2 h-screen max-w-3xl p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Product</h5>
-        <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
-            aria-controls="drawer-create-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close menu</span>
-        </button>
-        <form id="formAdd" enctype="multipart/form-data">
+
+    {{-- Products Table Card --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th scope="col" class="w-4 p-4">
+                            <input id="checkbox-all" type="checkbox"
+                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                        </th>
+                        <th scope="col" class="p-4">Sản phẩm</th>
+                        <th scope="col" class="p-4">Giá bán / Vốn</th>
+                        <th scope="col" class="p-4">Tồn kho</th>
+                        <th scope="col" class="p-4">Nhà cung cấp</th>
+                        <th scope="col" class="p-4">Trạng thái</th>
+                        <th scope="col" class="p-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="productTable" class="divide-y divide-slate-200/80 dark:divide-slate-700/80">
+                    @include('product.data')
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="productPagination">
+            {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
+        </div>
+    </div>
+
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: THÊM SẢN PHẨM MỚI (CREATE PRODUCT)                               --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-create-product-default" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-2xl md:max-w-3xl h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        {{-- Drawer Header --}}
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Thêm sản phẩm mới</h3>
+            </div>
+            <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+                ✕
+            </button>
+        </div>
+
+        {{-- Form Content --}}
+        <form id="formAdd" enctype="multipart/form-data" class="flex-1 flex flex-col justify-between">
             @csrf
-            <div class="p-6 space-y-6">
-                <div class="grid grid-cols-6 gap-6">
-                    <div class="col-span-6 sm:col-span-3">
-                        <div class="flex items-center justify-center w-full border border-gray-300 rounded-lg">
-                            <label for="dropzone-file"
-                                class="flex flex-col items-center justify-center w-full h-12 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
-                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                    </svg>
-                                    <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                            class="font-semibold">Click to upload</span> or drag and drop</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                        800x400px)</p>
-                                </div>
-                                <input id="dropzone-file" type="file" name="images[]" class="hidden" multiple />
+            <div class="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+
+                {{-- SECTION 1: THÔNG TIN CƠ BẢN --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 1. Thông tin cơ bản
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Tên sản phẩm <span class="text-rose-500">*</span>
                             </label>
+                            <input type="text" name="product_name" required placeholder="VD: Áo Sơ Mi Lụa Cổ V Dài Tay"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="product_name"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">PRODUCT
-                            NAME</label>
-                        <input type="text" name="product_name" id="product_name"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="import_price"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">IMPORT
-                            PRICE</label>
-                        <input type="number" name="import_price" id="import_price"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            min="0" placeholder="0" required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="export_price"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">EXPORT
-                            PRICE</label>
-                        <input type="number" name="sell_price" id="export_price"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            min="0" placeholder="0" required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="unit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">UNIT</label>
-                        <input type="text" name="unit" id="unit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="supplier"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">SUPPLIER</label>
-                        <select id="supplier" name="supplier_id"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            @foreach ($supplier as $item)
-                                <option value="{{ $item->id }}">{{ $item->supplier_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="categories"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">CATEGORY</label>
-                        <select id="categories" name="categories_id"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            @foreach ($categories as $item)
-                                <option value="{{ $item->id }}">{{ $item->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="countries"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Product
-                            Location</label>
-                        <div class="flex divide-x">
-                            <select id="zones" name="zone"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                @foreach ($zones as $item)
-                                    <option value="{{ $item->zone }}">Kho {{ $item->zone }}</option>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Danh mục <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="categories_id" required
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                @foreach ($categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                 @endforeach
                             </select>
-                            <select id="shelves" name="shelf"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Nhà cung cấp
+                            </label>
+                            <select name="supplier_id"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                @foreach ($supplier as $item)
+                                    <option value="{{ $item->id }}">{{ $item->supplier_name }}</option>
+                                @endforeach
                             </select>
-                            <select id="levels" name="level"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Chất liệu</label>
+                            <input type="text" name="material" placeholder="VD: Lụa satin, Cotton, Kaki..."
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Đối tượng</label>
+                            <select name="audience"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <option value="Nữ">Nữ</option>
+                                <option value="Unisex">Unisex</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Trẻ em">Trẻ em</option>
                             </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mô tả sản phẩm</label>
+                            <textarea name="description" rows="2.5" placeholder="Mô tả dáng áo, form chuẩn, lưu ý giặt ủi..."
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                         </div>
                     </div>
                 </div>
-                <swiper-container class="mySwiper" slides-per-view="5" space-between="10" id="image-preview"
-                    free-mode="true">
-                </swiper-container>
-                <input id="choose-image" type="text" class="hidden" name="pin_image" />
+
+                {{-- SECTION 2: HÌNH ẢNH & MEDIA --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 2. Hình ảnh & Video sản phẩm
+                    </div>
+                    
+                    <label for="dropzone-file"
+                        class="flex flex-col items-center justify-center w-full py-6 px-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl cursor-pointer bg-white dark:bg-slate-700/30 hover:bg-indigo-50/40 hover:border-indigo-300 transition-all">
+                        <div class="flex flex-col items-center justify-center text-center">
+                            <svg class="w-8 h-8 mb-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Kéo thả hoặc bấm để chọn ảnh / video</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Hỗ trợ JPG, PNG, WEBP, MP4 (Click vào ảnh bất kỳ để chọn làm ảnh đại diện)</p>
+                        </div>
+                        <input id="dropzone-file" type="file" name="media[]" class="hidden" multiple accept="image/*,video/mp4" />
+                    </label>
+
+                    <div id="image-preview" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+                    <input id="choose-image" type="hidden" name="pin_image" />
+                </div>
+
+                {{-- SECTION 3: GIÁ BÁN & QUY TẮC KHO --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 3. Giá bán & Tồn kho
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Giá bán (VNĐ) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" inputmode="numeric" name="sell_price" required placeholder="0"
+                                class="o-tien block w-full text-sm font-bold rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Giá vốn / Giá nhập (VNĐ)
+                            </label>
+                            <input type="text" inputmode="numeric" name="import_price" placeholder="0"
+                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Giá khuyến mãi (VNĐ)
+                            </label>
+                            <input type="text" inputmode="numeric" name="discount_price" placeholder="Bỏ trống nếu không giảm"
+                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-6 pt-2">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="manage_stock" value="1" checked
+                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">Quản lý tồn kho theo biến thể</span>
+                        </label>
+
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_featured" value="1"
+                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">Đánh dấu Sản phẩm Nổi bật</span>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- SECTION 4: MA TRẬN BIẾN THỂ (SIZE / MÀU) --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Biến thể Size & Màu (Tồn kho)
+                        </div>
+                        <button type="button" data-target="#variants-add"
+                            class="addVariantRow inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
+                            + Thêm dòng
+                        </button>
+                    </div>
+
+                    {{-- Quick Suggestion Chips --}}
+                    <div class="space-y-2 text-xs">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-slate-400 font-medium mr-1">Size gợi ý:</span>
+                            @foreach (['S', 'M', 'L', 'XL', '2XL', 'Freesize'] as $sz)
+                                <button type="button" class="btn-chip-size px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-val="{{ $sz }}">
+                                    + {{ $sz }}
+                                </button>
+                            @endforeach
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-slate-400 font-medium mr-1">Màu gợi ý:</span>
+                            @foreach (['Đen', 'Trắng', 'Be', 'Xanh Navy', 'Hồng', 'Nâu', 'Xám', 'Đỏ'] as $cl)
+                                <button type="button" class="btn-chip-color px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-val="{{ $cl }}">
+                                    + {{ $cl }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <input type="text" id="variant-generator-add"
+                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                            placeholder="Gõ nhanh tổ hợp: S,M,L | Đen,Trắng  →  nhấn Enter">
+                    </div>
+
+                    <div class="space-y-2" id="variants-add">
+                        {{-- Variant rows generated dynamically --}}
+                    </div>
+                </div>
+
             </div>
-            <!-- Modal footer -->
-            <div class="items-center p-6 border-t border-gray-200 rounded-b dark:border-gray-700">
-                <button
-                    class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                    type="submit">Add product</button>
+
+            {{-- Drawer Sticky Footer --}}
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" data-drawer-dismiss="drawer-create-product-default"
+                    class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
+                    Hủy bỏ
+                </button>
+                <button type="submit"
+                    class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    Lưu sản phẩm
+                </button>
             </div>
         </form>
     </div>
 
-    <!-- Delete Product Drawer -->
-    <div id="drawer-delete-product-default"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete item</h5>
-        <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
-            aria-controls="drawer-delete-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close menu</span>
-        </button>
-        <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3 id="contentDelete" class="mb-6 text-lg text-gray-500 dark:text-gray-400"></h3>
-        <a href="#" id="deleteBtn"
-            class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-3 py-2.5 text-center mr-2 dark:focus:ring-red-900">
-            Yes, I'm sure
-        </a>
-        <a href="#"
-            class="text-gray-900 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 border border-gray-200 font-medium inline-flex items-center rounded-lg text-sm px-3 py-2.5 text-center dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-            data-drawer-hide="drawer-delete-product-default">
-            No, cancel
-        </a>
-    </div>
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: CHỈNH SỬA SẢN PHẨM (EDIT PRODUCT)                                --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-update-product-default" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-2xl md:max-w-3xl h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        {{-- Drawer Header --}}
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Cập nhật sản phẩm</h3>
+            </div>
+            <button type="button" id="closeDrawerEdit" data-drawer-dismiss="drawer-update-product-default"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
+                ✕
+            </button>
+        </div>
 
-    {{-- edit --}}
-    <div id="drawer-update-product-default"
-        class="drawer fixed top-0 right-0 z-40 w-1/2 h-screen max-w-3xl p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
-        <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
-            aria-controls="drawer-update-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close menu</span>
-        </button>
-        <form id="formEdit" method="POST" enctype="multipart/form-data">
+        {{-- Form Content --}}
+        <form id="formEdit" method="POST" enctype="multipart/form-data" class="flex-1 flex flex-col justify-between">
             @csrf
-            <div class="p-6 space-y-6">
-                <div class="grid grid-cols-6 gap-6">
-                    <div class="col-span-6 sm:col-span-3">
-                        <div class="flex items-center justify-center w-full border border-gray-300 rounded-lg">
-                            <label for="dropzone-file-edit"
-                                class="flex flex-col items-center justify-center w-full h-12 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
-                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                    </svg>
-                                    <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                            class="font-semibold">Click to upload</span> or drag and drop</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                        800x400px)</p>
-                                </div>
-                                <input id="dropzone-file-edit" type="file" name="images[]" class="hidden"
-                                    multiple />
+            <div class="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+
+                {{-- SECTION 1: THÔNG TIN CƠ BẢN --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 1. Thông tin cơ bản
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Tên sản phẩm <span class="text-rose-500">*</span>
                             </label>
+                            <input type="text" name="product_name" id="product_name_edit" required
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="product_name_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">PRODUCT
-                            NAME</label>
-                        <input type="text" name="product_name" id="product_name_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="import_price_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">IMPORT
-                            PRICE</label>
-                        <input type="number" name="import_price" id="import_price_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            min="0" placeholder="0" required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="export_price_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">EXPORT
-                            PRICE</label>
-                        <input type="number" name="sell_price" id="export_price_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            min="0" placeholder="0" required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="unit_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">UNIT</label>
-                        <input type="text" name="unit" id="unit_edit"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            required>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="supplier_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">SUPPLIER</label>
-                        <select id="supplier_edit" name="supplier_id"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            @foreach ($supplier as $item)
-                                <option class="option-supplier" value="{{ $item->id }}">
-                                    {{ $item->supplier_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="categories_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">CATEGORY</label>
-                        <select id="categories_edit" name="categories_id"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            @foreach ($categories as $item)
-                                <option class="option-category" value="{{ $item->id }}">{{ $item->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="status_edit"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">STATUS</label>
-                        <select id="status_edit" name="status"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            <option value="2">Hết hàng</option>
-                            <option value="1">Còn hàng</option>
-                            <option value="0">Ngưng nhập/xuất</option>
-                        </select>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="old_location"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Old Location</label>
-                        <p id="old_location"
-                            class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        </p>
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label for="countries"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">New
-                            Location</label>
-                        <div class="flex divide-x">
-                            <select id="zones_edit" name="zone"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                @foreach ($zones as $item)
-                                    <option value="{{ $item->zone }}">Kho {{ $item->zone }}</option>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Danh mục <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="categories_id" id="categories_edit" required
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                @foreach ($categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                 @endforeach
                             </select>
-                            <select id="shelves_edit" name="shelf"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Nhà cung cấp
+                            </label>
+                            <select name="supplier_id" id="supplier_edit"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                @foreach ($supplier as $item)
+                                    <option value="{{ $item->id }}">{{ $item->supplier_name }}</option>
+                                @endforeach
                             </select>
-                            <select id="levels_edit" name="level"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Chất liệu</label>
+                            <input type="text" name="material" id="material_edit"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Đối tượng</label>
+                            <select name="audience" id="audience_edit"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                <option value="Nữ">Nữ</option>
+                                <option value="Unisex">Unisex</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Trẻ em">Trẻ em</option>
                             </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mô tả sản phẩm</label>
+                            <textarea name="description" id="description_edit" rows="2.5"
+                                class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                         </div>
                     </div>
                 </div>
-                <swiper-container class="mySwiper" slides-per-view="5" space-between="10" id="image-preview-edit"
-                    free-mode="true">
-                </swiper-container>
-                <hr>
-                <swiper-container class="mySwiper" slides-per-view="5" space-between="10"
-                    id="image-preview-edit-new" free-mode="true">
-                </swiper-container>
-                <input id="choose-image-edit" type="text" class="hidden" name="pin_image" />
+
+                {{-- SECTION 2: HÌNH ẢNH & MEDIA --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 2. Hình ảnh & Video sản phẩm
+                    </div>
+
+                    {{-- Ảnh hiện tại --}}
+                    <div>
+                        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Ảnh hiện có:</div>
+                        <div id="image-preview-edit" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+                    </div>
+
+                    <label for="dropzone-file-edit"
+                        class="flex flex-col items-center justify-center w-full py-4 px-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl cursor-pointer bg-white dark:bg-slate-700/30 hover:bg-indigo-50/40 hover:border-indigo-300 transition-all">
+                        <div class="flex flex-col items-center justify-center text-center">
+                            <svg class="w-6 h-6 mb-1.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Tải thêm ảnh / video mới</p>
+                        </div>
+                        <input id="dropzone-file-edit" type="file" name="media[]" class="hidden" multiple accept="image/*,video/mp4" />
+                    </label>
+
+                    <div id="image-preview-edit-new" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+                    <input id="choose-image-edit" type="hidden" name="pin_image" />
+                </div>
+
+                {{-- SECTION 3: GIÁ BÁN & TỒN KHO --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 3. Giá bán & Tồn kho
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Giá bán (VNĐ) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" inputmode="numeric" name="sell_price" id="export_price_edit" required
+                                class="o-tien block w-full text-sm font-bold rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Giá vốn / Giá nhập (VNĐ)
+                            </label>
+                            <input type="text" inputmode="numeric" name="import_price" id="import_price_edit"
+                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                Giá khuyến mãi (VNĐ)
+                            </label>
+                            <input type="text" inputmode="numeric" name="discount_price" id="discount_price_edit"
+                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-6 pt-2">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="manage_stock" id="manage_stock_edit" value="1"
+                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">Quản lý tồn kho theo biến thể</span>
+                        </label>
+
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_featured" id="is_featured_edit" value="1"
+                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">Đánh dấu Sản phẩm Nổi bật</span>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- SECTION 4: MA TRẬN BIẾN THỂ --}}
+                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Biến thể Size & Màu (Tồn kho)
+                        </div>
+                        <button type="button" data-target="#variants-edit"
+                            class="addVariantRow inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
+                            + Thêm dòng
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input type="text" id="variant-generator-edit"
+                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                            placeholder="Gõ nhanh tổ hợp: S,M,L | Đen,Trắng  →  nhấn Enter">
+                    </div>
+
+                    <div class="space-y-2" id="variants-edit">
+                        {{-- Edit variant rows --}}
+                    </div>
+                </div>
+
             </div>
-            <!-- Modal footer -->
-            <div class="items-center p-6 border-t border-gray-200 rounded-b dark:border-gray-700">
-                <button
-                    class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                    type="submit">Update Product</button>
+
+            {{-- Drawer Sticky Footer --}}
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" data-drawer-dismiss="drawer-update-product-default"
+                    class="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
+                    Hủy bỏ
+                </button>
+                <button type="submit"
+                    class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    Cập nhật thay đổi
+                </button>
             </div>
         </form>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
+    {{-- Modal Confirm Delete Product --}}
+    <x-modal-confirm id="modal-delete-product" title="Xóa sản phẩm" message="Bạn có chắc chắn muốn xóa sản phẩm này không? Dữ liệu tồn kho và hình ảnh liên quan sẽ bị xóa." confirmText="Xóa vĩnh viễn" />
 
+    {{-- Scripts --}}
     <script>
         $(document).ready(function() {
+            let editingProductId = null;
+            let currentFilter = 'all';
+            let variantRowIndex = 100;
 
-            const reloadDataTable = () => {
+            const variantRow = (data) => {
+                data = data || {};
+                const i = variantRowIndex++;
+                const qty = data.quantity !== undefined ? data.quantity : 0;
+                const price = data.price_override ? window.nhomNghin(data.price_override) : '';
+                return $(`
+                    <div class="variant-row flex items-center gap-2 p-2.5 bg-white dark:bg-slate-700/60 rounded-xl border border-slate-200 dark:border-slate-600">
+                        <input type="text" name="variants[${i}][size]" value="${data.size || ''}" maxlength="50" placeholder="Size (S, M...)"
+                            class="w-24 text-xs font-semibold rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                        <input type="text" name="variants[${i}][color]" value="${data.color || ''}" maxlength="50" placeholder="Màu (Đen, Be...)"
+                            class="w-28 text-xs rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                        <input type="number" min="0" name="variants[${i}][quantity]" value="${qty}" placeholder="SL tồn"
+                            class="w-20 text-xs rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center font-medium">
+                        <input type="text" inputmode="numeric" name="variants[${i}][price_override]" value="${price}" placeholder="Giá riêng (nếu có)"
+                            class="o-tien flex-1 text-xs rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white">
+                        <button type="button" class="removeVariantRow p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                `);
+            };
+
+            $(document).on('click', '.addVariantRow', function() {
+                $($(this).data('target')).append(variantRow());
+            });
+
+            $(document).on('click', '.removeVariantRow', function() {
+                $(this).closest('.variant-row').remove();
+            });
+
+            // Gợi ý chips nhanh
+            $(document).on('click', '.btn-chip-size', function() {
+                const target = $(this).closest('.space-y-4').find('#variants-add');
+                target.append(variantRow({ size: $(this).data('val'), color: '', quantity: 0 }));
+            });
+            $(document).on('click', '.btn-chip-color', function() {
+                const target = $(this).closest('.space-y-4').find('#variants-add');
+                target.append(variantRow({ size: '', color: $(this).data('val'), quantity: 0 }));
+            });
+
+            // Generator: S,M,L | Đen,Trắng
+            const bindVariantGenerator = (inputId, containerId) => {
+                $(inputId).on('keydown', function(e) {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+
+                    const parts = $(this).val().split('|');
+                    const split = (s) => (s || '').split(/[,;/\n]+/).map(v => v.trim().slice(0, 50)).filter(Boolean);
+                    const sizes = split(parts[0]);
+                    const colors = split(parts[1]);
+
+                    if (!sizes.length && !colors.length) return;
+
+                    const container = $(containerId);
+                    (sizes.length ? sizes : ['']).forEach(s => {
+                        (colors.length ? colors : ['']).forEach(c => {
+                            container.append(variantRow({ size: s, color: c, quantity: 0 }));
+                        });
+                    });
+
+                    $(this).val('');
+                });
+            };
+
+            bindVariantGenerator('#variant-generator-add', '#variants-add');
+            bindVariantGenerator('#variant-generator-edit', '#variants-edit');
+
+            // Media Pickers
+            const addPicker = createMediaPicker('#dropzone-file', '#image-preview', '#choose-image');
+            const editPicker = createMediaPicker('#dropzone-file-edit', '#image-preview-edit-new', '#choose-image-edit');
+
+            const reloadDataTable = (url) => {
+                const keyword = $('#search-product').val();
+                const category = $('#filter-category').val();
+                
                 $.ajax({
-                    url: '{{ route('product.data') }}',
+                    url: url || '{{ route('product.data') }}',
                     type: 'GET',
+                    data: { keyword: keyword, category_id: category, filter: currentFilter },
                     success: function(data) {
-                        $('#productTable').html(
-                            data); // Cập nhật nội dung của bảng
-                    }
-                });
-            }
-
-            const uploadImages = (preview, pinImage, files) => {
-                $.each(files, function(index, file) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var imageUrl = e.target.result;
-                        var imgContainer = $('<swiper-slide>').addClass(
-                            'slide relative border border-gray-300'
-                        );
-                        var img = $('<img>').attr('src', imageUrl);
-
-                        var deleteBtn = $('<img>').addClass(
-                                'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer')
-                            .attr('src',
-                                'https://static.vecteezy.com/system/resources/previews/018/887/462/original/signs-close-icon-png.png'
-                            );
-
-                        deleteBtn.click(function() {
-                            var parentSlide = $(this).parent();
-                            var isSelected = parentSlide.hasClass(
-                                'selected'
-                            ); // Kiểm tra xem ảnh có đang được chọn làm ảnh ghim không
-                            parentSlide.remove(); // Xóa ảnh
-
-                            if (isSelected) {
-                                pinImage.val(
-                                    ''); // Reset giá trị của input nếu ảnh được ghim bị xóa
-                            }
-                        });
-
-                        imgContainer.click(function() {
-                            preview.find('swiper-slide').removeClass('selected');
-                            $(this).addClass('selected');
-                            preview.prepend($(this));
-                            pinImage.empty();
-                            pinImage.val(file.name);
-                            $('.download').each(function() {
-                                $(this).removeClass('selected');
-                            });
-                        });
-
-                        imgContainer.append(img).append(deleteBtn);
-                        preview.append(imgContainer);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            var inputFile = $('#dropzone-file');
-            var preview = $('#image-preview');
-            var pinImage = $('#choose-image');
-
-            inputFile.on('change', function() {
-                var files = inputFile.prop('files');
-                uploadImages(preview, pinImage, files);
-            });
-
-            var inputFile_edit = $('#dropzone-file-edit');
-            var preview_edit_new = $('#image-preview-edit-new');
-
-            inputFile_edit.on('change', function() {
-                var files_edit = inputFile_edit.prop('files');
-                uploadImages(preview_edit_new, $('#choose-image-edit'), files_edit);
-            })
-
-            // add product
-            $('#formAdd').submit(function(e) {
-                e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
-                var formData = new FormData(this);
-                $.ajax({
-                    url: '{{ route('product.add') }}', // URL được định nghĩa trong routes
-                    type: 'POST',
-                    data: formData,
-                    contentType: false, // Quan trọng: không thiết lập kiểu nội dung
-                    processData: false, // Quan trọng: không xử lý dữ liệu
-                    success: function(response) {
-                        // Xử lý khi thêm thành công
-                        alert(response.success);
-
-                        $('#closeDrawerAdd').click();
-
-                        $('form').trigger('reset');
-
-                        reloadDataTable();
-
+                        $('#productTable').html(data);
+                        const newPagination = $('#productTable').find('#new-pagination-html').html();
+                        if (newPagination !== undefined) {
+                            $('#productPagination').html(newPagination);
+                            $('#productTable').find('#ajax-pagination-data').remove();
+                        }
                     },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                    error: window.showAjaxError
+                });
+            };
+
+            // Search with Debounce
+            $('#search-product').on('input', window.debounce(function() {
+                const val = $(this).val();
+                if (val) $('#clearSearch').removeClass('hidden');
+                else $('#clearSearch').addClass('hidden');
+                reloadDataTable();
+            }, 300));
+
+            $('#clearSearch').on('click', function() {
+                $('#search-product').val('');
+                $(this).addClass('hidden');
+                reloadDataTable();
+            });
+
+            $('#filter-category').on('change', function() {
+                reloadDataTable();
+            });
+
+            $('.quick-filter-btn').on('click', function() {
+                $('.quick-filter-btn').removeClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').addClass('text-slate-600 font-medium');
+                $(this).addClass('bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-semibold').removeClass('text-slate-600 font-medium');
+                currentFilter = $(this).data('filter');
+                reloadDataTable();
+            });
+
+            $(document).on('click', '#productPagination a', function(e) {
+                e.preventDefault();
+                const targetUrl = $(this).attr('href');
+                if (targetUrl) reloadDataTable(targetUrl);
+            });
+
+
+            // Form Add Submit
+            $('#formAdd').submit(function(e) {
+                e.preventDefault();
+                submitFormWithProgress($(this), '{{ route('product.add') }}', function(response) {
+                    window.showToast(response.success);
+                    $('#closeDrawerAdd').click();
+                    $('#formAdd').trigger('reset');
+                    $('#image-preview').empty();
+                    addPicker.reset();
+                    $('#variants-add').empty();
+                    reloadDataTable();
                 });
             });
 
-            //edit product
+            // Form Edit Submit
+            $('#formEdit').submit(function(e) {
+                e.preventDefault();
+                if (!editingProductId) return;
+
+                submitFormWithProgress($(this), '/product/edit/' + editingProductId, function(response) {
+                    window.showToast(response.success);
+                    $('#closeDrawerEdit').click();
+                    editPicker.reset();
+                    reloadDataTable();
+                });
+            });
+
+            // Open Edit Drawer
             $(document).on('click', '.editProductButton', function() {
-                // Mở drawer
-                $('.download').remove();
-                $('.slide').remove();
-                $('form').trigger('reset');
-
-                const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
-                const drawerElement = $('#' + drawerId);
                 const product_id = $(this).data('id-product');
-                console.log(product_id);
-
-                var preview_edit = $('#image-preview-edit');
-                var pinImage_edit = $('#choose-image-edit');
+                editingProductId = product_id;
+                
+                $('#image-preview-edit').empty();
+                $('#image-preview-edit-new').empty();
+                editPicker.reset();
+                $('#formEdit').trigger('reset');
 
                 $.ajax({
                     url: '/product/get-product/' + product_id,
                     type: 'GET',
                     success: function(response) {
-                        $('#product_name_edit').val(response[0].product_name);
-                        $('#inventory_edit').val(response[0].total_quantity);
-                        $('#import_price_edit').val(response[0].import_price);
-                        $('#export_price_edit').val(response[0].sell_price);
-                        $('#unit_edit').val(response[0].unit);
-                        $('#categories_edit').val(response[0].category.id);
-                        $('#supplier_edit').val(response[0].supplier.id);
-                        $('#status_edit').val(response[0].status);
-                        if (response[0].location && response[0].location.code) {
-                            $('#old_location').text(response[0].location.code);
-                        } else {
-                            $('#old_location').text(
-                                'Không có vị trí'); // Hoặc bất kỳ giá trị mặc định nào phù hợp
-                        }
-                        $.each(response[0].product_image, function(index, image) {
-                            if (image.is_pined) {
-                                pinImage_edit.val(image.name);
-                            } else {
-                                pinImage_edit.val('');
-                            }
+                        const item = response[0];
+                        $('#product_name_edit').val(item.product_name);
+                        $('#import_price_edit').val(window.nhomNghin(item.import_price ?? ''));
+                        $('#export_price_edit').val(window.nhomNghin(item.sell_price ?? ''));
+                        $('#discount_price_edit').val(window.nhomNghin(item.discount_price ?? ''));
+                        $('#material_edit').val(item.material);
+                        $('#brand_edit').val(item.brand);
+                        $('#audience_edit').val(item.audience || 'Nữ');
+                        $('#description_edit').val(item.description);
+                        $('#is_featured_edit').prop('checked', !!item.is_featured);
+                        $('#manage_stock_edit').prop('checked', !!item.manage_stock);
+                        $('#categories_edit').val(item.categories_id);
+                        $('#supplier_edit').val(item.supplier_id);
+
+                        const variantsBox = $('#variants-edit').empty();
+                        $.each(item.variants || [], function(i, v) {
+                            variantsBox.append(variantRow(v));
                         });
 
+                        const previewEdit = $('#image-preview-edit');
+                        const pinInput = $('#choose-image-edit');
 
-                        $.each(response[0].product_image, function(index, image) {
-                            if (image.is_pined) {
-                                var imgContainer = $('<swiper-slide>').addClass(
-                                    'download selected border border-gray-300'
-                                );
-                            } else {
-                                var imgContainer = $('<swiper-slide>').addClass(
-                                    'download border border-gray-300'
-                                );
-                            }
+                        $.each(item.product_image || [], function(index, img) {
+                            const isPined = !!img.is_pined;
+                            if (isPined) pinInput.val(img.name);
 
-                            var img = $('<img>').attr('src', image.path.replace(
-                                'public', 'storage'));
+                            const card = $(`
+                                <div class="relative group rounded-xl overflow-hidden border ${isPined ? 'border-2 border-indigo-600 ring-2 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-700'} aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center cursor-pointer">
+                                    <img src="${window.storageUrl(img.path)}" class="w-full h-full object-cover">
+                                    <button type="button" class="btn-del-img absolute top-1 right-1 w-6 h-6 rounded-full bg-slate-900/70 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                                </div>
+                            `);
 
-                            var deleteBtn = $('<img>').addClass(
-                                    'absolute top-0 right-0 m-2 w-6 h-6 cursor-pointer'
-                                )
-                                .attr('src',
-                                    'https://static.vecteezy.com/system/resources/previews/018/887/462/original/signs-close-icon-png.png'
-                                );
-
-                            deleteBtn.click(function() {
+                            card.find('.btn-del-img').on('click', function(ev) {
+                                ev.stopPropagation();
                                 $.ajax({
-                                    url: '/delete-image/' + image
-                                        .id,
-                                    type: 'GET',
-                                    success: function(response) {
-                                        // alert(response.success);
+                                    url: '/delete-image/' + img.id,
+                                    type: 'DELETE',
+                                    success: function() {
+                                        card.remove();
                                         reloadDataTable();
                                     },
-                                    error: function(xhr, status,
-                                        error) {
-                                        // Xử lý lỗi
-                                        alert('Có lỗi xảy ra: ' +
-                                            error
-                                        ); // Hiển thị thông báo lỗi
-                                    }
-                                });
-                                var parentSlide = $(this).parent();
-                                var isSelected = parentSlide.hasClass(
-                                    'selected'
-                                ); // Kiểm tra xem ảnh có đang được chọn làm ảnh ghim không
-                                parentSlide.remove(); // Xóa ảnh
-
-                                if (isSelected) {
-                                    pinImage.val(
-                                        ''
-                                    ); // Reset giá trị của input nếu ảnh được ghim bị xóa
-                                }
-                            });
-
-                            imgContainer.click(function() {
-                                preview_edit.find('swiper-slide')
-                                    .removeClass('selected');
-                                $(this).addClass('selected');
-                                preview_edit.prepend($(this));
-                                pinImage_edit.empty();
-                                pinImage_edit.val(image.name);
-                                $('.slide').each(function() {
-                                    $(this).removeClass('selected');
+                                    error: window.showAjaxError
                                 });
                             });
 
-                            imgContainer.append(img).append(deleteBtn);
-                            preview_edit.append(imgContainer);
+                            card.on('click', function() {
+                                previewEdit.find('div').removeClass('border-2 border-indigo-600 ring-2 ring-indigo-500/20');
+                                card.addClass('border-2 border-indigo-600 ring-2 ring-indigo-500/20');
+                                pinInput.val(img.name);
+                            });
+
+                            previewEdit.append(card);
                         });
 
+                        window.openDrawer('drawer-update-product-default');
                     },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
-                });
-
-
-                $('#formEdit').submit(function(event) {
-                    // Ngăn chặn hành động mặc định của form
-                    event.preventDefault();
-                    const urlEdit = '/product/edit/' + product_id;
-                    // Thay đổi action của form
-                    $(this).attr('action', urlEdit);
-
-                    // Submit form
-                    this.submit();
-                });
-
-                // Sử dụng Tailwind CSS classes để hiển thị drawer
-                drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
-                drawerElement.attr('aria-hidden', 'false');
-
-                // Sự kiện đóng drawer
-
-                // Sự kiện đóng drawer khi click vào phần tử có thuộc tính data - drawer - dismiss hoặc data -
-                //     drawer - hide
-                $(document).on('click', '[data-drawer-dismiss], [data-drawer-hide]', function() {
-                    const drawerId = $(this).attr('data-drawer-dismiss') || $(this).attr(
-                        'data-drawer-hide');
-                    const drawerElement = $('#' + drawerId);
-                    drawerElement.addClass('translate-x-full').removeClass('translate-x-0');
-                    drawerElement.attr('aria-hidden', 'true');
-                });
-
-                // Sự kiện đóng drawer khi click ra bên ngoài drawer
-                $(document).on('click', function(event) {
-                    // Điều này giả định rằng tất cả các drawer của bạn có một class chung là `.drawer`
-                    const $drawer = $(
-                        '.drawer'); // Sửa đổi selector này để phù hợp với class của drawer của bạn
-
-                    // Kiểm tra xem click có nằm ngoài drawer và không phải là nút mở drawer
-                    if (!$drawer.is(event.target) && $drawer.has(event.target).length === 0 && !$(
-                            event.target).closest('[data-drawer-target]').length) {
-                        $drawer.addClass('translate-x-full').removeClass('translate-x-0');
-                        $drawer.attr('aria-hidden', 'true');
-                    }
+                    error: window.showAjaxError
                 });
             });
 
-
-            // delete product
-            $(document).ready(function() {
-                // Sử dụng event delegation để gắn sự kiện click cho tất cả các nút hiện tại và tương lai
-                $(document).on('click', '.editProductButton', function() {
-                    // Mở drawer
-                    const drawerId = $(this).data(
-                        'drawer-target'); // Lấy ID của drawer từ thuộc tính data
-                    const drawerElement = $('#' + drawerId);
-                    const idProduct = $(this).data('id-product');
-                    const nameProduct = $(this).data('name-product');
-
-                    $('#contentDelete').html('Bạn có chắc chắn muốn xóa <strong>' + nameProduct +
-                        '</strong> không?');
-
-                    $(document).off('click', '#deleteBtn').on('click', '#deleteBtn', function() {
-
-                        const url = '/product/delete/' + idProduct;
-
-                        $.ajax({
-                            url: url, // Sử dụng nối chuỗi để thêm idSupplier vào URL
-                            type: 'GET',
-                            success: function(response) {
-                                // Xử lý khi xóa thành công
-                                alert(response.success);
-
-                                $('#closeDrawerDelete').click();
-
-                                reloadDataTable();
-                            },
-                            error: function(xhr) {
-                                // Xử lý lỗi
-                                alert('Error: ' + xhr.statusText);
-                            }
-                        });
-                    });
-
-                    // Sử dụng Tailwind CSS classes để hiển thị drawer
-                    drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
-                    drawerElement.attr('aria-hidden', 'false');
-                });
-                // Sự kiện đóng drawer
-                $(document).ready(function() {
-                    // Sự kiện đóng drawer khi click vào phần tử có thuộc tính data-drawer-dismiss hoặc data-drawer-hide
-                    $(document).on('click', '[data-drawer-dismiss], [data-drawer-hide]',
-                        function() {
-                            const drawerId = $(this).attr('data-drawer-dismiss') || $(this)
-                                .attr(
-                                    'data-drawer-hide');
-                            const drawerElement = $('#' + drawerId);
-                            drawerElement.addClass('translate-x-full').removeClass(
-                                'translate-x-0');
-                            drawerElement.attr('aria-hidden', 'true');
-                        });
-
-                    // Sự kiện đóng drawer khi click ra bên ngoài drawer
-                    $(document).on('click', function(event) {
-                        // Điều này giả định rằng tất cả các drawer của bạn có một class chung là `.drawer`
-                        const $drawer = $(
-                            '.drawer'
-                        ); // Sửa đổi selector này để phù hợp với class của drawer của bạn
-
-                        // Kiểm tra xem click có nằm ngoài drawer và không phải là nút mở drawer
-                        if (!$drawer.is(event.target) && $drawer.has(event.target)
-                            .length === 0 && !$(
-                                event.target).closest('[data-drawer-target]').length) {
-                            $drawer.addClass('translate-x-full').removeClass(
-                                'translate-x-0');
-                            $drawer.attr('aria-hidden', 'true');
-                        }
-                    });
-                });
+            // Delete Product with Modal Confirm
+            let deleteTargetId = null;
+            $(document).on('click', '.deleteProductButton', function() {
+                deleteTargetId = $(this).data('id-product');
+                const name = $(this).data('name-product');
+                $('#modal-delete-product-message').html(`Bạn có chắc chắn muốn xóa sản phẩm <strong>${name}</strong> không? Toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn.`);
+                $('#modal-delete-product').removeClass('hidden').addClass('flex');
             });
 
-
-
-            $('#closeDrawerAdd').click(function() {
-                $('.slide').remove();
-                $('form').find('input[type=text],input[type=number],input[type=file] ').val('');
-            })
-
-
-            //search
-
-            $('#search-product').on('input', function() {
-                var keyword = $(this).val();
-
+            $('#modal-delete-product-btn-confirm').on('click', function() {
+                if (!deleteTargetId) return;
                 $.ajax({
-                    url: '{{ route('product.search') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        keyword: keyword
+                    url: '/product/delete/' + deleteTargetId,
+                    type: 'DELETE',
+                    success: function(res) {
+                        window.showToast(res.success);
+                        $('#modal-delete-product').addClass('hidden').removeClass('flex');
+                        reloadDataTable();
                     },
-                    success: function(data) {
-                        $('#productTable').empty();
-                        if (data.length > 0) {
-                            $('#productTable').html(data)
-                        } else {
-                            // Hiển thị thông báo không tìm thấy kết quả
-                            $('#productTable').html();
-                        }
-                    }
+                    error: window.showAjaxError
                 });
             });
 
-        })
-    </script>
-    {{-- location add --}}
-    <script>
-        $(document).ready(function() {
-            filterZone($('#zones').val(), $('#shelves'));
-            filterZone($('#zones_edit').val(), $('#shelves_edit'));
-            $(document).on('click', '#createProductButton', function() {
-                filterShelf($('#shelves').val(), $('#levels'));
-            });
-
-            $(document).on('click', '.editProductButton', function() {
-                filterShelf($('#shelves_edit').val(), $('#levels_edit'));
-            });
-
-            $('#createLocation').click(function() {
-                $.ajax({
-                    url: '{{ route('location.create') }}',
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function(response) {
-                        alert(response.message);
-                        filterZone(response.location.zone);
-                        filterShelf(response.location.shelf);
-                        $('#zones').val(response.location.zone);
-                        $('#shelves').val(response.location.shelf);
-                    },
-                    error: function(response) {
-                        alert(response.message); // Hiển thị thông báo lỗi
-                    }
-                });
-            });
-
-            function filterZone(val, shelveSelect) {
-                $.ajax({
-                    url: '{{ route('location.getShelf') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        zone: val
-                    },
-                    success: function(data) {
-                        shelveSelect
-                            .empty(); // Giả sử bạn muốn cập nhật một element với id `someElement`
-                        data.shelves.forEach(function(shelves) {
-                            shelveSelect.append($('<option>', {
-                                value: shelves.shelf,
-                                text: 'Giá ' + shelves.shelf
-                            }));
-                        });
-                    }
-                });
-            }
-
-            function filterShelf(val, levelSelect) {
-                $.ajax({
-                    url: '{{ route('location.getLevel') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        shelf: val
-                    },
-                    success: function(data) {
-                        if (levelSelect.length) { // Kiểm tra xem phần tử có tồn tại không
-                            levelSelect.empty();
-                        } else {
-                            console.log('Phần tử #levels không tồn tại.');
-                        }
-                        data.levels.forEach(function(levels) {
-                            levelSelect.append($('<option>', {
-                                value: levels.level,
-                                text: 'Tầng ' + levels.level
-                            }));
-                        });
-                    }
-                });
-            }
-
-            $('#zones').on('change', function() {
-                var val = $(this).val();
-                filterZone(val, $('#shelves'))
-            });
-
-            $('#shelves').on('change', function() {
-                var val = $(this).val();
-                filterShelf(val, $('#levels'))
-            });
-
-            $('#zones_edit').on('change', function() {
-                var val = $(this).val();
-                filterZone(val, $('#shelves_edit'))
-            });
-
-            $('#shelves_edit').on('change', function() {
-                var val = $(this).val();
-                filterShelf(val, $('#levels_edit'))
+            $('.btn-cancel-modal, [data-modal-hide]').on('click', function() {
+                $('#modal-delete-product').addClass('hidden').removeClass('flex');
             });
         });
     </script>
-
 
 </x-app-layout>

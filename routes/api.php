@@ -7,6 +7,10 @@ use App\Http\Controllers\API\SupplierController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\CheckoutController;
+use App\Http\Controllers\API\PrintStorefrontController;
+use App\Http\Controllers\API\StorefrontController;
+use App\Http\Controllers\API\StorefrontOrderController;
 use App\Http\Controllers\API\CustomerController;
 use App\Http\Controllers\API\InvoiceController;
 use App\Http\Controllers\API\LocationController;
@@ -39,8 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/get-product-by-supplier', [ProductController::class, 'getProductsBySupplier']);
     Route::get('/products/filter-category', [ProductController::class, 'filterByCategory']);
     Route::get('/products/filter-status', [ProductController::class, 'filterByStatus']);
-    Route::get('/products/getBatch/{id}', [ProductController::class, 'getProductExpiries']);
-    Route::delete('/products/deleteBatch/{productId}/{expiryId}', [ProductController::class, 'updateOrDeleteExpiry']);
+    Route::get('/products/variants/{id}', [ProductController::class, 'getProductVariants']);
+    Route::delete('/products/variants/{productId}/{variantId}', [ProductController::class, 'updateOrDeleteVariant']);
 
     //supplier
     Route::get('/suppliers', [SupplierController::class, 'index']);
@@ -107,12 +111,89 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('statistical/export-invoice/last-month', [StatisticalController::class, "statsExportLastMonth"]);
 
     //số lượng tồn kho cuối ngày
-    Route::get('statistical/inventory/end-of-day', [StatisticalController::class, "inventoryStatsByExpiry"]);
+    Route::get('statistical/inventory/end-of-day', [StatisticalController::class, "inventoryStatsByVariant"]);
 
     //register
     Route::post('/register', [AuthController::class, 'register']);
+
+    //upload hàng loạt + đồng bộ trạng thái sản phẩm
+    Route::post('/upload-images', [ProductController::class, 'uploadBatchImages']);
+    Route::get('/update_product_status', [ProductController::class, 'updateProductStatus']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/upload-images', [ProductController::class, 'uploadBatchImages']);
-Route::get('/update_product_status', [ProductController::class, 'updateProductStatus']);
+
+/*
+ * Đặt hàng từ web bán hàng - công khai vì khách không có tài khoản.
+ * Giới hạn số lần gọi để tránh bị spam đơn rác; mọi số tiền do server tự tính.
+ */
+Route::middleware('throttle:20,1')->group(function () {
+    Route::post('/checkout', [CheckoutController::class, 'store']);
+    Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
+    // Chi web ban hang duoc goi: no da xac thuc chu ky PayOS truoc do.
+    Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid'])
+        ->middleware('storefront.secret');
+});
+
+/*
+ * Catalogue công khai cho web bán hàng đọc. Chỉ đọc, và chỉ những trường
+ * hiển thị ngoài cửa hàng - không có giá nhập hay nhà cung cấp.
+ */
+Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
+    Route::get('/products', [StorefrontController::class, 'products']);
+    Route::get('/products/{slug}', [StorefrontController::class, 'product']);
+    Route::get('/categories', [StorefrontController::class, 'categoriesIndex']);
+    Route::get('/content', [StorefrontController::class, 'content']);
+
+    /*
+     * Studio đặt in. Hai đường này chỉ đọc và không mang dữ liệu khách nào:
+     * catalogue là phôi và bảng giá đang áp dụng, quote là báo giá lại từ máy
+     * chủ. Studio tự tính giá bằng TypeScript cho mượt tay, nhưng con số tính
+     * tiền thật luôn dựng lại ở đây.
+     */
+    Route::get('/print/catalogue', [PrintStorefrontController::class, 'catalogue']);
+    Route::post('/print/quote', [PrintStorefrontController::class, 'quote']);
+});
+
+/*
+ * Ghi của module in: nhận file thiết kế và chốt một mẫu áo.
+ *
+ * Nằm sau bí mật dùng chung vì chúng ghi file lên Supabase và tạo bản ghi chờ
+ * duyệt - để ngỏ là ai cũng đổ rác vào kho ảnh được. Web bán hàng gọi từ route
+ * handler của Next, không phải từ trình duyệt.
+ */
+Route::middleware(['throttle:60,1', 'storefront.secret'])
+    ->prefix('storefront/print')
+    ->group(function () {
+        Route::post('/assets', [PrintStorefrontController::class, 'storeAsset']);
+        Route::post('/designs', [PrintStorefrontController::class, 'storeDesign']);
+        // Giá đã đóng băng của một mẫu — web bán hàng đọc lại lúc dựng giỏ hàng
+        // và lúc thanh toán thay vì tin con số nào trong localStorage.
+        Route::get('/designs/{code}', [PrintStorefrontController::class, 'showDesign']);
+    });
+
+/*
+ * Cho web bán hàng lưu đơn của trang thanh toán: mã trên URL, mã QR, hạn chuyển
+ * khoản, trạng thái PayOS. Bên đó không có cơ sở dữ liệu nào, và thư mục tạm của
+ * máy chủ Vercel bị xoá sau vài phút - đơn mất là khách đang trả tiền thì trang
+ * đơn hàng thành 404.
+ *
+ * Payload có tên, số điện thoại và địa chỉ khách, nên cả nhóm nằm sau bí mật
+ * dùng chung. Hạn gọi nới rộng vì trang thanh toán hỏi lại mỗi 4 giây trong lúc
+ * khách còn ở trong app ngân hàng.
+ */
+Route::middleware(['throttle:600,1', 'storefront.secret'])
+    ->prefix('storefront/orders')
+    ->group(function () {
+        Route::post('/', [StorefrontOrderController::class, 'store']);
+        // Đặt trước {ref} để mã PayOS không bị bắt làm mã trên URL.
+        Route::get('/by-code/{orderCode}', [StorefrontOrderController::class, 'showByCode'])
+            ->whereNumber('orderCode');
+
+        Route::prefix('{ref}')->whereAlphaNumeric('ref')->group(function () {
+            Route::get('/', [StorefrontOrderController::class, 'show']);
+            Route::patch('/', [StorefrontOrderController::class, 'update']);
+            Route::post('/email-claim', [StorefrontOrderController::class, 'claimEmail']);
+            Route::delete('/email-claim', [StorefrontOrderController::class, 'releaseEmail']);
+        });
+    });

@@ -44,6 +44,24 @@ return [
             'throw' => false,
         ],
 
+        /*
+         * Supabase Storage. Nói chuyện qua giao thức S3 nên vẫn dùng driver 's3',
+         * chỉ khác endpoint. 'url' là địa chỉ công khai để Storage::url() sinh link
+         * cho trình duyệt - KHÁC endpoint S3 dùng để tải file lên.
+         */
+        'supabase' => [
+            'driver' => 's3',
+            'key' => env('SUPABASE_S3_KEY'),
+            'secret' => env('SUPABASE_S3_SECRET'),
+            'region' => env('SUPABASE_S3_REGION', 'ap-south-1'),
+            'bucket' => env('SUPABASE_BUCKET', 'warehouse'),
+            'endpoint' => env('SUPABASE_S3_ENDPOINT'),
+            'url' => env('SUPABASE_PUBLIC_URL'),
+            'use_path_style_endpoint' => true,
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

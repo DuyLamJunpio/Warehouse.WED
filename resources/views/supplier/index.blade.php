@@ -1,580 +1,305 @@
 <x-app-layout>
-    <div
-        class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="mb-4">
-                <nav class="flex mb-5" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
+    {{-- Header & Breadcrumb --}}
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400">
                         <li class="inline-flex items-center">
-                            <a href="{{ route('dashboard') }}"
-                                class="inline-flex items-center text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-white">
-                                <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
-                                    </path>
-                                </svg>
-                                Home
-                            </a>
+                            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">Trang chủ</a>
                         </li>
                         <li>
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Supplier</span>
-                            </div>
+                            <span class="mx-1 text-slate-400">/</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">Nhà cung cấp</span>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL SUPPLIERS</h1>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Quản lý nhà cung cấp
+                </h1>
             </div>
-            <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
-                <div class="flex items-center mb-4 sm:mb-0">
-                    <form class="sm:pr-3" action="#" method="GET">
-                        <label for="products-search" class="sr-only">Search</label>
-                        <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
-                            <input type="text" name="search" id="search-supplier"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for suppliers">
-                        </div>
-                    </form>
-                    <div class="flex items-center w-full sm:justify-end">
-                        <div class="flex pl-2 space-x-1">
-                            <a href="#"
-                                class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                            </a>
-                            <a href="#"
-                                class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                            </a>
-                            <a href="#"
-                                class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z">
-                                    </path>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <button id="createProductButton"
-                    class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800"
-                    type="button" data-drawer-target="drawer-create-product-default"
-                    data-drawer-show="drawer-create-product-default" aria-controls="drawer-create-product-default"
-                    data-drawer-placement="right">
-                    Add new supplier
+
+            <div class="flex items-center gap-2.5">
+                <button type="button" id="btn-open-create-supplier"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Thêm nhà cung cấp</span>
                 </button>
             </div>
         </div>
     </div>
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col" class="p-4">
-                                    <div class="flex items-center">
-                                        <input id="checkall" aria-describedby="checkbox-1" type="checkbox"
-                                            class="w-4 h-4 border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600">
-                                        <label for="checkall" class="sr-only">checkbox</label>
-                                    </div>
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Supplier Name
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Phone
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Address
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Tax
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Total Money Imported
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Status
-                                </th>
-                                <th scope="col"
-                                    class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="supplierTable"
-                            class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @include('supplier.data')
-                        </tbody>
-                    </table>
+
+    {{-- Search Bar --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs mb-4 p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="relative w-full sm:max-w-md">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                 </div>
+                <input type="text" id="search-supplier"
+                    class="block w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border-slate-200 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700/50 dark:border-slate-600 dark:text-white placeholder-slate-400"
+                    placeholder="Tìm theo tên hoặc SĐT nhà cung cấp...">
+                <button type="button" id="clearSupplierSearch" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">✕</button>
             </div>
         </div>
     </div>
 
-    {{ $supplier->withQueryString()->links('vendor.pagination.tailwind') }}
+    {{-- Supplier Table Card --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th scope="col" class="p-4 w-4">
+                            <input type="checkbox" id="checkall" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                        </th>
+                        <th scope="col" class="p-4">Tên nhà cung cấp</th>
+                        <th scope="col" class="p-4">Số điện thoại</th>
+                        <th scope="col" class="p-4">Địa chỉ</th>
+                        <th scope="col" class="p-4">Tổng tiền nhập</th>
+                        <th scope="col" class="p-4">Trạng thái</th>
+                        <th scope="col" class="p-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="supplierTable" class="divide-y divide-slate-200/80 dark:divide-slate-700/80">
+                    @include('supplier.data')
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Edit Product Drawer -->
-    <div id="drawer-update-product-default"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
-        <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
-            aria-controls="drawer-update-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close menu</span>
-        </button>
-        <form id="formEdit">
+        <div id="supplierPagination">
+            {{ $supplier->withQueryString()->links('vendor.pagination.tailwind') }}
+        </div>
+    </div>
+
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: THÊM NHÀ CUNG CẤP                                                 --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-create-supplier" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Thêm nhà cung cấp</h3>
+            </div>
+            <button type="button" class="close-supplier-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">✕</button>
+        </div>
+
+        <form id="formAddSupplier" class="flex-1 flex flex-col justify-between">
             @csrf
-            <div class="space-y-4">
+            <div class="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                 <div>
-                    <label for="name_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-                    <input type="text" name="supplier_name" id="name_edit"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier name" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Tên nhà cung cấp <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="supplier_name" required placeholder="Ví dụ: Công ty Dệt May Việt Nhật"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
+
                 <div>
-                    <label for="supplier_phone_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone</label>
-                    <input type="text" name="supplier_phone" id="supplier_phone_edit"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier phone" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Số điện thoại <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="supplier_phone" required placeholder="0901234567"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
+
                 <div>
-                    <label for="tax_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tax</label>
-                    <input type="text" name="tax" id="tax_edit"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier tax" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mã số thuế</label>
+                    <input type="text" name="tax" placeholder="Ví dụ: 0101234567"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
+
                 <div>
-                    <label for="address_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address</label>
-                    <textarea id="address_edit" rows="4" name="address"
-                        class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Enter address here"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ</label>
+                    <textarea name="address" rows="3" placeholder="Địa chỉ trụ sở / kho của nhà cung cấp..."
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                 </div>
-                <div>
-                    <label for="status_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
-                    <select id="status_edit" name="status"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        <option value="1">Hợp tác</option>
-                        <option value="0">Đã hủy</option>
-                    </select>
-                </div>
-                <div
-                    class="bottom-0 left-0 flex justify-center w-full pb-4 mt-4 space-x-4 sm:absolute sm:px-4 sm:mt-0">
-                    <button type="submit"
-                        class="w-full justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Update
-                    </button>
-                    <button type="button" data-drawer-dismiss="drawer-update-product-default"
-                        aria-controls="drawer-update-product-default"
-                        class="inline-flex w-full justify-center text-gray-500 items-center bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">
-                        <svg aria-hidden="true" class="w-5 h-5 -ml-1 sm:mr-1" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Cancel
-                    </button>
-                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" class="close-supplier-drawer px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">Hủy</button>
+                <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">Lưu nhà cung cấp</button>
             </div>
         </form>
     </div>
 
+    {{-- ========================================================================= --}}
+    {{-- DRAWER: SỬA NHÀ CUNG CẤP                                                  --}}
+    {{-- ========================================================================= --}}
+    <div id="drawer-update-supplier" tabindex="-1" aria-hidden="true"
+        class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
+        
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Cập nhật nhà cung cấp</h3>
+            </div>
+            <button type="button" class="close-supplier-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">✕</button>
+        </div>
 
-    <!-- Delete Product Drawer -->
-    <div id="drawer-delete-product-default"
-        class="drawer fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete item</h5>
-        <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
-            aria-controls="drawer-delete-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close menu</span>
-        </button>
-        <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3 id="contentDelete" class="mb-6 text-lg text-gray-500 dark:text-gray-400"></h3>
-        <a href="#" id="deleteBtn"
-            class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-3 py-2.5 text-center mr-2 dark:focus:ring-red-900">
-            Yes, I'm sure
-        </a>
-        <a href="#"
-            class="text-gray-900 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-primary-300 border border-gray-200 font-medium inline-flex items-center rounded-lg text-sm px-3 py-2.5 text-center dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-            data-drawer-hide="drawer-delete-product-default">
-            No, cancel
-        </a>
-    </div>
-
-    <!-- Add Product Drawer -->
-    <div id="drawer-create-product-default"
-        class="fixed top-0 right-0 z-40 w-full h-screen max-w-xs p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800"
-        tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
-        <h5 id="drawer-label"
-            class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Product</h5>
-        <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
-            aria-controls="drawer-create-product-default"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Close menu</span>
-        </button>
-        <form id="formAdd">
+        <form id="formEditSupplier" class="flex-1 flex flex-col justify-between">
             @csrf
-            <div class="space-y-4">
+            <div class="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                 <div>
-                    <label for="name"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-                    <input type="text" name="supplier_name" id="name"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier name" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Tên nhà cung cấp <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="supplier_name" id="name_edit" required
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
+
                 <div>
-                    <label for="supplier_phone"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone</label>
-                    <input type="text" name="supplier_phone" id="supplier_phone"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier phone" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Số điện thoại <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="supplier_phone" id="supplier_phone_edit" required
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
+
                 <div>
-                    <label for="tax"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tax</label>
-                    <input type="text" name="tax" id="tax"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier tax" required="">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mã số thuế</label>
+                    <input type="text" name="tax" id="tax_edit"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
+
                 <div>
-                    <label for="address"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address</label>
-                    <textarea id="address" rows="4" name="address"
-                        class="block p-2.5 w-full text-md text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Enter address here"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ</label>
+                    <textarea id="address_edit" rows="3" name="address"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                 </div>
-                <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4 md:absolute">
-                    <button type="submit"
-                        class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Add supplier
-                    </button>
-                    <button type="button" data-drawer-dismiss="drawer-create-product-default"
-                        aria-controls="drawer-create-product-default"
-                        class="inline-flex w-full justify-center text-gray-500 items-center bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">
-                        <svg aria-hidden="true" class="w-5 h-5 -ml-1 sm:mr-1" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Cancel
-                    </button>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Trạng thái hợp tác</label>
+                    <select id="status_edit" name="status"
+                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <option value="1">Đang hợp tác</option>
+                        <option value="0">Tạm dừng</option>
+                    </select>
                 </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
+                <button type="button" class="close-supplier-drawer px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">Hủy</button>
+                <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">Cập nhật</button>
+            </div>
         </form>
     </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    {{-- add supplier --}}
+    {{-- Delete Modal Confirmation --}}
+    <x-modal-confirm id="modal-delete-supplier" title="Xóa nhà cung cấp" message="Bạn có chắc chắn muốn xóa nhà cung cấp này? Thao tác này không thể hoàn tác." />
+
+    {{-- Scripts --}}
     <script>
+        function reloadSuppliers() {
+            $.get('{{ route('supplier.data') }}', function(data) {
+                $('#supplierTable').html(data);
+            });
+        }
+
         $(document).ready(function() {
-            $('#formAdd').submit(function(e) {
-                e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
+            let editSupplierId = null;
+            let deleteSupplierId = null;
 
-                $.ajax({
-                    url: '{{ route('supplier.add') }}', // URL được định nghĩa trong routes
-                    type: 'POST',
-                    data: $(this).serialize(), // Serialize dữ liệu form
-                    success: function(response) {
-                        // Xử lý khi thêm thành công
-                        alert(response.success);
+            const openDrawer = (id) => window.openDrawer(id);
+            const closeDrawer = (id) => window.closeDrawer(id);
 
-                        $('#closeDrawerAdd').click();
 
-                        // Có thể làm mới danh sách suppliers hoặc reset form tại đây
-                        $('form').find('input[type=text], textarea').val('');
+            // Search
+            $('#search-supplier').on('input', window.debounce(function() {
+                const val = $(this).val();
+                if (val) $('#clearSupplierSearch').removeClass('hidden');
+                else $('#clearSupplierSearch').addClass('hidden');
 
-                        $.ajax({
-                            url: '{{ route('supplier.data') }}', // Đường dẫn tới phương thức getSuppliers
-                            type: 'GET',
-                            success: function(data) {
-                                $('#supplierTable').html(
-                                    data); // Cập nhật nội dung của bảng
-                            }
-                        });
-                    },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                $.get('{{ route('suppliers.search') }}', { keyword: val }, function(data) {
+                    $('#supplierTable').html(data);
+                });
+            }, 300));
+
+            $('#clearSupplierSearch').on('click', function() {
+                $('#search-supplier').val('');
+                $(this).addClass('hidden');
+                reloadSuppliers();
+            });
+
+            // Checkall
+            $('#checkall').change(function() {
+                $('.checkitem').prop('checked', $(this).prop('checked'));
+            });
+
+            // Create Supplier
+            $('#btn-open-create-supplier').click(function() {
+                $('#formAddSupplier')[0].reset();
+                openDrawer('drawer-create-supplier');
+            });
+
+            $('#formAddSupplier').submit(function(e) {
+                e.preventDefault();
+                window.submitFormWithProgress($(this), '{{ route('supplier.add') }}', function(response) {
+                    window.showToast(response.success);
+                    closeDrawer('drawer-create-supplier');
+                    reloadSuppliers();
                 });
             });
-        });
-    </script>
-    {{-- delete supplier --}}
-    <script>
-        $(document).ready(function() {
-            // Sử dụng event delegation để gắn sự kiện click cho tất cả các nút hiện tại và tương lai
-            $(document).on('click', '.deleteSupplierButton', function() {
-                // Mở drawer
-                const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
-                const drawerElement = $('#' + drawerId);
-                const idSupplier = $(this).data('id-supplier');
-                const nameSupplier = $(this).data('name-supplier');
 
-                $('#contentDelete').html('Bạn có chắc chắn muốn xóa <strong>' + nameSupplier +
-                    '</strong> không?');
-
-                $(document).off('click', '#deleteBtn').on('click', '#deleteBtn', function() {
-
-                    const url = '/supplier/delete/' + idSupplier;
-
-                    $.ajax({
-                        url: url, // Sử dụng nối chuỗi để thêm idSupplier vào URL
-                        type: 'GET',
-                        success: function(response) {
-                            // Xử lý khi xóa thành công
-                            alert(response.success);
-
-                            $('#closeDrawerDelete').click();
-
-                            $.ajax({
-                                url: '{{ route('supplier.data') }}', // Đường dẫn tới phương thức getSuppliers
-                                type: 'GET',
-                                success: function(data) {
-                                    $('#supplierTable').html(
-                                        data); // Cập nhật nội dung của bảng
-                                }
-                            });
-                        },
-                        error: function(xhr) {
-                            // Xử lý lỗi
-                            alert('Error: ' + xhr.statusText);
-                        }
-                    });
-                });
-
-                // Sử dụng Tailwind CSS classes để hiển thị drawer
-                drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
-                drawerElement.attr('aria-hidden', 'false');
-            });
-            // Sự kiện đóng drawer
-            $(document).ready(function() {
-                // Sự kiện đóng drawer khi click vào phần tử có thuộc tính data-drawer-dismiss hoặc data-drawer-hide
-                $(document).on('click', '[data-drawer-dismiss], [data-drawer-hide]', function() {
-                    const drawerId = $(this).attr('data-drawer-dismiss') || $(this).attr(
-                        'data-drawer-hide');
-                    const drawerElement = $('#' + drawerId);
-                    drawerElement.addClass('translate-x-full').removeClass('translate-x-0');
-                    drawerElement.attr('aria-hidden', 'true');
-                });
-
-                // Sự kiện đóng drawer khi click ra bên ngoài drawer
-                $(document).on('click', function(event) {
-                    // Điều này giả định rằng tất cả các drawer của bạn có một class chung là `.drawer`
-                    const $drawer = $(
-                        '.drawer'); // Sửa đổi selector này để phù hợp với class của drawer của bạn
-
-                    // Kiểm tra xem click có nằm ngoài drawer và không phải là nút mở drawer
-                    if (!$drawer.is(event.target) && $drawer.has(event.target).length === 0 && !$(
-                            event.target).closest('[data-drawer-target]').length) {
-                        $drawer.addClass('translate-x-full').removeClass('translate-x-0');
-                        $drawer.attr('aria-hidden', 'true');
-                    }
-                });
-            });
-        });
-    </script>
-    {{-- edit supplier --}}
-    <script>
-        $(document).ready(function() {
-            // Sử dụng event delegation để gắn sự kiện click cho tất cả các nút hiện tại và tương lai
-            var id = 0;
+            // Edit Supplier
             $(document).on('click', '.editSupplierButton', function() {
-                // Mở drawer
-                const drawerId = $(this).data('drawer-target'); // Lấy ID của drawer từ thuộc tính data
-                const drawerElement = $('#' + drawerId);
-                const idSupplier = $(this).data('id-supplier');
-                id = idSupplier;
-                const url = '/supplier/getsupplier/' + idSupplier;
+                editSupplierId = $(this).data('id-supplier');
+                $.get('/supplier/getsupplier/' + editSupplierId, function(response) {
+                    $('#name_edit').val(response.supplier_name);
+                    $('#supplier_phone_edit').val(response.supplier_phone);
+                    $('#address_edit').val(response.address);
+                    $('#tax_edit').val(response.tax);
+                    $('#status_edit').val(response.status == "1" ? "1" : "0");
+                    openDrawer('drawer-update-supplier');
+                }).fail(window.showAjaxError);
+            });
 
-                $('form').find('input[type=text], textarea').val('');
+            $('#formEditSupplier').submit(function(e) {
+                e.preventDefault();
+                if (!editSupplierId) return;
+                window.submitFormWithProgress($(this), '/supplier/edit/' + editSupplierId, function(response) {
+                    window.showToast(response.success);
+                    closeDrawer('drawer-update-supplier');
+                    reloadSuppliers();
+                });
+            });
 
+            // Delete Supplier Modal
+            $(document).on('click', '.deleteSupplierButton', function() {
+                deleteSupplierId = $(this).data('id-supplier');
+                const name = $(this).data('name-supplier');
+                $('#modal-delete-supplier-msg').text(`Bạn có chắc muốn xóa nhà cung cấp "${name}"?`);
+                $('#modal-delete-supplier').removeClass('hidden');
+            });
+
+            $('#modal-delete-supplier-confirm').click(function() {
+                if (!deleteSupplierId) return;
                 $.ajax({
-                    url: url, // Sử dụng nối chuỗi để thêm idSupplier vào URL
-                    type: 'GET',
+                    url: '/supplier/delete/' + deleteSupplierId,
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     success: function(response) {
-                        // Gán giá trị vào các trường input và textarea
-                        $('#name_edit').val(response.supplier_name);
-                        $('#supplier_phone_edit').val(response.supplier_phone);
-                        $('#address_edit').val(response.address);
-                        $('#tax_edit').val(response.tax);
-
-                        // Gán giá trị cho select
-                        if (response.status == "1") {
-                            $('#status_edit').val("1");
-                        } else {
-                            $('#status_edit').val("0");
-                        }
+                        window.showToast(response.success);
+                        $('#modal-delete-supplier').addClass('hidden');
+                        reloadSuppliers();
                     },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
-                });
-
-                // Sử dụng Tailwind CSS classes để hiển thị drawer
-                drawerElement.removeClass('translate-x-full').addClass('translate-x-0');
-                drawerElement.attr('aria-hidden', 'false');
-            });
-            // Sự kiện đóng drawer
-            $(document).ready(function() {
-                // Sự kiện đóng drawer khi click vào phần tử có thuộc tính data-drawer-dismiss hoặc data-drawer-hide
-                $(document).on('click', '[data-drawer-dismiss], [data-drawer-hide]', function() {
-                    const drawerId = $(this).attr('data-drawer-dismiss') || $(this).attr(
-                        'data-drawer-hide');
-                    const drawerElement = $('#' + drawerId);
-                    drawerElement.addClass('translate-x-full').removeClass('translate-x-0');
-                    drawerElement.attr('aria-hidden', 'true');
-                });
-
-                // Sự kiện đóng drawer khi click ra bên ngoài drawer
-                $(document).on('click', function(event) {
-                    // Điều này giả định rằng tất cả các drawer của bạn có một class chung là `.drawer`
-                    const $drawer = $(
-                        '.drawer'); // Sửa đổi selector này để phù hợp với class của drawer của bạn
-
-                    // Kiểm tra xem click có nằm ngoài drawer và không phải là nút mở drawer
-                    if (!$drawer.is(event.target) && $drawer.has(event.target).length === 0 && !$(
-                            event.target).closest('[data-drawer-target]').length) {
-                        $drawer.addClass('translate-x-full').removeClass('translate-x-0');
-                        $drawer.attr('aria-hidden', 'true');
-                    }
-                });
-            });
-            $('#formEdit').submit(function(e) {
-                e.preventDefault(); // Ngăn chặn form submit theo cách truyền thống
-                const urlEdit = '/supplier/edit/' + id;
-                $.ajax({
-                    url: urlEdit, // URL được định nghĩa trong routes
-                    type: 'POST',
-                    data: $(this).serialize(), // Serialize dữ liệu form
-                    success: function(response) {
-                        // Xử lý khi thêm thành công
-                        alert(response.success);
-
-                        $('#closeDrawerEdit').click();
-
-                        // Có thể làm mới danh sách suppliers hoặc reset form tại đây
-                        $('form').find('input[type=text], textarea').val('');
-
-                        $.ajax({
-                            url: '{{ route('supplier.data') }}', // Đường dẫn tới phương thức getSuppliers
-                            type: 'GET',
-                            success: function(data) {
-                                $('#supplierTable').html(
-                                    data); // Cập nhật nội dung của bảng
-                            }
-                        });
-                    },
-                    error: function(xhr) {
-                        // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
-                    }
+                    error: window.showAjaxError
                 });
             });
         });
-    </script>
-    {{-- search --}}
-    <script>
-        $(document).ready(function() {
-            $('#search-supplier').on('input', function() {
-                var keyword = $(this).val();
-
-                $.ajax({
-                    url: '{{ route('suppliers.search') }}', // Đảm bảo bạn đã định nghĩa route này trong routes/web.php
-                    type: 'GET',
-                    data: {
-                        keyword: keyword
-                    },
-                    success: function(data) {
-                        $('#supplierTable').empty();
-                        if (data.length > 0) {
-                            $('#supplierTable').html(data)
-                        } else {
-                            // Hiển thị thông báo không tìm thấy kết quả
-                            $('#supplierTable').html();
-                        }
-                    }
-                });
-            });
-        });
-    </script>
-    <script>
-        $('#checkall').change(function() {
-            // Lấy giá trị (checked hoặc không checked) của checkbox "checkall"
-            var isChecked = $(this).prop('checked');
-            // Set giá trị của tất cả các checkbox khác thành giá trị của checkbox "checkall"
-            $('.checkitem').prop('checked', isChecked);
-        });
-    </script>
-
-    <script>
-        $(document).ready(function() {
-            $('#closeDrawerAdd').click(function() {
-                $('form').find('input[type=text] ').val('');
-            })
-        })
     </script>
 </x-app-layout>

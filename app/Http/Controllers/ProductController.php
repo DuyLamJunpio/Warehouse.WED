@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categories;
-use App\Models\Expiry;
+use App\Models\ProductVariant;
 use App\Models\ImageModel;
 use App\Models\Product;
-use App\Models\ProductLocation;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -27,55 +26,78 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = 10;
-        $categories = Categories::where('status', 1)->get();
-        $supplier = Supplier::where('status', 1)->get();
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')->paginate($perPage);
+        $categories = Categories::where('status', 1)->orderBy('name')->get();
+        $supplier = Supplier::where('status', 1)->orderBy('supplier_name')->get();
+        $products = $this->buildFilterQuery($request)->paginate(15)->withQueryString();
 
-        $zones = ProductLocation::whereNull('product_id')
-            ->select('zone')
-            ->distinct()
-            ->orderBy('zone')
-            ->get();
-
-        return view("product.index", compact("products", "categories", "supplier", "zones"));
+        return view("product.index", compact("products", "categories", "supplier"));
     }
 
-    public function getData()
+    public function getData(Request $request)
     {
-        $perPage = 10;
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')->paginate($perPage);
+        $products = $this->buildFilterQuery($request)->paginate(15)->withQueryString();
 
         return view("product.data", compact("products"));
     }
 
     public function search(Request $request)
     {
-        $pin_image = ImageModel::all();
-        $keyword = trim($request->input('keyword')); // Lấy từ khóa từ request và loại bỏ khoảng trắng thừa
-        if (!empty($keyword)) {
-            $key = "search_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
-            $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return DB::table('products')->withSum('expiries', 'quantity_exp')
-                    ->join('categories', 'products.categories_id', '=', 'categories.id')
-                    ->join('suppliers', 'products.supplier_id', '=', 'suppliers.id') // Thêm join với bảng suppliers
-                    ->where('products.product_name', 'like', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
-                    ->select('products.*', 'categories.name AS categories', 'suppliers.supplier_name AS supplier')
-                    ->get();
-            });
-        } else {
-            $perPage = 15;
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])->withSum('expiries', 'quantity_exp')->paginate($perPage);
-        }
-        return view("product.data", compact("products"));
+        return $this->getData($request);
     }
+
+    /**
+     * Xây dựng câu truy vấn lọc sản phẩm theo từ khóa, danh mục và trạng thái tồn kho / nổi bật.
+     */
+    private function buildFilterQuery(Request $request)
+    {
+        $keyword = trim((string) $request->input('keyword'));
+        $categoryId = $request->input('category_id') ?: $request->input('categories_id');
+        $filter = $request->input('filter'); // all, in_stock, out_of_stock, featured
+
+        $query = Product::with(['supplier', 'category', 'productImage', 'variants'])
+            ->withSum('variants', 'quantity')
+            ->latest('id');
+
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('product_name', 'ilike', "%{$keyword}%")
+                  ->orWhere('brand', 'ilike', "%{$keyword}%")
+                  ->orWhere('material', 'ilike', "%{$keyword}%")
+                  ->orWhere('audience', 'ilike', "%{$keyword}%")
+                  ->orWhereHas('variants', function ($vq) use ($keyword) {
+                      $vq->where('sku', 'ilike', "%{$keyword}%")
+                         ->orWhere('size', 'ilike', "%{$keyword}%")
+                         ->orWhere('color', 'ilike', "%{$keyword}%");
+                  });
+            });
+        }
+
+        if (!empty($categoryId)) {
+            $query->where('categories_id', $categoryId);
+        }
+
+        if ($filter === 'featured') {
+            $query->where('is_featured', true);
+        } elseif ($filter === 'in_stock') {
+            // Còn hàng: Không quản lý tồn hoặc có biến thể số lượng > 0
+            $query->where(function ($q) {
+                $q->where('manage_stock', false)
+                  ->orWhereHas('variants', fn($vq) => $vq->where('quantity', '>', 0));
+            });
+        } elseif ($filter === 'out_of_stock') {
+            // Hết hàng: Quản lý tồn và không có biến thể nào có số lượng > 0
+            $query->where('manage_stock', true)
+                  ->whereDoesntHave('variants', fn($vq) => $vq->where('quantity', '>', 0));
+        }
+
+        return $query;
+    }
+
 
     public function getProductById(string $id)
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')
+        $products = Product::with(['supplier', 'category', 'productImage', 'variants'])
+            ->withSum('variants', 'quantity')
             ->where('products.id', $id)
             ->get();
 
@@ -84,16 +106,13 @@ class ProductController extends Controller
 
     public function getImageUrl(string $id)
     {
-        $imageUrl = ImageModel::where("product_id", $id)->get();
-        $count = $imageUrl->count();
-        $paths = [];
-        for ($i = 0; $i < $count; $i++) {
-            $paths[$i] = Storage::url($imageUrl[$i]->path);
-        }
+        $media = ImageModel::where('product_id', $id)->orderBy('sort_order')->get();
 
         return response()->json([
-            'imageUrl' => $imageUrl,
-            'paths' => $paths,
+            'imageUrl' => $media,
+            'paths' => $media->map(fn($m) => Storage::url($m->path))->all(),
+            // Để JS biết render <img> hay <video> cho từng phần tử.
+            'types' => $media->pluck('media_type')->all(),
         ]);
     }
 
@@ -203,60 +222,30 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'images' => 'nullable|array',
-            'images.*' => 'file|image|max:2048',
-            'pin_image' => 'nullable',
-            'product_name' => 'required|max:255',
-            'sell_price' => 'required|integer|min:0',
-            'import_price' => 'required|integer|min:0',
-            'unit' => 'required|max:30',
-            'supplier_id' => 'required',
-            'categories_id' => 'required',
-        ]);
+        $data = $request->validate($this->productRules());
 
-        $params = $request->except('_token');
-        $params['barcode'] = Str::uuid()->toString();
-        $params['status'] = 2;
-        $params['total_quantity'] = 0;
-        $product = Product::create($params);
+        DB::beginTransaction();
+        try {
+            $data['barcode'] = Str::uuid()->toString();
+            $data['slug'] = $this->uniqueSlug($data['product_name']);
+            $data['is_featured'] = $request->boolean('is_featured');
+            $data['manage_stock'] = $request->boolean('manage_stock');
+            // Tồn kho nằm ở biến thể; trạng thái được đồng bộ lại sau khi lưu biến thể.
+            $data['status'] = 2;
 
-        $images = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('public/images');
-                if ($request->pin_image == $image->getClientOriginalName()) {
-                    $isPined = true;
-                } else {
-                    $isPined = false;
-                }
-                $images[] = new ImageModel([
-                    'path' => $path,
-                    'name' => $image->getClientOriginalName(),
-                    'is_pined' => $isPined
-                ]);
-            }
-            $product->imageModel()->saveMany($images);
+            $product = Product::create($data);
+
+            $this->storeMedia($product, $request);
+            $totalQuantity = $this->syncVariants($product, $request->input('variants', []));
+            $this->syncProductStatus($product, $totalQuantity);
+
+            DB::commit();
+            return response()->json(['success' => 'Sản phẩm đã được thêm thành công!']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Thêm sản phẩm thất bại: ' . $e->getMessage());
+            return response()->json(['error' => 'Không thêm được sản phẩm: ' . $e->getMessage()], 500);
         }
-
-        if ($request->zone && $request->shelf && $request->level) {
-            $code = 'K' . $request->zone . '-' . $request->shelf . '-' . $request->level;
-            $location = ProductLocation::where('code', $code)->first();
-
-            if ($location) {
-                if ($location->product_id === null) {
-                    $location->product_id = $product->id;
-                    $location->save();
-                    return response()->json(['success' => 'Sản phẩm đã được thêm thành công!']);
-                } else {
-                    return response()->json(['error' => 'Vị trí này đã có sản phẩm.'], 409);
-                }
-            } else {
-                return response()->json(['error' => 'Không tìm thấy vị trí phù hợp.'], 404);
-            }
-        }
-
-        return response()->json(['success' => 'Sản phẩm đã được thêm thành công!']);
     }
 
     /**
@@ -320,80 +309,285 @@ class ProductController extends Controller
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $request->validate([
-            'images' => 'nullable|array',
-            'images.*' => 'file|image|max:2048',
-            'pin_image' => 'nullable',
+        $data = $request->validate($this->productRules($product));
+
+        DB::beginTransaction();
+        try {
+            if ($product->product_name !== $data['product_name']) {
+                $data['slug'] = $this->uniqueSlug($data['product_name'], $product->id);
+            }
+            $data['is_featured'] = $request->boolean('is_featured');
+            $data['manage_stock'] = $request->boolean('manage_stock');
+
+            $product->update($data);
+
+            // Phải lưu media trước: ảnh đại diện có thể chính là ảnh vừa upload,
+            // đổi ghim trước khi lưu thì không tìm thấy tên file nên bị bỏ qua.
+            $this->storeMedia($product, $request);
+            $this->syncPinnedMedia($product, $request->input('pin_image'));
+            $totalQuantity = $this->syncVariants($product, $request->input('variants', []));
+            $this->syncProductStatus($product, $totalQuantity);
+
+            DB::commit();
+            // Trả JSON vì form sửa gửi bằng AJAX; bản cũ redirect()->back() khiến JS không đọc được kết quả.
+            return response()->json(['success' => 'Sản phẩm đã được cập nhật thành công!']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Sửa sản phẩm thất bại: ' . $e->getMessage());
+            return response()->json(['error' => 'Không sửa được sản phẩm: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Quy tắc hợp lệ dùng chung cho thêm và sửa sản phẩm.
+     * Cho phép tải lên cả ảnh lẫn video trong cùng một trường `media`.
+     */
+    private function productRules(?Product $product = null): array
+    {
+        return [
             'product_name' => 'required|max:255',
-            'sell_price' => 'required|integer|min:0',
+            'categories_id' => 'required|exists:categories,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'description' => 'nullable|string|max:5000',
+            'material' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            // Khớp đúng 4 giá trị bộ lọc "đối tượng" của web bán hàng.
+            'audience' => 'nullable|in:Nam,Nữ,Trẻ em,Unisex',
+            'unit' => 'nullable|max:30',
             'import_price' => 'required|integer|min:0',
-            'unit' => 'required|max:30',
-            'supplier_id' => 'required',
-            'categories_id' => 'required',
-        ]);
+            'sell_price' => 'required|integer|min:0',
+            'discount_price' => 'nullable|integer|min:0|lte:sell_price',
+            'is_featured' => 'nullable|boolean',
+            'manage_stock' => 'nullable|boolean',
 
-        $params = $request->except(['_token', 'images']);
-        $product->update($params);
+            // Media: ảnh tối đa 5MB, video tối đa 50MB (giới hạn theo từng file ở dưới).
+            'media' => 'nullable|array',
+            'media.*' => [
+                'file',
+                'max:51200',
+                'mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm',
+            ],
+            'pin_image' => 'nullable|string',
 
-        // Xử lý ảnh ghim mà không cần tải ảnh mới
-        if ($request->filled('pin_image')) {
-            // Xóa đánh dấu ghim trên tất cả các ảnh hiện tại
-            ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
+            'variants' => 'nullable|array',
+            'variants.*.id' => 'nullable|integer|exists:product_variants,id',
+            'variants.*.size' => 'nullable|string|max:50',
+            'variants.*.color' => 'nullable|string|max:50',
+            'variants.*.quantity' => 'nullable|integer|min:0',
+            'variants.*.price_override' => 'nullable|integer|min:0',
+        ];
+    }
 
-            // Đánh dấu ảnh mới là ghim
-            $pinImage = ImageModel::where('product_id', $product->id)
-                ->where('name', $request->pin_image)
-                ->first();
-            if ($pinImage) {
-                $pinImage->is_pined = true;
-                $pinImage->save();
-            }
+    /**
+     * Lưu media mới (ảnh hoặc video) và nối vào cuối danh sách hiện có.
+     *
+     * DB đặt ở xa (~300ms mỗi round-trip) nên phần này cố ý gộp truy vấn:
+     * 1 truy vấn thống kê + 1 lệnh chèn hàng loạt, thay vì 2 + N như trước.
+     */
+    private function storeMedia(Product $product, Request $request): void
+    {
+        if (!$request->hasFile('media')) {
+            return;
         }
 
-        if ($request->hasFile('images')) {
-            // Xóa đánh dấu ghim trên tất cả các ảnh hiện tại
-            ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
+        // Gộp "sort_order lớn nhất" và "đã có ảnh ghim chưa" vào cùng một truy vấn.
+        $stats = ImageModel::where('product_id', $product->id)
+            ->selectRaw('COALESCE(MAX(sort_order), 0) AS max_sort')
+            ->selectRaw('COALESCE(SUM(CASE WHEN is_pined THEN 1 ELSE 0 END), 0) AS pinned_count')
+            ->first();
 
-            // Thêm hình ảnh mới
-            $images = [];
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('public/images');
-                $isPined = ($request->pin_image == $image->getClientOriginalName());
-                $images[] = new ImageModel([
+        $sortOrder = (int) ($stats->max_sort ?? 0);
+        $hasPinned = (int) ($stats->pinned_count ?? 0) > 0;
+        $now = now();
+        $rows = [];
+
+        foreach ($request->file('media') as $file) {
+            $isVideo = str_starts_with((string) $file->getMimeType(), 'video/');
+            $name = $file->getClientOriginalName();
+            $shouldPin = !$isVideo && !$hasPinned && $request->pin_image === $name;
+
+            $rows[] = [
+                'product_id' => $product->id,
+                'path' => $file->store('public/images'),
+                'name' => $name,
+                'media_type' => $isVideo ? ImageModel::TYPE_VIDEO : ImageModel::TYPE_IMAGE,
+                'sort_order' => ++$sortOrder,
+                // Video không dùng làm ảnh đại diện được, nên chỉ ảnh mới được ghim.
+                'is_pined' => $shouldPin,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            // Tránh ghim hai media khi người dùng gửi lên nhiều file trùng tên.
+            $hasPinned = $hasPinned || $shouldPin;
+        }
+
+        if ($rows) {
+            ImageModel::insert($rows);
+        }
+    }
+
+    /**
+     * Đổi ảnh đại diện sang một media đã có sẵn (theo tên file).
+     */
+    private function syncPinnedMedia(Product $product, ?string $pinName): void
+    {
+        if (empty($pinName)) {
+            return;
+        }
+
+        $pinned = ImageModel::where('product_id', $product->id)
+            ->where('name', $pinName)
+            ->where('media_type', ImageModel::TYPE_IMAGE)
+            ->first();
+
+        // Đã ghim đúng ảnh đó rồi thì thôi, khỏi tốn thêm 2 truy vấn mỗi lần sửa.
+        if (!$pinned || $pinned->is_pined) {
+            return;
+        }
+
+        ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
+        $pinned->is_pined = true;
+        $pinned->save();
+    }
+
+    /**
+     * Lưu ma trận biến thể size/màu gửi từ form và trả về tổng tồn kho.
+     * Biến thể không còn trong danh sách gửi lên sẽ bị xóa.
+     *
+     * Nạp một lần rồi so khớp trong PHP: bản cũ gọi firstOrNew + save cho từng
+     * dòng (2 round-trip mỗi biến thể), 12 biến thể là đã mất ~8 giây chờ DB.
+     */
+    private function syncVariants(Product $product, array $variants): int
+    {
+        $existing = ProductVariant::where('product_id', $product->id)
+            ->get()
+            ->keyBy(fn($v) => $this->variantKey($v->size, $v->color));
+
+        $keptIds = [];
+        $inserts = [];
+        $seen = [];
+        $sortOrder = 0;
+        $total = 0;
+        $now = now();
+
+        foreach ($variants as $row) {
+            $size = trim((string) ($row['size'] ?? '')) ?: null;
+            $color = trim((string) ($row['color'] ?? '')) ?: null;
+
+            // Dòng trống hoàn toàn thì bỏ qua, tránh tạo biến thể rác.
+            if ($size === null && $color === null) {
+                continue;
+            }
+
+            $key = $this->variantKey($size, $color);
+
+            // Form có thể gửi trùng tổ hợp size/màu; giữ dòng đầu tiên để không
+            // vi phạm ràng buộc unique(product_id, size, color).
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $quantity = max(0, (int) ($row['quantity'] ?? 0));
+            $rawPrice = $row['price_override'] ?? null;
+            $priceOverride = ($rawPrice === null || $rawPrice === '') ? null : (int) $rawPrice;
+            $order = $sortOrder++;
+            $total += $quantity;
+
+            $variant = $existing->get($key);
+
+            if (!$variant) {
+                $inserts[] = [
                     'product_id' => $product->id,
-                    'path' => $path,
-                    'name' => $image->getClientOriginalName(),
-                    'is_pined' => $isPined
-                ]);
+                    'size' => $size,
+                    'color' => $color,
+                    'sku' => $product->barcode . '-' . strtoupper(Str::random(5)),
+                    'quantity' => $quantity,
+                    'price_override' => $priceOverride,
+                    'sort_order' => $order,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                continue;
             }
-            $product->imageModel()->saveMany($images);
+
+            $keptIds[] = $variant->id;
+
+            // Chỉ ghi khi giá trị thật sự đổi: mỗi UPDATE thừa là một round-trip thừa.
+            if (
+                $variant->quantity !== $quantity
+                || $variant->price_override !== $priceOverride
+                || $variant->sort_order !== $order
+            ) {
+                $variant->quantity = $quantity;
+                $variant->price_override = $priceOverride;
+                $variant->sort_order = $order;
+                $variant->save();
+            }
         }
 
-        if ($request->zone && $request->shelf && $request->level) {
-            // Tìm vị trí hiện tại của sản phẩm
-            $old_location = ProductLocation::where('product_id', $product->id)->first();
-            if ($old_location) {
-                $old_location->product_id = null;
-                $old_location->save();
-            }
+        // Xóa trước rồi mới chèn: biến thể mới chưa có id nên không nằm trong
+        // $keptIds, nếu xóa sau sẽ quét mất chính những dòng vừa thêm.
+        ProductVariant::where('product_id', $product->id)
+            ->whereNotIn('id', $keptIds ?: [0])
+            ->delete();
 
-            // Tìm vị trí mới dựa trên zone, shelf, và level
-            $new_location = ProductLocation::where('zone', $request->zone)
-                                           ->where('shelf', $request->shelf)
-                                           ->where('level', $request->level)
-                                           ->first();
-
-            if ($new_location && $new_location->product_id === null) {
-                $new_location->product_id = $product->id;
-                $new_location->save();
-            } else {
-                return response()->json(['error' => 'Vị trí mới không hợp lệ hoặc đã được sử dụng.'], 422);
-            }
-        } else {
-            return response()->json(['error' => 'Thông tin vị trí không đầy đủ.'], 400);
+        if ($inserts) {
+            ProductVariant::insert($inserts);
         }
 
-        return redirect()->back()->with('success', 'Sản phẩm đã được cập nhật thành công!');
+        return $total;
+    }
+
+    /**
+     * Khóa so khớp biến thể: phân biệt "không có" với chuỗi rỗng.
+     */
+    private function variantKey(?string $size, ?string $color): string
+    {
+        return ($size ?? '~') . '||' . ($color ?? '~');
+    }
+
+    /**
+     * Đồng bộ trạng thái còn/hết hàng từ tổng tồn kho đã tính sẵn ở syncVariants,
+     * tránh chạy thêm một truy vấn SUM nữa.
+     */
+    private function syncProductStatus(Product $product, int $totalQuantity): void
+    {
+        // Hàng không theo dõi tồn kho thì luôn ở trạng thái bán được: số tồn của
+        // nó không phản ánh gì, để nó tự nhảy sang "hết hàng" là chặn nhầm.
+        $status = ($totalQuantity > 0 || !$product->manage_stock) ? 1 : 2;
+
+        if ((int) $product->status === $status) {
+            return;
+        }
+
+        $product->status = $status;
+        $product->save();
+    }
+
+    private function uniqueSlug(string $name, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($name) ?: 'san-pham';
+
+        // Lấy toàn bộ slug cùng tiền tố trong một truy vấn, thay vì lặp exists()
+        // cho từng hậu tố (mỗi vòng lặp là một round-trip tới DB ở xa).
+        $taken = Product::withTrashed()
+            ->where(fn($q) => $q->where('slug', $base)->orWhere('slug', 'like', $base . '-%'))
+            ->when($ignoreId, fn($q) => $q->whereKeyNot($ignoreId))
+            ->pluck('slug')
+            ->all();
+
+        if (!in_array($base, $taken, true)) {
+            return $base;
+        }
+
+        $suffix = 2;
+        while (in_array($base . '-' . $suffix, $taken, true)) {
+            $suffix++;
+        }
+
+        return $base . '-' . $suffix;
     }
 
 
@@ -474,50 +668,49 @@ class ProductController extends Controller
         return response()->json(['message' => 'Ảnh đã được tải lên thành công!'], 200);
     }
 
-    public function getProductExpiries($id)
+    public function getProductVariants($id)
     {
-        $product = Product::with('expiries')->find($id);
+        $product = Product::with('variants')->find($id);
 
         if (!$product) {
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $expiries = $product->expiries;
+        $variants = $product->variants;
 
-        // Kiểm tra xem có lô hàng hết hạn nào không
-        if ($expiries->isEmpty()) {
-            return response()->json(['message' => 'Sản phẩm hết hàng.'], 200);
+        if ($variants->isEmpty()) {
+            return response()->json(['message' => 'Sản phẩm chưa có biến thể.'], 200);
         }
 
-        return response()->json($expiries);
+        return response()->json($variants);
     }
 
-    public function updateOrDeleteExpiry(Request $request, $productId, $expiryId)
+    public function updateOrDeleteVariant(Request $request, $productId, $variantId)
     {
         $product = Product::find($productId);
         if (!$product) {
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $expiry = Expiry::where('product_id', $productId)->where('id', $expiryId)->first();
-        if (!$expiry) {
-            return response()->json(['error' => 'Lô hàng không tồn tại.'], 404);
+        $variant = ProductVariant::where('product_id', $productId)->where('id', $variantId)->first();
+        if (!$variant) {
+            return response()->json(['error' => 'Biến thể không tồn tại.'], 404);
         }
 
-        $quantityToRemove = $request->input('quantity');
+        $quantityToRemove = (int) $request->input('quantity');
         if ($quantityToRemove < 0) {
             return response()->json(['error' => 'Số lượng không hợp lệ.'], 400);
         }
 
-        if ($quantityToRemove >= $expiry->quantity_exp) {
-            // Nếu số lượng cần xóa bằng hoặc lớn hơn số lượng trong lô, xóa lô
-            $expiry->delete();
-            return response()->json(['success' => 'Lô hàng đã được xóa.']);
-        } else {
-            // Nếu số lượng cần xóa nhỏ hơn, cập nhật số lượng mới
-            $expiry->quantity_exp -= $quantityToRemove;
-            $expiry->save();
-            return response()->json(['success' => 'Số lượng trong lô đã được cập nhật.']);
-        }
+        // Khác với lô hạn dùng: biến thể về 0 vẫn giữ lại vì nó là một mục
+        // trong danh mục sản phẩm (size/màu vẫn tồn tại, chỉ là hết hàng).
+        $variant->quantity = max(0, $variant->quantity - $quantityToRemove);
+        $variant->save();
+
+        $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
+        $product->status = $total > 0 ? 1 : 2;
+        $product->save();
+
+        return response()->json(['success' => 'Số lượng biến thể đã được cập nhật.']);
     }
 }

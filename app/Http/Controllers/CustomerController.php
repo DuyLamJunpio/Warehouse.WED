@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Invoice;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -14,57 +14,104 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $perPage = 15;
-        // Lấy ra danh sách khách hàng với tổng tiền hàng đã mua từ hóa đơn có trạng thái là đã trả và nợ
-        $customers = Customer::withCount([
-            'invoices as invoice_quantity' => function ($query) {
-                $query->where('invoice_type', 1);
-            }
-        ])->with([
-                    'invoicesPaid' => function ($query) {
-                        $query->where('pay_status', 1)
-                            ->where('invoice_type', 1)
-                            ->selectRaw('customer_id, SUM(total_amount) as total_paid')
-                            ->groupBy('customer_id'); // Sử dụng partner_id để nhóm
-                    },
-                    'invoicesOwed' => function ($query) {
-                        $query->where('pay_status', 0)
-                            ->where('invoice_type', 1)
-                            ->selectRaw('customer_id, SUM(total_amount) as total_owed')
-                            ->groupBy('customer_id'); // Sử dụng partner_id để nhóm
-                    }
-                ])->paginate($perPage);
+    private const PER_PAGE = 15;
 
-        return view("customer.index", compact("customers"));
+    public function index(Request $request)
+    {
+        return view('customer.index', $this->listData($request));
     }
 
-    public function getData()
+    public function getData(Request $request)
     {
-        $perPage = 15;
-        // Lấy ra danh sách khách hàng với tổng tiền hàng đã mua từ hóa đơn có trạng thái là đã trả và nợ
-        $customers = Customer::withCount('invoices as total_invoices')->with([
-            'invoicesPaid' => function ($query) {
-                $query->where('pay_status', 1)->selectRaw('customer_id, SUM(total_amount) as total_paid')->groupBy('customer_id');
-            },
-            'invoicesOwed' => function ($query) {
-                $query->where('pay_status', 0)->selectRaw('customer_id, SUM(total_amount) as total_owed')->groupBy('customer_id');
-            }
-        ])->paginate($perPage);
+        return view('customer.data', $this->listData($request));
+    }
 
-        return view("customer.data", compact("customers"));
+    /**
+     * Danh sách khách kèm số đơn và tổng chi tiêu.
+     * Chỉ tính đơn đã hoàn thành: đơn đang giao còn có thể bị hoàn.
+     */
+    private function listData(Request $request): array
+    {
+        $keyword = trim((string) $request->input('keyword'));
+        $tier = $request->input('tier');
+
+        $query = Customer::query()
+            ->withCount(['orders as order_count'])
+            ->withSum([
+                'orders as total_spent_sum' => fn($q) => $q->where('order_status', Invoice::STATUS_COMPLETED),
+            ], 'total_amount')
+            ->orderByDesc('total_spent_sum');
+
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('customer_name', 'ilike', "%{$keyword}%")
+                    ->orWhere('customer_phone', 'ilike', "%{$keyword}%")
+                    ->orWhere('customer_email', 'ilike', "%{$keyword}%")
+                    ->orWhere('address', 'ilike', "%{$keyword}%")
+                    ->orWhere('province', 'ilike', "%{$keyword}%");
+            });
+        }
+
+        return [
+            'customers' => $query->paginate(self::PER_PAGE)->withQueryString(),
+            'tierFilter' => $tier,
+        ];
+    }
+
+    /**
+     * Hồ sơ khách: thông tin giao hàng + lịch sử mua.
+     */
+    public function show(string $id)
+    {
+        $customer = Customer::with(['orders' => fn($q) => $q->limit(50)])->findOrFail($id);
+
+        return response()->json([
+            'id' => $customer->id,
+            'customer_name' => $customer->customer_name,
+            'customer_phone' => $customer->customer_phone,
+            'customer_email' => $customer->customer_email,
+            'full_address' => $customer->full_address,
+            'note' => $customer->note,
+            'tier' => $customer->tier,
+            'total_spent' => $customer->total_spent,
+            'order_count' => $customer->orders()->count(),
+            'orders' => $customer->orders->map(fn($o) => [
+                'order_code' => $o->order_code ?? '#' . $o->id,
+                'created_at' => $o->created_at->format('d/m/Y H:i'),
+                'status' => $o->order_status_label ?? 'Chưa có trạng thái',
+                'total_amount' => (int) $o->total_amount,
+            ]),
+        ]);
+    }
+
+    /**
+     * Ghi chú chăm sóc khách hàng.
+     */
+    public function updateNote(Request $request, string $id)
+    {
+        $data = $request->validate(['note' => 'nullable|string|max:2000']);
+
+        $customer = Customer::findOrFail($id);
+        $customer->note = $data['note'] ?? null;
+        $customer->save();
+
+        return response()->json(['success' => 'Đã lưu ghi chú.']);
     }
 
 
     public function store(Request $request)
     {
         if ($request->isMethod('post') || $request->ajax() || $request->wantsJson()) {
+            // Khách không có tài khoản: số điện thoại là thứ bắt buộc và duy nhất,
+            // email có thể bỏ trống vì nhiều khách đặt qua điện thoại.
             $validator = Validator::make($request->all(), [
-                'customer_name' => 'required|max:255', // Giới hạn tên nhà cung cấp tối đa 255 ký tự
-                'customer_phone' => ['required', 'numeric', 'digits_between:9,11', 'unique:' . Customer::class], // Cho phép số điện thoại từ 9 đến 11 chữ số
-                'customer_email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . Customer::class],
-                'address' => 'required|max:500', // Giới hạn địa chỉ tối đa 500 ký tự
+                'customer_name' => 'required|max:255',
+                'customer_phone' => ['required', 'numeric', 'digits_between:9,11', 'unique:' . Customer::class],
+                'customer_email' => ['nullable', 'string', 'email', 'max:255'],
+                'address' => 'nullable|max:500',
+                'province' => 'nullable|max:255',
+                'ward' => 'nullable|max:255',
+                'note' => 'nullable|string|max:2000',
                 'avatar' => 'nullable|file|image|max:2048',
             ]);
 
@@ -88,22 +135,13 @@ class CustomerController extends Controller
         }
     }
 
+    /**
+     * Không cache: dữ liệu khách đổi liên tục khi có đơn mới về,
+     * cache theo từ khóa sẽ trả về tổng chi tiêu đã cũ.
+     */
     public function search(Request $request)
     {
-        $keyword = $request->input('keyword'); // Lấy từ khóa từ request
-        if ($keyword > 0) {
-            $key = "search_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
-            $Customer = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Customer::where('Customer_name', 'like', "%{$keyword}%")
-                    ->orWhere('Customer_phone', 'like', "%{$keyword}%")
-                    ->orWhere('address', 'like', "%{$keyword}%")
-                    ->get();
-            });
-        } else {
-            $perPage = 15;
-            $Customer = Customer::paginate($perPage);
-        }
-        return view("Customer.data", compact("Customer"));
+        return view('customer.data', $this->listData($request));
     }
 
     public function getCustomerId(string $id)
@@ -131,15 +169,11 @@ class CustomerController extends Controller
                     'digits_between:9,11',
                     Rule::unique('customers')->ignore($id),
                 ],
-                'customer_email' => [
-                    'required',
-                    'string',
-                    'lowercase',
-                    'email',
-                    'max:255',
-                    Rule::unique('customers')->ignore($id),
-                ],
-                'address' => 'required|max:500',
+                'customer_email' => ['nullable', 'string', 'email', 'max:255'],
+                'address' => 'nullable|max:500',
+                'province' => 'nullable|max:255',
+                'ward' => 'nullable|max:255',
+                'note' => 'nullable|string|max:2000',
                 'avatar' => 'nullable|file|image|max:2048',
             ]);
 

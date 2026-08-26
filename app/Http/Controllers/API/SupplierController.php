@@ -57,9 +57,9 @@ class SupplierController extends Controller
         if (!empty($keyword)) {
             $key = "search_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             $suppliers = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Supplier::where('supplier_name', 'like', "%{$keyword}%")
-                    ->orWhere('supplier_phone', 'like', "%{$keyword}%")
-                    ->orWhere('address', 'like', "%{$keyword}%")
+                return Supplier::where('supplier_name', 'ilike', "%{$keyword}%")
+                    ->orWhere('supplier_phone', 'ilike', "%{$keyword}%")
+                    ->orWhere('address', 'ilike', "%{$keyword}%")
                     ->with('invoices')
                     ->get();
             });

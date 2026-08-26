@@ -9,9 +9,12 @@
                     @elseif($item->productImage->first())
                     data-product-image="{{ Storage::url($item->productImage->first()->path) }}"
                     @else
-                    data-product-image="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+                    data-product-image="{{ asset('images/no-photo.svg') }}" @endif
                     data-price="{{ $item->sell_price }}" data-cost="{{ $item->import_price }}"
-                    data-inventory="{{ $item->expiries_sum_quantity_exp ?? 0 }}" data-status="{{ $item->status }}"
+                    data-inventory="{{ $item->variants_sum_quantity ?? 0 }}" data-status="{{ $item->status }}"
+                    data-variants="{{ json_encode(
+                        $item->variants->map(fn($v) => ['id' => $v->id, 'label' => $v->label, 'quantity' => $v->quantity])->values(),
+                    ) }}"
                     class="checkitem w-4 h-4 border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600">
                 <label hidden for="checkbox-{{ $item->id }}" class="sr-only">checkbox</label>
             </div>
@@ -22,7 +25,7 @@
                 @elseif($item->productImage->first())
                 src="{{ Storage::url($item->productImage->first()->path) }}"
                 @else
-                src="https://static.vecteezy.com/system/resources/previews/004/141/669/original/no-photo-or-blank-image-icon-loading-images-or-missing-image-mark-image-not-available-or-image-coming-soon-sign-simple-nature-silhouette-in-frame-isolated-illustration-vector.jpg" @endif
+                src="{{ asset('images/no-photo.svg') }}" @endif
                 alt="{{ $item->product_name }}">
             <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
                 <div class="text-base font-semibold text-gray-9000 dark:text-white">{{ $item->product_name }}</div>
@@ -36,8 +39,8 @@
         <td class="import_price p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
             {{ $item->import_price }}</td>
         <td
-            class="p-4 text-base font-medium {{ $item->expiries_sum_quantity_exp ? 'text-gray-900' : 'text-red-500' }} whitespace-nowrap {{ $item->expiries_sum_quantity_exp ? 'dark:text-white' : 'dark:text-red-500' }}">
-            {{ $item->expiries_sum_quantity_exp ?? 'Hết hàng' }}
+            class="p-4 text-base font-medium {{ $item->variants_sum_quantity ? 'text-gray-900' : 'text-red-500' }} whitespace-nowrap {{ $item->variants_sum_quantity ? 'dark:text-white' : 'dark:text-red-500' }}">
+            {{ $item->variants_sum_quantity ?? 'Hết hàng' }}
         </td>
         <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
             {{ $item->supplier->supplier_name }}
@@ -49,7 +52,6 @@
     </tr>
 @endforeach
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
         updatePricesAndTotal();
@@ -98,6 +100,16 @@
             const price = $(this).data('price');
             const cost = $(this).data('cost');
             const inventory = $(this).data('inventory');
+            const variants = $(this).data('variants') || [];
+
+            // Ô chọn biến thể size/màu - thay cho ô nhập hạn sử dụng của hệ thống kho cũ.
+            const variantCell = variants.length ?
+                `<td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
+        <select class="variant bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+            ${variants.map(v => `<option value="${v.id}">${v.label} (${v.quantity})</option>`).join('')}
+        </select>
+    </td>` :
+                `<td class="p-4 text-sm text-red-500 whitespace-nowrap">Chưa có biến thể</td>`;
 
             if ($(this).is(':checked')) {
                 const row = `
@@ -122,6 +134,7 @@
             </span>
         </div>
     </td>
+    ${variantCell}
     <td class="total p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">0</td>
     <td class="p-4">
         <button type="button" data-product-id="${productId}"
@@ -159,10 +172,7 @@
             </span>
         </div>
     </td>
-    <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
-        <input type="date" name="expiry_date"
-        class="expiry bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-    </td>
+    ${variantCell}
     <td class="total p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">0</td>
     <td class="p-4">
         <button type="button" data-product-id="${productId}"
@@ -234,20 +244,17 @@
 
         $(document).on('change', '#invoice_type', function() {
             var invoiceType = $(this).val();
+            // Cột biến thể luôn hiển thị: nhập hay bán đều phải chỉ rõ size/màu.
             if (invoiceType == 0) {
                 $('.price').hide();
                 $('.cost').show();
-                $('#expiry_th').show();
-                $('.expiry').show();
                 $('#add_product').attr('colspan', '6');
                 $('#productTableAdd tr:not(:last)').remove();
                 $('#productTableEdit tr:not(:last)').remove();
             } else {
                 $('.price').show();
                 $('.cost').hide();
-                $('#expiry_th').hide();
-                $('.expiry').hide();
-                $('#add_product').attr('colspan', '5');
+                $('#add_product').attr('colspan', '6');
                 $('#productTableAdd tr:not(:last)').remove();
                 $('#productTableEdit tr:not(:last)').remove();
             }

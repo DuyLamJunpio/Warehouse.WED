@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categories;
-use App\Models\Expiry;
+use App\Models\ProductVariant;
 use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\ProductLocation;
@@ -29,7 +29,7 @@ class ProductController extends Controller
     {
         $perPage = 15;
         $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')
+            ->withSum('variants', 'quantity')
             ->paginate($perPage);
 
         return response()->json($products);
@@ -45,10 +45,10 @@ class ProductController extends Controller
 
         $products = Cache::remember($key, 60 * 60, function () use ($keyword, $supplierId) {
             $query = Product::with(['supplier', 'category', 'productImage', 'location'])
-                ->withSum('expiries', 'quantity_exp');
+                ->withSum('variants', 'quantity');
 
             if (!empty ($keyword)) {
-                $query->where('product_name', 'like', "%{$keyword}%");
+                $query->where('product_name', 'ilike', "%{$keyword}%");
             }
 
             if (!empty ($supplierId)) {
@@ -67,7 +67,7 @@ class ProductController extends Controller
         $supplierId = $request->input('supplier_id'); // Lấy ID nhà cung cấp từ request
 
         $query = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')->whereHas('supplier', function ($query) {
+            ->withSum('variants', 'quantity')->whereHas('supplier', function ($query) {
                 $query->whereNull('deleted_at');
             });
 
@@ -86,7 +86,7 @@ class ProductController extends Controller
 
         if (!empty($supplierId)) {
             $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-                ->withSum('expiries', 'quantity_exp')
+                ->withSum('variants', 'quantity')
                 ->where('supplier_id', $supplierId)
                 ->paginate(15);
 
@@ -106,7 +106,7 @@ class ProductController extends Controller
 
         if (!empty($categoryId)) {
             $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-                ->withSum('expiries', 'quantity_exp')
+                ->withSum('variants', 'quantity')
                 ->where('categories_id', $categoryId)
                 ->paginate(15);
 
@@ -126,7 +126,7 @@ class ProductController extends Controller
 
         if ($status !== null) {
             $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-                ->withSum('expiries', 'quantity_exp')
+                ->withSum('variants', 'quantity')
                 ->where('status', $status)
                 ->paginate(15);
 
@@ -143,7 +143,7 @@ class ProductController extends Controller
     public function getProductById(string $id)
     {
         $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')
+            ->withSum('variants', 'quantity')
             ->where('products.id', $id)
             ->get();
 
@@ -167,7 +167,7 @@ class ProductController extends Controller
     public function getProductStatus()
     {
         $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-            ->withSum('expiries', 'quantity_exp')->whereIn('products.status', [1, 2])->get();
+            ->withSum('variants', 'quantity')->whereIn('products.status', [1, 2])->get();
         return response()->json($products);
     }
 
@@ -182,14 +182,14 @@ class ProductController extends Controller
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
                 return Product::with(['supplier', 'category', 'productImage', 'location'])
-                    ->withSum('expiries', 'quantity_exp')
-                    ->where('products.product_name', 'like', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
+                    ->withSum('variants', 'quantity')
+                    ->where('products.product_name', 'ilike', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
                     ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                     ->get();
             });
         } else {
             $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-                ->withSum('expiries', 'quantity_exp')
+                ->withSum('variants', 'quantity')
                 ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                 ->get();
         }
@@ -204,16 +204,16 @@ class ProductController extends Controller
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
                 return Product::with(['supplier', 'category', 'productImage', 'location'])
-                    ->withSum('expiries', 'quantity_exp')
+                    ->withSum('variants', 'quantity')
                     ->whereHas('supplier', function ($query) use ($keyword) {
-                        $query->where('supplier_name', 'like', "%{$keyword}%");
+                        $query->where('supplier_name', 'ilike', "%{$keyword}%");
                     })
                     ->whereIn('products.status', [1, 2])
                     ->get();
             });
         } else {
             $products = Product::with(['supplier', 'category', 'productImage', 'location'])
-                ->withSum('expiries', 'quantity_exp')
+                ->withSum('variants', 'quantity')
                 ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                 ->get();
         }
@@ -449,68 +449,67 @@ class ProductController extends Controller
         return response()->json(['success', 'Sản phẩm đã được cập nhật thành công!']);
     }
 
-    public function getProductExpiries($id)
+    public function getProductVariants($id)
     {
-        $product = Product::with('expiries')->find($id);
+        $product = Product::with('variants')->find($id);
 
         if (!$product) {
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $expiries = $product->expiries;
+        $variants = $product->variants;
 
-        // Kiểm tra xem có lô hàng hết hạn nào không
-        if ($expiries->isEmpty()) {
-            return response()->json(['message' => 'Sản phẩm hết hàng.'], 200);
+        if ($variants->isEmpty()) {
+            return response()->json(['message' => 'Sản phẩm chưa có biến thể.'], 200);
         }
 
-        return response()->json($expiries);
+        return response()->json($variants);
     }
 
-    public function updateOrDeleteExpiry(Request $request, $productId, $expiryId)
+    public function updateOrDeleteVariant(Request $request, $productId, $variantId)
     {
         $product = Product::find($productId);
         if (!$product) {
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $expiry = Expiry::where('product_id', $productId)->where('id', $expiryId)->first();
-        if (!$expiry) {
-            return response()->json(['error' => 'Lô hàng không tồn tại.'], 404);
+        $variant = ProductVariant::where('product_id', $productId)->where('id', $variantId)->first();
+        if (!$variant) {
+            return response()->json(['error' => 'Biến thể không tồn tại.'], 404);
         }
 
-        $quantityToRemove = $request->input('quantity');
+        $quantityToRemove = (int) $request->input('quantity');
         if ($quantityToRemove < 0) {
             return response()->json(['error' => 'Số lượng không hợp lệ.'], 400);
         }
 
-        if ($quantityToRemove >= $expiry->quantity_exp) {
-            // Nếu số lượng cần xóa bằng hoặc lớn hơn số lượng trong lô, xóa lô
-            $expiry->delete();
-            return response()->json(['success' => 'Lô hàng đã được xóa.']);
-        } else {
-            // Nếu số lượng cần xóa nhỏ hơn, cập nhật số lượng mới
-            $expiry->quantity_exp -= $quantityToRemove;
-            $expiry->save();
-            return response()->json(['success' => 'Số lượng trong lô đã được cập nhật.']);
-        }
+        // Khác với lô hạn dùng: biến thể về 0 vẫn giữ lại vì nó là một mục
+        // trong danh mục sản phẩm (size/màu vẫn tồn tại, chỉ là hết hàng).
+        $variant->quantity = max(0, $variant->quantity - $quantityToRemove);
+        $variant->save();
+
+        $this->syncProductStatus($product);
+
+        return response()->json(['success' => 'Số lượng biến thể đã được cập nhật.']);
     }
+
     public function updateProductStatus()
     {
-        // Lấy tất cả các sản phẩm
-        $products = Product::all();
-
-        foreach ($products as $product) {
-            // Kiểm tra xem sản phẩm có lô hàng nào không
-            $expiryCount = Expiry::where('product_id', $product->id)->count();
-
-            // Nếu không có lô hàng nào, cập nhật trạng thái của sản phẩm thành 2
-            if ($expiryCount == 0) {
-                $product->status = 2;
-                $product->save();
-            }
+        foreach (Product::all() as $product) {
+            $this->syncProductStatus($product);
         }
 
         return response()->json(['success' => 'Trạng thái của các sản phẩm đã được cập nhật.']);
+    }
+
+    /**
+     * Đồng bộ trạng thái còn/hết hàng theo tổng tồn các biến thể.
+     */
+    private function syncProductStatus(Product $product): void
+    {
+        $total = ProductVariant::where('product_id', $product->id)->sum('quantity');
+        // Hàng không theo dõi tồn kho không bao giờ bị gắn "hết hàng".
+        $product->status = ($total > 0 || !$product->manage_stock) ? 1 : 2;
+        $product->save();
     }
 }

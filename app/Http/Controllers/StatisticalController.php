@@ -348,25 +348,31 @@ class StatisticalController extends Controller
         ]);
     }
 
-    public function inventoryStatsByExpiry(Request $request)
+    /**
+     * Tồn kho theo biến thể size/màu (thay cho thống kê theo lô hạn dùng).
+     */
+    public function inventoryStatsByVariant(Request $request)
     {
-        $products = Product::with(['expiries'])->withTrashed()
+        $products = Product::with(['variants'])->withTrashed()
             ->get()
             ->groupBy('categories_id') // Sửa 'category_id' thành 'categories_id' để phù hợp với model Product
             ->map(function ($productsInCategory) {
                 return $productsInCategory->map(function ($product) {
-                    if ($product->expiries->isEmpty()) {
+                    if ($product->variants->isEmpty()) {
                         return [
                             'product_id' => $product->id,
-                            'message' => 'Hết hàng'
+                            'message' => 'Chưa có biến thể'
                         ];
                     } else {
                         return [
                             'product_id' => $product->id,
-                            'expiries' => $product->expiries->map(function ($expiry) {
+                            'variants' => $product->variants->map(function ($variant) {
                                 return [
-                                    'expiry_date' => $expiry->expiry_date,
-                                    'total_quantity' => $expiry->quantity_exp
+                                    'variant_id' => $variant->id,
+                                    'size' => $variant->size,
+                                    'color' => $variant->color,
+                                    'sku' => $variant->sku,
+                                    'total_quantity' => $variant->quantity
                                 ];
                             })
                         ];

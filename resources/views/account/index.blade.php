@@ -26,21 +26,21 @@
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="ml-1 text-gray-400 md:ml-2 dark:text-gray-500"
-                                    aria-current="page">Accounts</span>
+                                    aria-current="page">Tài khoản</span>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">ALL ACCOUNTS</h1>
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">TẤT CẢ TÀI KHOẢN</h1>
             </div>
             <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
                 <div class="flex items-center mb-4 sm:mb-0">
                     <form class="sm:pr-3" action="#" method="GET">
-                        <label for="search-account" class="sr-only">Search</label>
+                        <label for="search-account" class="sr-only">Tìm kiếm</label>
                         <div class="relative w-48 mt-1 sm:w-64 xl:w-96">
                             <input type="text" name="email" id="search-account"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Search for account">
+                                placeholder="Tìm tài khoản">
                         </div>
                     </form>
                     <div class="flex items-center w-full sm:justify-end">
@@ -115,7 +115,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Name
+                                    Tên
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -123,7 +123,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Phone Number
+                                    Điện thoại Number
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
@@ -135,7 +135,7 @@
                                 </th>
                                 <th scope="col"
                                     class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                    Action
+                                    Thao tác
                                 </th>
                             </tr>
                         </thead>
@@ -158,7 +158,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Update Product</h5>
+            Cập nhật sản phẩm</h5>
         <button type="button" data-drawer-dismiss="drawer-update-product-default" id="closeDrawerEdit"
             aria-controls="drawer-update-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -168,21 +168,21 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formEdit">
             @csrf
             <div class="space-y-4">
                 <div>
                     <label for="name_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên</label>
                     <input type="text" name="name" id="name_edit"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Type supplier name" required="">
+                        placeholder="Nhập tên nhà cung cấp" required="">
                 </div>
                 <div>
                     <label for="status_edit"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Trạng thái</label>
                     <select id="status_edit" name="status"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                         <option value="1">Sử dụng</option>
@@ -193,7 +193,7 @@
                     class="bottom-0 left-0 flex justify-center w-full pb-4 mt-4 space-x-4 sm:absolute sm:px-4 sm:mt-0">
                     <button type="submit"
                         class="w-full justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Update
+                        Cập nhật
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-update-product-default"
                         aria-controls="drawer-update-product-default"
@@ -203,7 +203,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Cancel
+                        Huỷ
                     </button>
                 </div>
             </div>
@@ -217,7 +217,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            Delete item</h5>
+            Xóa</h5>
         <button type="button" id="closeDrawerDelete" data-drawer-dismiss="drawer-delete-product-default"
             aria-controls="drawer-delete-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -227,7 +227,7 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <svg class="w-10 h-10 mt-8 mb-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -254,7 +254,7 @@
         tabindex="-1" aria-labelledby="drawer-label" aria-hidden="true">
         <h5 id="drawer-label"
             class="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400">
-            New Category</h5>
+            Danh mục mới</h5>
         <button type="button" id="closeDrawerAdd" data-drawer-dismiss="drawer-create-product-default"
             aria-controls="drawer-create-product-default"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -264,22 +264,22 @@
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="sr-only">Close menu</span>
+            <span class="sr-only">Đóng</span>
         </button>
         <form id="formAdd" enctype="multipart/form-data">
             @csrf
             <div class="space-y-4">
                 <div>
                     <label for="name"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tên</label>
                     <input type="text" name="name" id="name"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Category name" required="">
+                        placeholder="Tên danh mục" required="">
                 </div>
                 <div class="bottom-0 left-0 flex justify-center w-full pb-4 space-x-4 md:px-4 md:absolute">
                     <button type="submit" id="addCategories"
                         class="text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Add category
+                        Thêm danh mục
                     </button>
                     <button type="button" data-drawer-dismiss="drawer-create-product-default"
                         aria-controls="drawer-create-product-default"
@@ -289,14 +289,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Cancel
+                        Huỷ
                     </button>
                 </div>
             </div>
         </form>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     {{-- add categories --}}
     <script>
         $(document).ready(function() {
@@ -353,7 +351,10 @@
 
                     $.ajax({
                         url: url, // Sử dụng nối chuỗi để thêm idCategories vào URL
-                        type: 'GET',
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
                         success: function(response) {
                             // Xử lý khi xóa thành công
                             alert(response.success);

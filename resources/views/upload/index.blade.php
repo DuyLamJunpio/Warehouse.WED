@@ -4,7 +4,7 @@
             @csrf
             <input type="text" name="ids">
             <input type="file" name="images[]" multiple>
-            <button type="submit" class="btn btn-primary">Upload</button>
+            <button type="submit" class="btn btn-primary">Tải lên</button>
         </form>
     </div>
 </x-app-layout>
