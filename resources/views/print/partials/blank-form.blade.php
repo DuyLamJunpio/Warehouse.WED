@@ -6,6 +6,8 @@
     hàm collectBlank() bên print/blanks.blade.php.
 --}}
 @php($colors = $blank?->colors->where('is_active', true)->values() ?? collect())
+@php($positions = \App\Services\PrintPositions::payload())
+@php($enabled = $blank?->positionKeys() ?? \App\Services\PrintPositions::keys())
 
 <div data-blank-form="{{ $blank?->id }}" class="space-y-3">
     <div>
@@ -68,6 +70,35 @@
         </div>
     </div>
 
+    <p class="text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 border-l-2 border-indigo-500 pl-3">
+        Hiệu chuẩn một lần: <b>chiếc áo trong tấm mockup rộng và cao bao nhiêu milimét thật</b>.
+        Mọi kích thước khách kéo bên web quy ra mm từ hai số này — sai ở đây là sai cả xưởng.
+    </p>
+
+    <div>
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Vị trí in bán được</label>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            @foreach ($positions as $position)
+                <label class="flex items-center gap-2 text-[13px] text-slate-700 dark:text-slate-300">
+                    <input type="checkbox" data-f-pos value="{{ $position['key'] }}"
+                        @checked(in_array($position['key'], $enabled, true))
+                        class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                    <span>
+                        {{ $position['label'] }}
+                        <span class="block text-[10.5px] font-mono text-slate-400 tabular-nums">
+                            tối đa {{ $position['max_width_mm'] }}×{{ $position['max_height_mm'] }} mm
+                        </span>
+                    </span>
+                </label>
+            @endforeach
+        </div>
+        <p class="mt-1 text-[11px] text-slate-400">
+            Bốn chỗ này là hằng số trong mã nguồn, không phải khung in để kéo. Bỏ tick chỗ nào phôi này
+            không in được — áo ba lỗ không có vai, áo khoác không in lưng. Trần milimét là giới hạn của
+            xưởng; bên trong nó khách đặt hình ở đâu và to nhỏ thế nào là tuỳ khách.
+        </p>
+    </div>
+
     <div>
         <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Kỹ thuật in được</label>
         <div class="flex flex-wrap gap-x-4 gap-y-1.5">
@@ -118,8 +149,8 @@
 
     @unless ($blank)
         <p class="text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 border-l-2 border-indigo-500 pl-3">
-            Tạo xong thì mở thẻ phôi ra, tải mockup lên rồi <b>kéo khung</b> để khai vùng in.
-            Chưa có vùng in thì studio bên web chưa cho khách đặt.
+            Tạo xong thì mở thẻ phôi ra và <b>tải ảnh mockup</b> lên — áo trải phẳng, chính diện.
+            Chưa có mockup thì studio bên web chưa dựng được màn hình cho khách.
         </p>
     @endunless
 </div>

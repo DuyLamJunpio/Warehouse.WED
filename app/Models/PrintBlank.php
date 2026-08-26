@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PrintPositions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,7 +20,7 @@ class PrintBlank extends Model
 {
     protected $fillable = [
         'product_id', 'name', 'slug', 'description', 'base_price',
-        'frame_width_mm', 'frame_height_mm', 'moq', 'lead_days',
+        'frame_width_mm', 'frame_height_mm', 'positions', 'moq', 'lead_days',
         'template_path', 'sort_order', 'is_active',
     ];
 
@@ -27,6 +28,7 @@ class PrintBlank extends Model
         'base_price' => 'integer',
         'frame_width_mm' => 'integer',
         'frame_height_mm' => 'integer',
+        'positions' => 'array',
         'moq' => 'integer',
         'lead_days' => 'integer',
         'sort_order' => 'integer',
@@ -43,9 +45,17 @@ class PrintBlank extends Model
         return $this->hasMany(PrintBlankColor::class)->orderBy('sort_order')->orderBy('id');
     }
 
-    public function zones(): HasMany
+    /**
+     * Bốn vị trí in phôi này bán được, đã lọc và xếp theo thứ tự chuẩn.
+     *
+     * Cột `positions` để trống nghĩa là chưa ai tick gì — hiểu là đủ bốn, vì một
+     * phôi không bán được vị trí nào thì không phải là một phôi.
+     *
+     * @return string[]
+     */
+    public function positionKeys(): array
     {
-        return $this->hasMany(PrintZone::class)->orderBy('sort_order')->orderBy('id');
+        return PrintPositions::normalise($this->positions);
     }
 
     public function mockups(): HasMany

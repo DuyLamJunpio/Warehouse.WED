@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PrintPositions;
 use App\Services\PrintPricing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -99,18 +100,21 @@ class PrintDesign extends Model
      */
     public function productionSheet(): array
     {
-        $zones = $this->blank?->zones->keyBy('key') ?? collect();
         $rows = [];
 
         foreach ((array) $this->placements as $p) {
-            $zone = $zones->get($p['zone'] ?? '');
+            // `zone` là tên cũ của trường này, còn trong vài bản ghi rất cũ.
+            $key = $p['position'] ?? $p['zone'] ?? '';
+            $position = PrintPositions::get($key);
 
             $isText = ($p['kind'] ?? 'image') === 'text';
 
             $rows[] = [
                 'kind' => $isText ? 'text' : 'image',
-                'zone' => $zone?->label ?? ($p['zone'] ?? '?'),
-                'zone_size_mm' => $zone ? $zone->width_mm . ' × ' . $zone->height_mm : null,
+                'position' => PrintPositions::label($key),
+                'position_max_mm' => $position
+                    ? 'tối đa ' . $position['max_width_mm'] . ' × ' . $position['max_height_mm'] . ' mm'
+                    : null,
                 // Với chữ, "tên" là chính nội dung — đó là thứ thợ cần đọc.
                 'asset_name' => $isText ? ($p['text_content'] ?? '') : ($p['asset_name'] ?? null),
                 'asset_url' => $isText ? null : ($p['asset_url'] ?? null),
@@ -132,21 +136,54 @@ class PrintDesign extends Model
         return $rows;
     }
 
-    /** Khung bao mỗi vùng, để nhân viên kiểm nhanh khổ in đã tính tiền. */
-    public function zoneBoxes(): array
+    /** Khung bao mỗi vị trí, để nhân viên kiểm nhanh khổ in đã tính tiền. */
+    public function positionBoxes(): array
     {
-        $byZone = [];
-        foreach ((array) $this->placements as $p) {
-            $byZone[$p['zone']][] = $p;
-        }
-
         $out = [];
-        foreach ($byZone as $key => $list) {
+
+        foreach ($this->placementsByPosition() as $key => $list) {
             $box = PrintPricing::boundingBox($list);
-            $out[$key] = ['width_mm' => round($box['w'], 1), 'height_mm' => round($box['h'], 1)];
+
+            $out[$key] = [
+                'label' => PrintPositions::label($key),
+                'width_mm' => round($box['w'], 1),
+                'height_mm' => round($box['h'], 1),
+                // Chỗ đặt thật trên áo, tính từ góc trên trái khung ảnh phôi.
+                'x_mm' => round($box['x'], 1),
+                'y_mm' => round($box['y'], 1),
+            ];
         }
 
         return $out;
+    }
+
+    /**
+     * Gom hình theo vị trí in, giữ nguyên thứ tự khách đặt vào.
+     *
+     * @return array<string, array<int, array>>
+     */
+    public function placementsByPosition(): array
+    {
+        $out = [];
+        foreach ((array) $this->placements as $p) {
+            $out[$p['position'] ?? $p['zone'] ?? ''][] = $p;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Khung ảnh của phôi — gốc toạ độ mà mọi x/y trong bảng thợ in đọc tính từ đó.
+     *
+     * Từ khi bỏ khung vùng in, toạ độ không còn tính từ một cái khung do người
+     * quản trị kéo nữa mà tính từ góc trên trái của cả tấm mockup. Thợ phải biết
+     * tấm ấy ứng với bao nhiêu milimét thật thì con số mới có nghĩa.
+     */
+    public function frameSizeMm(): ?string
+    {
+        $blank = $this->blank;
+
+        return $blank ? $blank->frame_width_mm . ' × ' . $blank->frame_height_mm . ' mm' : null;
     }
 
     /**
@@ -160,51 +197,47 @@ class PrintDesign extends Model
      *     bấm convert to outlines là in được — không phải gõ lại tay.
      *   • Không lần nào resample nên không lần nào sai màu.
      *
-     * Mỗi vùng in là một `<g>` riêng, xếp cạnh nhau và giữ nguyên toạ độ mm bên
-     * trong. Thợ chọn từng nhóm rồi in — một tệp cho cả chiếc áo.
+     * Mỗi vị trí in là một `<g>` riêng, xếp cạnh nhau. Trong mỗi nhóm, toạ độ
+     * được DỜI VỀ GỐC KHUNG BAO của chính nó: một mảnh in phải nằm sát mép tệp
+     * để thợ cắt, chứ không lạc giữa một tờ trống to bằng cả chiếc áo. Chỗ đặt
+     * thật trên áo không mất đi — nó nằm trong nhãn ngay trên mỗi nhóm.
      */
     public function toSvg(): string
     {
-        $zones = $this->blank?->zones->keyBy('key') ?? collect();
-
-        $byZone = [];
-        foreach ((array) $this->placements as $p) {
-            $byZone[$p['zone'] ?? ''][] = $p;
-        }
-
-        /** Khoảng hở giữa hai vùng, đủ để thợ cắt rời mà không chạm nét. */
+        /** Khoảng hở giữa hai vị trí, đủ để thợ cắt rời mà không chạm nét. */
         $gap = 20;
         $offsetX = 0;
         $totalHeight = 0;
         $groups = [];
 
-        foreach ($byZone as $key => $placements) {
-            $zone = $zones->get($key);
-            if (!$zone) {
-                continue;
-            }
+        foreach ($this->placementsByPosition() as $key => $placements) {
+            $box = PrintPricing::boundingBox($placements);
+            $width = max($box['w'], 1);
+            $height = max($box['h'], 1);
 
             $body = '';
             foreach ($placements as $p) {
-                $body .= $this->svgPlacement($p);
+                $body .= $this->svgPlacement($p, -$box['x'], -$box['y']);
             }
 
             $groups[] = sprintf(
                 '<g transform="translate(%s 0)">'
                 . '<rect x="0" y="0" width="%s" height="%s" fill="none" stroke="#cccccc" stroke-width="0.2" stroke-dasharray="2 2"/>'
-                . '<text x="0" y="-4" font-family="sans-serif" font-size="4" fill="#999999">%s — %s×%s mm</text>'
+                . '<text x="0" y="-4" font-family="sans-serif" font-size="4" fill="#999999">%s — %s×%s mm, đặt tại %s/%s mm trên áo</text>'
                 . '%s</g>',
-                $offsetX,
-                $zone->width_mm,
-                $zone->height_mm,
-                self::xml($zone->label),
-                $zone->width_mm,
-                $zone->height_mm,
+                round($offsetX, 2),
+                round($width, 2),
+                round($height, 2),
+                self::xml(PrintPositions::label($key)),
+                round($width, 1),
+                round($height, 1),
+                round($box['x'], 1),
+                round($box['y'], 1),
                 $body,
             );
 
-            $offsetX += $zone->width_mm + $gap;
-            $totalHeight = max($totalHeight, $zone->height_mm);
+            $offsetX += $width + $gap;
+            $totalHeight = max($totalHeight, $height);
         }
 
         $width = max($offsetX - $gap, 10);
@@ -230,11 +263,15 @@ class PrintDesign extends Model
         );
     }
 
-    /** Một hình hoặc một dòng chữ, đặt đúng chỗ trong vùng in. */
-    private function svgPlacement(array $p): string
+    /**
+     * Một hình hoặc một dòng chữ, đặt đúng chỗ trong nhóm của vị trí in.
+     *
+     * `$dx`/`$dy` là phép dời về gốc khung bao của nhóm — xem toSvg().
+     */
+    private function svgPlacement(array $p, float $dx = 0, float $dy = 0): string
     {
-        $x = round((float) ($p['x_mm'] ?? 0), 2);
-        $y = round((float) ($p['y_mm'] ?? 0), 2);
+        $x = round((float) ($p['x_mm'] ?? 0) + $dx, 2);
+        $y = round((float) ($p['y_mm'] ?? 0) + $dy, 2);
         $w = round((float) ($p['w_mm'] ?? 0), 2);
         $h = round((float) ($p['h_mm'] ?? 0), 2);
         $rotation = round((float) ($p['rotation'] ?? 0), 2);

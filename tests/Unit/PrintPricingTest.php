@@ -39,12 +39,12 @@ class PrintPricingTest extends TestCase
                 [
                     'id' => 'underbase', 'label' => 'Lót trắng áo tối', 'enabled' => true,
                     'when' => ['tone' => 'dark', 'technique_ids' => [1]],
-                    'apply' => ['kind' => 'add', 'amount' => 15000, 'per' => 'zone'],
+                    'apply' => ['kind' => 'add', 'amount' => 15000, 'per' => 'position'],
                 ],
                 [
                     'id' => 'back', 'label' => 'Mặt lưng khó căn', 'enabled' => true,
-                    'when' => ['zone_keys' => ['back']],
-                    'apply' => ['kind' => 'multiply', 'amount' => 1.2, 'per' => 'zone'],
+                    'when' => ['position_keys' => ['back']],
+                    'apply' => ['kind' => 'multiply', 'amount' => 1.2, 'per' => 'position'],
                 ],
                 [
                     'id' => 'ink', 'label' => 'In lụa từ màu thứ 2', 'enabled' => true,
@@ -70,17 +70,18 @@ class PrintPricingTest extends TestCase
             'technique_id' => 1,
             'ink_colors' => 1,
             'qty' => 1,
-            'zones' => [
-                'front' => ['label' => 'Mặt trước', 'width_mm' => 280, 'height_mm' => 360],
-                'back' => ['label' => 'Mặt lưng', 'width_mm' => 280, 'height_mm' => 400],
+            'positions' => [
+                'front' => ['label' => 'Mặt trước', 'max_width_mm' => 320, 'max_height_mm' => 420],
+                'back' => ['label' => 'Mặt sau', 'max_width_mm' => 320, 'max_height_mm' => 420],
+                'shoulder_left' => ['label' => 'Vai trái', 'max_width_mm' => 120, 'max_height_mm' => 120],
             ],
             'placements' => $placements,
         ], $overrides);
     }
 
-    private function place(string $zone, float $x, float $y, float $w, float $h, float $rot = 0): array
+    private function place(string $position, float $x, float $y, float $w, float $h, float $rot = 0): array
     {
-        return ['zone' => $zone, 'x_mm' => $x, 'y_mm' => $y, 'w_mm' => $w, 'h_mm' => $h, 'rotation' => $rot];
+        return ['position' => $position, 'x_mm' => $x, 'y_mm' => $y, 'w_mm' => $w, 'h_mm' => $h, 'rotation' => $rot];
     }
 
     public function test_khong_co_hinh_thi_chi_tinh_tien_phoi(): void
@@ -103,7 +104,7 @@ class PrintPricingTest extends TestCase
         $this->assertEmpty($result['errors']);
     }
 
-    public function test_ao_toi_bi_cong_phi_lot_trang_theo_tung_vung(): void
+    public function test_ao_toi_bi_cong_phi_lot_trang_theo_tung_vi_tri(): void
     {
         // 120.000 + 35.000 + 15.000 lót = 170.000
         $result = PrintPricing::quote(
@@ -118,7 +119,7 @@ class PrintPricingTest extends TestCase
      * Ca quan trọng nhất của cả cách tính giá: ba sticker nhỏ nằm gọn trong một
      * khổ A5 phải tính tiền MỘT lần khổ A5, không phải ba lần tiền khổ A6.
      */
-    public function test_nhieu_hinh_cung_vung_gop_thanh_mot_khung_bao(): void
+    public function test_nhieu_hinh_cung_vi_tri_gop_thanh_mot_khung_bao(): void
     {
         $result = PrintPricing::quote($this->design([
             $this->place('front', 0, 0, 40, 40),
@@ -185,9 +186,9 @@ class PrintPricingTest extends TestCase
         $this->assertStringContainsString('không nhận khổ A4', $result['errors'][0]);
     }
 
-    public function test_he_so_nhan_chi_an_vao_gia_in_cua_vung_do(): void
+    public function test_he_so_nhan_chi_an_vao_gia_in_cua_vi_tri_do(): void
     {
-        // Mặt lưng x1.2 phải nhân trên 35.000 tiền in, KHÔNG nhân cả tiền phôi.
+        // Mặt sau x1.2 phải nhân trên 35.000 tiền in, KHÔNG nhân cả tiền phôi.
         $result = PrintPricing::quote(
             $this->design([$this->place('back', 0, 0, 140, 200)]),
             $this->pricing(),
@@ -344,5 +345,57 @@ class PrintPricingTest extends TestCase
 
         $this->assertSame(185000, $result['unit_price']);
         $this->assertSame(185000, $result['total']);
+    }
+
+    /**
+     * Trần milimét của vị trí chặn TRƯỚC bậc khổ.
+     *
+     * 200x200 lọt khổ A4 và có giá hẳn hoi, nhưng không ai in được nó lên bả
+     * vai. Không chặn ở đây là đơn đi thẳng vào xưởng rồi mới bị gọi điện huỷ.
+     */
+    public function test_vuot_tran_milimet_cua_vi_tri_thi_bao_loi(): void
+    {
+        $result = PrintPricing::quote(
+            $this->design([$this->place('shoulder_left', 0, 0, 200, 200)]),
+            $this->pricing(),
+        );
+
+        $this->assertNotEmpty($result['errors']);
+        $this->assertStringContainsString('vượt giới hạn 120×120 mm', $result['errors'][0]);
+    }
+
+    /** Vị trí phôi đang tắt thì chặn hẳn, không im lặng bỏ hình của khách đi. */
+    public function test_vi_tri_phoi_khong_ban_thi_bao_loi(): void
+    {
+        $result = PrintPricing::quote(
+            $this->design([$this->place('shoulder_right', 0, 0, 60, 60)]),
+            $this->pricing(),
+        );
+
+        $this->assertNotEmpty($result['errors']);
+        $this->assertStringContainsString('không còn nhận đơn', $result['errors'][0]);
+    }
+
+    /**
+     * Hồi quy: bảng giá xuất bản TRƯỚC khi đổi tên vẫn phải ra đúng con số.
+     *
+     * Các bản đã xuất bản là ảnh chụp bất biến, không được sửa. Chúng còn chữ
+     * `zone_keys` và `per: zone` bên trong; đọc trượt là quy tắc im lặng ngừng
+     * chạy và khách bỗng nhiên trả rẻ hơn hôm qua.
+     */
+    public function test_hieu_duoc_ten_cu_zone_trong_bang_gia_da_xuat_ban(): void
+    {
+        $pricing = $this->pricing();
+        $pricing['rules'][1]['when'] = ['zone_keys' => ['back']];
+        $pricing['rules'][1]['apply']['per'] = 'zone';
+
+        $placement = $this->place('back', 0, 0, 140, 200);
+        $placement['zone'] = $placement['position'];
+        unset($placement['position']);
+
+        $result = PrintPricing::quote($this->design([$placement]), $pricing);
+
+        // Đúng bằng test_he_so_nhan_chi_an_vao_gia_in_cua_vi_tri_do.
+        $this->assertSame(162000, $result['unit_price']);
     }
 }

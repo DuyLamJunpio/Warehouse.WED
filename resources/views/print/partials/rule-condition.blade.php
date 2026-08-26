@@ -13,9 +13,12 @@
         $parts[] = 'kỹ thuật ∈ <b class="text-indigo-600 dark:text-indigo-400">'
             . e(collect($when['technique_ids'])->map($techniqueName)->implode(', ')) . '</b>';
     }
-    if (!empty($when['zone_keys'])) {
-        $parts[] = 'vùng ∈ <b class="text-indigo-600 dark:text-indigo-400">'
-            . e(implode(', ', $when['zone_keys'])) . '</b>';
+    // `zone_keys` là tên cũ, còn nằm trong các bảng giá đã xuất bản từ trước.
+    $positionKeys = $when['position_keys'] ?? $when['zone_keys'] ?? null;
+    if (!empty($positionKeys)) {
+        $parts[] = 'vị trí ∈ <b class="text-indigo-600 dark:text-indigo-400">'
+            . e(collect($positionKeys)->map(fn ($k) => \App\Services\PrintPositions::label($k))->implode(', '))
+            . '</b>';
     }
     if (!empty($when['tier_ids'])) {
         $parts[] = 'bậc khổ ∈ <b class="text-indigo-600 dark:text-indigo-400">'

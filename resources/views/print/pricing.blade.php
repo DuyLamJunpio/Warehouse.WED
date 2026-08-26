@@ -271,7 +271,7 @@
                             <select id="simBlank" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
                                 @foreach ($blanks as $blank)
                                     <option value="{{ $blank->id }}"
-                                        data-zones="{{ json_encode($blank->zones->map(fn ($z) => ['key' => $z->key, 'label' => $z->label]), JSON_UNESCAPED_UNICODE) }}">
+                                        data-positions="{{ json_encode($blank->positionKeys()) }}">
                                         {{ $blank->name }}
                                     </option>
                                 @endforeach
@@ -286,8 +286,8 @@
                             </select>
                         </div>
                         <div>
-                            <label for="simZone" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Vùng in</label>
-                            <select id="simZone" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm"></select>
+                            <label for="simPosition" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Vị trí in</label>
+                            <select id="simPosition" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm"></select>
                         </div>
                         <div>
                             <label for="simTier" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Bậc khổ</label>
@@ -433,23 +433,27 @@
 
         // ── Trình thử giá ────────────────────────────────────────────
         const simBlank = document.getElementById('simBlank');
-        const simZone = document.getElementById('simZone');
+        const simPosition = document.getElementById('simPosition');
 
-        function fillZones() {
-            if (!simBlank || !simZone) return;
-            const zones = JSON.parse(simBlank.selectedOptions[0]?.dataset.zones || '[]');
-            simZone.innerHTML = zones.length
-                ? zones.map(z => '<option value="' + z.key + '">' + z.label + '</option>').join('')
-                : '<option value="">— phôi chưa khai vùng in —</option>';
+        // Bốn vị trí là hằng số phía máy chủ; phôi chỉ bật/tắt từng cái.
+        const POSITIONS = @json(collect($positions)->map(fn ($p) => ['key' => $p['key'], 'label' => $p['label']]));
+
+        function fillPositions() {
+            if (!simBlank || !simPosition) return;
+            const allowed = JSON.parse(simBlank.selectedOptions[0]?.dataset.positions || '[]');
+            const usable = POSITIONS.filter(p => allowed.includes(p.key));
+            simPosition.innerHTML = usable.length
+                ? usable.map(p => '<option value="' + p.key + '">' + p.label + '</option>').join('')
+                : '<option value="">— phôi đang tắt hết vị trí in —</option>';
         }
 
         async function runSim() {
-            if (!simBlank || !simZone?.value) return;
+            if (!simBlank || !simPosition?.value) return;
             try {
                 const r = await post('{{ route('print.pricing.simulate') }}', {
                     blank_id: simBlank.value,
                     technique_id: document.getElementById('simTechnique').value,
-                    zone_key: simZone.value,
+                    position_key: simPosition.value,
                     tier_id: document.getElementById('simTier').value,
                     tone: document.getElementById('simTone').value,
                     qty: parseInt(document.getElementById('simQty').value, 10) || 1,
@@ -474,14 +478,14 @@
             } catch (err) { toast(err.message, false); }
         }
 
-        ['simBlank', 'simTechnique', 'simZone', 'simTier', 'simTone', 'simQty'].forEach(id => {
+        ['simBlank', 'simTechnique', 'simPosition', 'simTier', 'simTone', 'simQty'].forEach(id => {
             document.getElementById(id)?.addEventListener('change', () => {
-                if (id === 'simBlank') fillZones();
+                if (id === 'simBlank') fillPositions();
                 runSim();
             });
         });
 
-        fillZones();
+        fillPositions();
         runSim();
     })();
     </script>

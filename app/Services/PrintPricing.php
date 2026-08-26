@@ -17,7 +17,7 @@ use App\Models\Setting;
  * ─── Vì sao không phải là một mã hàng "dịch vụ in" ───────────────────
  *
  * Khi khách được tự chọn chỗ in, tiền in phụ thuộc cùng lúc vào kỹ thuật, khổ
- * in, vùng nào trên áo, tông màu áo, số màu mực và số lượng. Không biến thể nào
+ * in, vị trí nào trên áo, tông màu áo, số màu mực và số lượng. Không biến thể nào
  * phủ được tổ hợp đó. Nên đây là một hàm, và phần chủ shop chỉnh được là DỮ
  * LIỆU đầu vào của hàm chứ không phải bản thân hàm.
  *
@@ -32,7 +32,7 @@ use App\Models\Setting;
  * ─── Sáu bước, thứ tự CỐ ĐỊNH ────────────────────────────────────────
  *
  *   1. giá phôi (+ phụ thu size)
- *   2. giá in cơ bản — ma trận kỹ thuật × bậc khổ, tính cho từng vùng
+ *   2. giá in cơ bản — ma trận kỹ thuật × bậc khổ, tính cho từng vị trí
  *   3. phụ phí CỘNG
  *   4. hệ số NHÂN
  *   5. chiết khấu số lượng
@@ -54,17 +54,38 @@ class PrintPricing
     /** Quy tắc tính trên đơn vị nào. */
     public const PER_ORDER = 'order';
     public const PER_SHIRT = 'shirt';
-    public const PER_ZONE = 'zone';
+    public const PER_POSITION = 'position';
     public const PER_PLACEMENT = 'placement';
     public const PER_INK_COLOR = 'inkColor';
+
+    /**
+     * Tên cũ của PER_POSITION, hồi vị trí in còn là "vùng in" chủ shop tự kéo.
+     *
+     * Các bản bảng giá đã xuất bản là ảnh chụp BẤT BIẾN và vẫn còn chữ này bên
+     * trong. Không sửa chúng — chỉ đọc hiểu, xem normalisePer().
+     */
+    public const PER_ZONE_LEGACY = 'zone';
 
     public const PER_LABELS = [
         self::PER_ORDER => 'mỗi đơn',
         self::PER_SHIRT => 'mỗi áo',
-        self::PER_ZONE => 'mỗi vùng',
+        self::PER_POSITION => 'mỗi vị trí',
         self::PER_PLACEMENT => 'mỗi hình',
         self::PER_INK_COLOR => 'mỗi màu mực',
     ];
+
+    /** Ba đơn vị này tính riêng từng vị trí; hai đơn vị còn lại tính trên cả đơn. */
+    private const PER_POSITION_SCOPED = [self::PER_POSITION, self::PER_PLACEMENT, self::PER_INK_COLOR];
+
+    /** Đọc `per` của một quy tắc, hiểu cả tên cũ lẫn tên mới. */
+    public static function normalisePer(?string $per): string
+    {
+        return match ($per) {
+            null => self::PER_ORDER,
+            self::PER_ZONE_LEGACY => self::PER_POSITION,
+            default => $per,
+        };
+    }
 
     // ── Bản nháp và bản đã xuất bản ──────────────────────────────────
 
@@ -181,7 +202,7 @@ class PrintPricing
     }
 
     /**
-     * Khung bao chung của mọi hình trong CÙNG một vùng.
+     * Khung bao chung của mọi hình trong CÙNG một vị trí.
      *
      * Đây là chỗ quyết định cách tính tiền: gộp lại rồi mới quy ra khổ, nên ba
      * sticker nhỏ nằm gọn trong A5 tính tiền A5 chứ không phải ba lần tiền.
@@ -244,8 +265,10 @@ class PrintPricing
         if (isset($when['technique_ids']) && !in_array($ctx['technique_id'], (array) $when['technique_ids'])) {
             return false;
         }
-        if (isset($when['zone_keys'])) {
-            if ($ctx['zone_key'] === null || !in_array($ctx['zone_key'], (array) $when['zone_keys'], true)) {
+        // `zone_keys` là tên cũ, còn nằm trong các ảnh chụp bảng giá đã xuất bản.
+        $positionKeys = $when['position_keys'] ?? $when['zone_keys'] ?? null;
+        if ($positionKeys !== null) {
+            if ($ctx['position_key'] === null || !in_array($ctx['position_key'], (array) $positionKeys, true)) {
                 return false;
             }
         }
@@ -282,8 +305,8 @@ class PrintPricing
      *     'blank' => ['id','name','base_price','moq','product_id'],
      *     'size', 'size_surcharge', 'color_name', 'tone',
      *     'technique_id', 'ink_colors', 'qty',
-     *     'zones' => [zone_key => ['label','width_mm','height_mm']],
-     *     'placements' => [['zone','x_mm','y_mm','w_mm','h_mm','rotation','asset_fee','asset_name']],
+     *     'positions' => [position_key => ['label','max_width_mm','max_height_mm']],
+     *     'placements' => [['position','x_mm','y_mm','w_mm','h_mm','rotation','asset_fee','asset_name']],
      * ]
      * @param array|null $pricing Ảnh chụp bảng giá; null = bản đang có hiệu lực.
      *
@@ -332,26 +355,56 @@ class PrintPricing
             $lines[] = self::line('phụ thu size ' . $design['size'], $surcharge, null, true);
         }
 
-        // ── BƯỚC 2 — giá in cơ bản, tính riêng từng vùng ─────────────
-        $byZone = [];
+        // ── BƯỚC 2 — giá in cơ bản, tính riêng từng vị trí ───────────
+        $byPosition = [];
         foreach ((array) ($design['placements'] ?? []) as $p) {
-            $byZone[$p['zone']][] = $p;
+            // `zone` là tên cũ của trường này trong các thiết kế lưu trước đây.
+            $byPosition[$p['position'] ?? $p['zone'] ?? ''][] = $p;
         }
 
-        $zoneContexts = [];
-        foreach ($byZone as $zoneKey => $placements) {
-            $zone = ($design['zones'] ?? [])[$zoneKey] ?? null;
-            if (!$zone) {
+        $positionContexts = [];
+        foreach ($byPosition as $positionKey => $placements) {
+            $position = ($design['positions'] ?? [])[$positionKey] ?? null;
+
+            /*
+             * Bỏ qua trong im lặng là hình của khách biến mất khỏi bảng kê mà
+             * vẫn nằm trong thiết kế đã lưu — khách trả tiền một đằng, xưởng in
+             * một nẻo. Nói thẳng ra và chặn đơn lại.
+             */
+            if (!$position) {
+                $errors[] = sprintf('Vị trí in "%s" không còn nhận đơn trên phôi này.', $positionKey);
                 continue;
             }
 
             $bbox = self::boundingBox($placements);
+
+            /*
+             * Trần mm của vị trí — giới hạn của cái máy in, KHÔNG phải khung in
+             * cũ quay lại dưới tên khác: bên trong trần đó khách vẫn đặt hình ở
+             * đâu và to nhỏ thế nào tuỳ ý. Chặn ngay tại đây rẻ hơn để xưởng
+             * nhận đơn rồi gọi điện từ chối.
+             */
+            $maxW = (float) ($position['max_width_mm'] ?? INF);
+            $maxH = (float) ($position['max_height_mm'] ?? INF);
+
+            if ($bbox['w'] > $maxW + 0.5 || $bbox['h'] > $maxH + 0.5) {
+                $errors[] = sprintf(
+                    '%s: khung bao %s×%s mm vượt giới hạn %s×%s mm của vị trí này.',
+                    $position['label'],
+                    round($bbox['w'], 1),
+                    round($bbox['h'], 1),
+                    round($maxW),
+                    round($maxH),
+                );
+                continue;
+            }
+
             $tier = self::pickTier($bbox, $tiers);
 
             if (!$tier) {
                 $errors[] = sprintf(
                     '%s: khung bao %s×%s mm vượt bậc khổ lớn nhất.',
-                    $zone['label'],
+                    $position['label'],
                     round($bbox['w'], 1),
                     round($bbox['h'], 1),
                 );
@@ -364,28 +417,28 @@ class PrintPricing
                     '%s không nhận khổ %s — đổi kỹ thuật hoặc thu nhỏ hình ở %s.',
                     $technique['name'],
                     $tier['name'],
-                    $zone['label'],
+                    $position['label'],
                 );
                 continue;
             }
 
             $lines[] = self::line(
-                sprintf('%s · %s · khổ %s', $technique['name'], $zone['label'], $tier['name']),
+                sprintf('%s · %s · khổ %s', $technique['name'], $position['label'], $tier['name']),
                 (float) $cell,
                 sprintf('khung bao %s × %s mm · %d hình', round($bbox['w'], 1), round($bbox['h'], 1), count($placements)),
             );
             $running += (float) $cell;
 
-            $zoneContexts[] = [
-                'zone_key' => $zoneKey,
-                'zone_label' => $zone['label'],
+            $positionContexts[] = [
+                'position_key' => $positionKey,
+                'position_label' => $position['label'],
                 'tier_id' => $tier['id'],
                 'base' => (float) $cell,
                 'count' => count($placements),
             ];
         }
 
-        // Sticker có bản quyền — phí gắn với tài nguyên, không gắn với vùng.
+        // Sticker có bản quyền — phí gắn với tài nguyên, không gắn với vị trí.
         foreach ((array) ($design['placements'] ?? []) as $p) {
             $fee = (int) ($p['asset_fee'] ?? 0);
             if ($fee > 0) {
@@ -394,7 +447,7 @@ class PrintPricing
             }
         }
 
-        if (!$zoneContexts && !$errors) {
+        if (!$positionContexts && !$errors) {
             $warnings[] = 'Chưa có hình nào trên áo — mới tính tiền phôi.';
         }
 
@@ -412,29 +465,29 @@ class PrintPricing
                 continue;
             }
 
-            $per = $rule['apply']['per'] ?? self::PER_ORDER;
+            $per = self::normalisePer($rule['apply']['per'] ?? null);
             $amount = (float) ($rule['apply']['amount'] ?? 0);
 
-            if (in_array($per, [self::PER_ZONE, self::PER_PLACEMENT, self::PER_INK_COLOR], true)) {
-                foreach ($zoneContexts as $zc) {
-                    $ctx = $baseCtx + ['zone_key' => $zc['zone_key'], 'tier_id' => $zc['tier_id']];
+            if (in_array($per, self::PER_POSITION_SCOPED, true)) {
+                foreach ($positionContexts as $pc) {
+                    $ctx = $baseCtx + ['position_key' => $pc['position_key'], 'tier_id' => $pc['tier_id']];
                     if (!self::ruleMatches($rule, $ctx)) {
                         continue;
                     }
 
-                    [$multiplier, $note] = self::additiveMultiplier($rule, $per, $zc, $inkColors);
+                    [$multiplier, $note] = self::additiveMultiplier($rule, $per, $pc, $inkColors);
                     if ($multiplier <= 0) {
                         continue;
                     }
 
                     $delta = $amount * $multiplier;
-                    $lines[] = self::line($rule['label'] . ' — ' . $zc['zone_label'], $delta, $note, true);
+                    $lines[] = self::line($rule['label'] . ' — ' . $pc['position_label'], $delta, $note, true);
                     $running += $delta;
                 }
                 continue;
             }
 
-            $ctx = $baseCtx + ['zone_key' => null, 'tier_id' => null];
+            $ctx = $baseCtx + ['position_key' => null, 'tier_id' => null];
             if (!self::ruleMatches($rule, $ctx)) {
                 continue;
             }
@@ -467,29 +520,29 @@ class PrintPricing
                 continue;
             }
 
-            $per = $rule['apply']['per'] ?? self::PER_ORDER;
+            $per = self::normalisePer($rule['apply']['per'] ?? null);
             $amount = (float) ($rule['apply']['amount'] ?? 0);
             $factor = $kind === self::KIND_MULTIPLY ? $amount : 1 + $amount / 100;
             $note = $kind === self::KIND_MULTIPLY ? '×' . $amount : '+' . $amount . '%';
 
-            if (in_array($per, [self::PER_ZONE, self::PER_PLACEMENT, self::PER_INK_COLOR], true)) {
-                foreach ($zoneContexts as $zc) {
-                    $ctx = $baseCtx + ['zone_key' => $zc['zone_key'], 'tier_id' => $zc['tier_id']];
+            if (in_array($per, self::PER_POSITION_SCOPED, true)) {
+                foreach ($positionContexts as $pc) {
+                    $ctx = $baseCtx + ['position_key' => $pc['position_key'], 'tier_id' => $pc['tier_id']];
                     if (!self::ruleMatches($rule, $ctx)) {
                         continue;
                     }
 
-                    // Nhân trên GIÁ IN CƠ BẢN của vùng, không trên tổng đang chạy:
-                    // "mặt lưng khó căn hơn" nói về công in mặt lưng, không phải
-                    // về tiền phôi hay về phụ phí của vùng khác.
-                    $delta = $zc['base'] * ($factor - 1);
-                    $lines[] = self::line($rule['label'] . ' — ' . $zc['zone_label'], $delta, $note, true);
+                    // Nhân trên GIÁ IN CƠ BẢN của vị trí, không trên tổng đang
+                    // chạy: "mặt sau khó căn hơn" nói về công in mặt sau, chứ
+                    // không về tiền phôi hay phụ phí của vị trí khác.
+                    $delta = $pc['base'] * ($factor - 1);
+                    $lines[] = self::line($rule['label'] . ' — ' . $pc['position_label'], $delta, $note, true);
                     $running += $delta;
                 }
                 continue;
             }
 
-            $ctx = $baseCtx + ['zone_key' => null, 'tier_id' => null];
+            $ctx = $baseCtx + ['position_key' => null, 'tier_id' => null];
             if (!self::ruleMatches($rule, $ctx)) {
                 continue;
             }
@@ -569,10 +622,10 @@ class PrintPricing
      * `mỗi màu mực` đếm từ ngưỡng của chính quy tắc trở đi: quy tắc "từ màu thứ
      * 2" với đơn 4 màu thì tính tiền 3 màu, không phải 4.
      */
-    private static function additiveMultiplier(array $rule, string $per, array $zoneCtx, int $inkColors): array
+    private static function additiveMultiplier(array $rule, string $per, array $positionCtx, int $inkColors): array
     {
         if ($per === self::PER_PLACEMENT) {
-            return [$zoneCtx['count'], $zoneCtx['count'] . ' hình'];
+            return [$positionCtx['count'], $positionCtx['count'] . ' hình'];
         }
 
         if ($per === self::PER_INK_COLOR) {

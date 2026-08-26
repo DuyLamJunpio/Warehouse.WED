@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\PrintFont;
 use App\Models\PrintSizeTier;
 use App\Models\PrintTechnique;
+use App\Services\PrintPositions;
 use App\Services\PrintPricing;
 use Illuminate\Database\Seeder;
 
@@ -159,14 +160,14 @@ class PrintModuleSeeder extends Seeder
                 'label' => 'Lót trắng cho áo màu tối',
                 'enabled' => true,
                 'when' => ['tone' => 'dark', 'technique_ids' => [$tech['decal']->id, $tech['dtg']->id]],
-                'apply' => ['kind' => PrintPricing::KIND_ADD, 'amount' => 15000, 'per' => PrintPricing::PER_ZONE],
+                'apply' => ['kind' => PrintPricing::KIND_ADD, 'amount' => 15000, 'per' => PrintPricing::PER_POSITION],
             ],
             [
-                'id' => 'back-zone',
-                'label' => 'Mặt lưng khó căn hơn',
+                'id' => 'back-position',
+                'label' => 'Mặt sau khó căn hơn',
                 'enabled' => true,
-                'when' => ['zone_keys' => ['back']],
-                'apply' => ['kind' => PrintPricing::KIND_MULTIPLY, 'amount' => 1.2, 'per' => PrintPricing::PER_ZONE],
+                'when' => ['position_keys' => [PrintPositions::BACK]],
+                'apply' => ['kind' => PrintPricing::KIND_MULTIPLY, 'amount' => 1.2, 'per' => PrintPricing::PER_POSITION],
             ],
             [
                 'id' => 'screen-extra-ink',

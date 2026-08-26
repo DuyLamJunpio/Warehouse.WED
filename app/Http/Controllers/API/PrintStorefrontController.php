@@ -8,6 +8,7 @@ use App\Models\PrintBlank;
 use App\Models\PrintDesign;
 use App\Models\PrintFont;
 use App\Models\PrintTechnique;
+use App\Services\PrintPositions;
 use App\Services\PrintPricing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +32,7 @@ class PrintStorefrontController extends Controller
     {
         $pricing = PrintPricing::current();
 
-        $blanks = PrintBlank::with(['colors', 'zones', 'mockups', 'techniques', 'product.variants'])
+        $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants'])
             ->where('is_active', true)
             ->orderBy('sort_order')->orderBy('id')
             ->get()
@@ -39,6 +40,14 @@ class PrintStorefrontController extends Controller
 
         return response()->json([
             'pricing_version_id' => PrintPricing::currentVersionId(),
+            /*
+             * Bốn vị trí in, kèm nhãn và trần milimét của từng chỗ.
+             *
+             * Web bán hàng KHÔNG chép lại bảng này — nó nhận từ đây. Chép sang
+             * bên đó là sớm muộn hai bên lệch nhau, và lệch trần mm nghĩa là
+             * studio cho khách kéo một khổ mà máy chủ từ chối ngay sau đó.
+             */
+            'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
             'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->values(),
             'tiers' => $pricing['tiers'] ?? [],
@@ -88,8 +97,7 @@ class PrintStorefrontController extends Controller
                 'hex' => $c->hex,
                 'tone' => $c->tone,
             ]),
-            'zones' => $blank->zones->where('is_active', true)->values()
-                ->map(fn ($z) => $z->toStorefrontArray()),
+            'position_keys' => $blank->positionKeys(),
             'mockups' => $blank->mockups->map(fn ($m) => [
                 'color_id' => $m->print_blank_color_id,
                 'view' => $m->view,
@@ -112,7 +120,7 @@ class PrintStorefrontController extends Controller
     public function quote(Request $request)
     {
         $data = $this->validatedDesign($request);
-        $blank = PrintBlank::with(['colors', 'zones', 'product.variants'])->findOrFail($data['blank_id']);
+        $blank = PrintBlank::with(['colors', 'product.variants'])->findOrFail($data['blank_id']);
 
         return response()->json($this->quoteFor($blank, $data));
     }
@@ -127,7 +135,9 @@ class PrintStorefrontController extends Controller
             'ink_colors' => 'nullable|integer|min:1|max:99',
             'qty' => 'required|integer|min:1|max:5000',
             'placements' => 'present|array|max:30',
-            'placements.*.zone' => 'required|string|max:40',
+            // Bốn vị trí là hằng số trong mã nguồn, không phải dữ liệu — khoá
+            // lạ bị chặn ngay ở đây thay vì đi tiếp thành một đơn không in được.
+            'placements.*.position' => 'required|string|in:' . implode(',', PrintPositions::keys()),
             /*
              * Ảnh hay chữ. Hai loại đi chung một đường vì mọi thứ phía sau đối xử
              * với chúng như nhau — khung bao, bậc khổ, tiền in. Chỉ khác cái gì
@@ -149,13 +159,13 @@ class PrintStorefrontController extends Controller
     /**
      * Dựng đầu vào cho bộ máy giá từ dữ liệu thô của studio.
      *
-     * Phí sticker và kích thước vùng in đều đọc lại TỪ CSDL, không nhận từ
-     * trình duyệt: sửa một con số trong request không được phép làm rẻ đơn đi.
+     * Phí sticker và trần milimét của vị trí in đều đọc lại TỪ MÁY CHỦ, không
+     * nhận từ trình duyệt: sửa một con số trong request không được phép làm rẻ
+     * đơn đi, cũng không được phép in một khổ mà xưởng không nhận.
      */
     private function quoteFor(PrintBlank $blank, array $data): array
     {
         $color = $blank->colors->firstWhere('name', $data['color_name']);
-        $zones = $blank->zones->where('is_active', true)->keyBy('key');
         $assets = PrintAsset::whereIn('id', collect($data['placements'])->pluck('asset_id')->filter())
             ->get()->keyBy('id');
 
@@ -164,7 +174,7 @@ class PrintStorefrontController extends Controller
             $asset = isset($p['asset_id']) ? $assets->get($p['asset_id']) : null;
 
             return [
-                'zone' => $p['zone'],
+                'position' => $p['position'],
                 'x_mm' => (float) $p['x_mm'],
                 'y_mm' => (float) $p['y_mm'],
                 'w_mm' => (float) $p['w_mm'],
@@ -192,11 +202,7 @@ class PrintStorefrontController extends Controller
             'technique_id' => (int) $data['technique_id'],
             'ink_colors' => (int) ($data['ink_colors'] ?? 1),
             'qty' => (int) $data['qty'],
-            'zones' => $zones->map(fn ($z) => [
-                'label' => $z->label,
-                'width_mm' => $z->width_mm,
-                'height_mm' => $z->height_mm,
-            ])->all(),
+            'positions' => PrintPositions::pricingMap($blank->positionKeys()),
             'placements' => $placements,
         ]);
     }
@@ -263,7 +269,7 @@ class PrintStorefrontController extends Controller
     public function storeDesign(Request $request)
     {
         $data = $this->validatedDesign($request);
-        $blank = PrintBlank::with(['colors', 'zones', 'product.variants'])->findOrFail($data['blank_id']);
+        $blank = PrintBlank::with(['colors', 'product.variants'])->findOrFail($data['blank_id']);
         $quote = $this->quoteFor($blank, $data);
 
         // Thiết kế có lỗi thì KHÔNG lưu: một bản ghi giá 0 đồng nằm chờ duyệt
@@ -295,7 +301,7 @@ class PrintStorefrontController extends Controller
 
                 return [
                     'kind' => $p['kind'],
-                    'zone' => $p['zone'],
+                    'position' => $p['position'],
                     'asset_id' => $p['asset_id'] ?? null,
                     'asset_name' => $asset?->name,
                     'asset_url' => $asset?->url,

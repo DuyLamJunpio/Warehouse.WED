@@ -96,10 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/blanks', [PrintBlankController::class, 'store'])->name('blanks.store');
         Route::post('/blanks/{blank}', [PrintBlankController::class, 'update'])->name('blanks.update');
         Route::post('/blanks/{blank}/toggle', [PrintBlankController::class, 'toggle'])->name('blanks.toggle');
-        Route::post('/blanks/{blank}/zones', [PrintBlankController::class, 'storeZone'])->name('blanks.zones.store');
         Route::post('/blanks/{blank}/mockups', [PrintBlankController::class, 'uploadMockup'])->name('blanks.mockups.store');
-        Route::post('/zones/{zone}', [PrintBlankController::class, 'updateZone'])->name('zones.update');
-        Route::post('/zones/{zone}/toggle', [PrintBlankController::class, 'toggleZone'])->name('zones.toggle');
         Route::delete('/mockups/{mockup}', [PrintBlankController::class, 'destroyMockup'])->name('mockups.destroy');
 
         Route::get('/designs', [PrintDesignController::class, 'index'])->name('designs');

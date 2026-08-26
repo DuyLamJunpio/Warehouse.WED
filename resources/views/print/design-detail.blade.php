@@ -1,9 +1,27 @@
 <x-app-layout>
     @php
         $color = $design->blank?->colors->firstWhere('name', $design->color_name);
-        $mockup = $design->blank?->mockups->firstWhere('print_blank_color_id', $color?->id)
-            ?? $design->blank?->mockups->first();
-        $zones = $design->blank?->zones->keyBy('key') ?? collect();
+        $mockups = $design->blank?->mockups ?? collect();
+
+        // Toạ độ giờ tính từ góc trên trái khung ảnh phôi, nên quy ra phần trăm
+        // chỉ cần hai con số hiệu chuẩn này — không còn khung vùng in nào ở giữa.
+        $frameW = max((int) ($design->blank?->frame_width_mm ?? 0), 1);
+        $frameH = max((int) ($design->blank?->frame_height_mm ?? 0), 1);
+
+        // Mỗi vị trí in muốn một góc chụp riêng; thiếu góc nào thì lùi dần theo
+        // danh sách của chính vị trí đó. Hiện sai góc vẫn hơn hiện ô trống.
+        $mockupFor = function (string $key) use ($mockups, $color) {
+            $byColor = $mockups->where('print_blank_color_id', $color?->id);
+
+            foreach (\App\Services\PrintPositions::get($key)['views'] ?? ['front'] as $view) {
+                $hit = $byColor->firstWhere('view', $view) ?? $mockups->firstWhere('view', $view);
+                if ($hit) {
+                    return $hit;
+                }
+            }
+
+            return $byColor->first() ?? $mockups->first();
+        };
     @endphp
 
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -44,42 +62,52 @@
                         Đây là bản dựng lại từ toạ độ mm, không phải file in. Thợ nhận file gốc kèm bảng toạ độ bên phải.
                     </p>
                 </div>
-                <div class="p-5">
-                    <div class="relative mx-auto w-full max-w-[360px] rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-900/40"
-                        style="aspect-ratio: {{ $mockup && $mockup->height_px ? $mockup->width_px . '/' . $mockup->height_px : '400/460' }}">
-                        @if ($mockup)
-                            <img src="{{ Storage::url($mockup->path) }}" alt="" class="absolute inset-0 w-full h-full object-contain">
-                        @endif
+                <div class="p-5 space-y-5">
+                    @forelse ($boxes as $key => $box)
+                        @php($mockup = $mockupFor($key))
+                        <div>
+                            <div class="flex items-baseline justify-between gap-3 mb-1.5">
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ $box['label'] }}</p>
+                                <p class="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                                    khung bao {{ $box['width_mm'] }} × {{ $box['height_mm'] }} mm
+                                    · tại {{ $box['x_mm'] }}/{{ $box['y_mm'] }} mm
+                                </p>
+                            </div>
 
-                        @foreach ($zones as $zone)
-                            <div class="absolute border border-dashed border-slate-400/70 rounded-sm"
-                                style="left:{{ $zone->box_x }}%;top:{{ $zone->box_y }}%;width:{{ $zone->box_w }}%;height:{{ $zone->box_h }}%">
-                                @foreach (($design->placements ?? []) as $p)
-                                    @continue(($p['zone'] ?? null) !== $zone->key)
-                                    <img src="{{ $p['asset_url'] ?? '' }}" alt=""
-                                        class="absolute object-contain"
-                                        style="left:{{ ($p['x_mm'] / max($zone->width_mm, 1)) * 100 }}%;
-                                               top:{{ ($p['y_mm'] / max($zone->height_mm, 1)) * 100 }}%;
-                                               width:{{ ($p['w_mm'] / max($zone->width_mm, 1)) * 100 }}%;
-                                               height:{{ ($p['h_mm'] / max($zone->height_mm, 1)) * 100 }}%;
+                            <div class="relative mx-auto w-full max-w-[320px] rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-900/40"
+                                style="aspect-ratio: {{ $mockup && $mockup->height_px ? $mockup->width_px . '/' . $mockup->height_px : '400/460' }}">
+                                @if ($mockup)
+                                    <img src="{{ Storage::url($mockup->path) }}" alt="" class="absolute inset-0 w-full h-full object-contain">
+                                @endif
+
+                                @foreach ($design->placementsByPosition()[$key] ?? [] as $p)
+                                    <div class="absolute"
+                                        style="left:{{ ($p['x_mm'] / $frameW) * 100 }}%;
+                                               top:{{ ($p['y_mm'] / $frameH) * 100 }}%;
+                                               width:{{ ($p['w_mm'] / $frameW) * 100 }}%;
+                                               height:{{ ($p['h_mm'] / $frameH) * 100 }}%;
                                                transform: rotate({{ $p['rotation'] ?? 0 }}deg)">
+                                        @if (($p['kind'] ?? 'image') === 'text')
+                                            {{-- Cùng cách dựng chữ với studio, để cái khách duyệt và cái này là một. --}}
+                                            <svg viewBox="0 0 200 60" preserveAspectRatio="xMidYMid meet" class="w-full h-full">
+                                                <text x="100" y="30" text-anchor="middle" dominant-baseline="central"
+                                                    font-family="{{ $p['text_font_family'] ?? 'sans-serif' }}" font-size="44"
+                                                    fill="{{ $p['text_color'] ?? '#000000' }}">{{ $p['text_content'] ?? '' }}</text>
+                                            </svg>
+                                        @else
+                                            <img src="{{ $p['asset_url'] ?? '' }}" alt="" class="w-full h-full object-contain">
+                                        @endif
+                                    </div>
                                 @endforeach
                             </div>
-                        @endforeach
-                    </div>
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Thiết kế này chưa có hình nào.</p>
+                    @endforelse
 
-                    @if ($boxes)
-                        <dl class="mt-4 space-y-1 text-xs">
-                            @foreach ($boxes as $key => $box)
-                                <div class="flex justify-between gap-3">
-                                    <dt class="text-slate-500 dark:text-slate-400">Khung bao {{ $zones[$key]->label ?? $key }}</dt>
-                                    <dd class="font-mono tabular-nums text-slate-700 dark:text-slate-200">
-                                        {{ $box['width_mm'] }} × {{ $box['height_mm'] }} mm
-                                    </dd>
-                                </div>
-                            @endforeach
-                        </dl>
-                    @endif
+                    <p class="text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        Toạ độ tính từ góc trên trái khung ảnh phôi ({{ $design->frameSizeMm() ?? 'chưa hiệu chuẩn' }}).
+                    </p>
                 </div>
             </section>
 
@@ -124,14 +152,15 @@
                     <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         Gửi thợ <b>file .svg</b> ở nút trên cùng — nó giữ đúng toạ độ mm, ảnh gốc theo link và
                         chữ ở dạng <b>text thật</b> (mở bằng Illustrator hoặc Corel, convert to outlines là in được).
-                        Bảng dưới đây và ảnh ghép bên trái là để đối chiếu bằng mắt.
+                        Bảng dưới đây và ảnh ghép bên trái là để đối chiếu bằng mắt. Cột X/Y tính từ góc trên trái
+                        khung ảnh phôi ({{ $design->frameSizeMm() ?? 'chưa hiệu chuẩn' }}), không phải từ mép hình.
                     </p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 dark:border-slate-700/80">
-                                <th class="px-5 py-2.5">Vùng</th>
+                                <th class="px-5 py-2.5">Vị trí</th>
                                 <th class="px-5 py-2.5">Hình</th>
                                 <th class="px-5 py-2.5 text-right">Vị trí X/Y</th>
                                 <th class="px-5 py-2.5 text-right">Khổ</th>
@@ -144,8 +173,8 @@
                                 @php($low = $row['dpi'] !== null && $design->technique && $row['dpi'] < $design->technique->min_dpi)
                                 <tr class="border-b border-slate-100 dark:border-slate-700/60 last:border-0">
                                     <td class="px-5 py-2.5 text-slate-700 dark:text-slate-200">
-                                        {{ $row['zone'] }}
-                                        <span class="block text-[10.5px] font-mono text-slate-400">{{ $row['zone_size_mm'] }}</span>
+                                        {{ $row['position'] }}
+                                        <span class="block text-[10.5px] font-mono text-slate-400">{{ $row['position_max_mm'] }}</span>
                                     </td>
                                     <td class="px-5 py-2.5">
                                         @if ($row['asset_url'])

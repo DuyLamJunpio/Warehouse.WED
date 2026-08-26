@@ -48,13 +48,13 @@ class PrintDesignController extends Controller
 
     public function show(PrintDesign $design)
     {
-        $design->load(['blank.zones', 'blank.colors', 'blank.mockups', 'technique', 'reviewer', 'pricingVersion', 'invoice']);
+        $design->load(['blank.colors', 'blank.mockups', 'technique', 'reviewer', 'pricingVersion', 'invoice']);
 
         return view('print.design-detail', [
             'design' => $design,
             'invoice' => $design->invoice,
             'sheet' => $design->productionSheet(),
-            'boxes' => $design->zoneBoxes(),
+            'boxes' => $design->positionBoxes(),
         ]);
     }
 
@@ -66,7 +66,7 @@ class PrintDesignController extends Controller
      */
     public function svg(PrintDesign $design)
     {
-        $design->loadMissing(['blank.zones']);
+        $design->loadMissing('blank');
 
         return response($design->toSvg(), 200, [
             'Content-Type' => 'image/svg+xml; charset=UTF-8',

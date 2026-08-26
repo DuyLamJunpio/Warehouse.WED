@@ -6,8 +6,8 @@ use App\Models\PrintBlank;
 use App\Models\PrintBlankColor;
 use App\Models\PrintMockup;
 use App\Models\PrintTechnique;
-use App\Models\PrintZone;
 use App\Models\Product;
+use App\Services\PrintPositions;
 use App\Services\StorefrontNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Quản lý phôi in: màu áo, vùng in, ảnh mockup.
+ * Quản lý phôi in: màu áo, vị trí in bán được, ảnh mockup.
  *
  * Nối vào sản phẩm trong kho là TUỲ CHỌN. Không nối thì phôi đứng riêng với giá
  * khai tay — đó là đường mặc định, vì hầu hết shop in áo đặt phôi từ nhà cung
@@ -30,7 +30,7 @@ class PrintBlankController extends Controller
     public function index()
     {
         return view('print.blanks', [
-            'blanks' => PrintBlank::with(['colors', 'zones', 'mockups', 'techniques', 'product'])
+            'blanks' => PrintBlank::with(['colors', 'mockups', 'techniques', 'product'])
                 ->orderBy('sort_order')->orderBy('id')->get(),
             'techniques' => PrintTechnique::where('is_active', true)->orderBy('sort_order')->get(),
             // Chỉ sản phẩm còn sống mới nối được; danh sách gọn để chọn nhanh.
@@ -58,7 +58,7 @@ class PrintBlankController extends Controller
         $this->notifier->markDirty();
 
         return response()->json([
-            'success' => 'Đã tạo phôi "' . $blank->name . '". Bước tiếp theo: tải mockup lên rồi khai vùng in.',
+            'success' => 'Đã tạo phôi "' . $blank->name . '". Bước tiếp theo: tải ảnh mockup lên.',
             'id' => $blank->id,
         ]);
     }
@@ -100,6 +100,11 @@ class PrintBlankController extends Controller
             'base_price' => 'required|integer|min:0',
             'frame_width_mm' => 'required|integer|min:50|max:2000',
             'frame_height_mm' => 'required|integer|min:50|max:2000',
+            // Bốn vị trí in là hằng số trong mã nguồn; ở đây chỉ tick bật/tắt.
+            // Bỏ tick sạch thì chặn hẳn: tự bật lại giúp là nói dối người dùng,
+            // còn lưu một phôi không in được chỗ nào là bày ra thứ không bán được.
+            'positions' => 'required|array|min:1',
+            'positions.*' => 'string|in:' . implode(',', PrintPositions::keys()),
             'moq' => 'required|integer|min:1|max:9999',
             'lead_days' => 'required|integer|min:0|max:365',
             'technique_ids' => 'nullable|array',
@@ -108,6 +113,9 @@ class PrintBlankController extends Controller
             'colors.*.name' => 'required|string|max:80',
             'colors.*.hex' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'colors.*.tone' => 'nullable|in:light,dark',
+        ], [
+            'positions.required' => 'Phôi phải bán được ít nhất một vị trí in.',
+            'positions.min' => 'Phôi phải bán được ít nhất một vị trí in.',
         ]);
     }
 
@@ -120,6 +128,7 @@ class PrintBlankController extends Controller
             'base_price' => (int) $data['base_price'],
             'frame_width_mm' => (int) $data['frame_width_mm'],
             'frame_height_mm' => (int) $data['frame_height_mm'],
+            'positions' => PrintPositions::normalise($data['positions'] ?? null),
             'moq' => (int) $data['moq'],
             'lead_days' => (int) $data['lead_days'],
         ];
@@ -169,64 +178,15 @@ class PrintBlankController extends Controller
         $blank->colors()->whereNotIn('name', $seen ?: ['__none__'])->update(['is_active' => false]);
     }
 
-    // ── Vùng in ──────────────────────────────────────────────────────
-
-    public function storeZone(Request $request, PrintBlank $blank)
-    {
-        $data = $this->validatedZone($request);
-
-        $zone = $blank->zones()->create($data + [
-            'key' => 'z' . Str::lower(Str::random(6)),
-            'sort_order' => (int) $blank->zones()->max('sort_order') + 1,
-            'is_active' => true,
-        ]);
-
-        $this->notifier->markDirty();
-
-        return response()->json(['success' => 'Đã lưu vùng "' . $zone->label . '".', 'id' => $zone->id]);
-    }
-
-    public function updateZone(Request $request, PrintZone $zone)
-    {
-        $zone->update($this->validatedZone($request));
-        $this->notifier->markDirty();
-
-        return response()->json(['success' => 'Đã lưu vùng "' . $zone->label . '".']);
-    }
-
-    public function toggleZone(Request $request, PrintZone $zone)
-    {
-        $zone->update(['is_active' => $request->boolean('is_active')]);
-        $this->notifier->markDirty();
-
-        return response()->json([
-            'success' => $zone->is_active ? 'Đã bật vùng in.' : 'Đã tắt vùng in — đơn cũ giữ nguyên.',
-        ]);
-    }
-
-    private function validatedZone(Request $request): array
-    {
-        return $request->validate([
-            'label' => 'required|string|max:80',
-            // mm là sự thật; box_* chỉ để vẽ khung lên mockup.
-            'width_mm' => 'required|integer|min:5|max:2000',
-            'height_mm' => 'required|integer|min:5|max:2000',
-            'box_x' => 'required|numeric|min:0|max:100',
-            'box_y' => 'required|numeric|min:0|max:100',
-            'box_w' => 'required|numeric|min:0.5|max:100',
-            'box_h' => 'required|numeric|min:0.5|max:100',
-            'max_placements' => 'nullable|integer|min:1|max:50',
-        ]);
-    }
-
     // ── Ảnh mockup ───────────────────────────────────────────────────
 
     /**
      * Tải một tấm mockup lên và KIỂM KHUNG ngay tại đây.
      *
-     * Vùng in khai một lần cho cả phôi nhưng mockup up theo từng màu. Tấm nào
-     * cắt cúp khác là khung in đúng trên một tấm và sai trên phần còn lại — mà
-     * không ai phát hiện cho tới lúc in hỏng. So TỈ LỆ chứ không so số pixel:
+     * Hiệu chuẩn khung ảnh khai một lần cho cả phôi nhưng mockup tải lên theo
+     * từng màu. Tấm nào cắt cúp khác là mỗi milimét quy đổi ra một chỗ khác trên
+     * tấm đó — mà không ai phát hiện cho tới lúc in hỏng. So TỈ LỆ chứ không so
+     * số pixel:
      * 2000x2300 và 1000x1150 là cùng khung, chỉ khác độ phân giải.
      */
     public function uploadMockup(Request $request, PrintBlank $blank)
@@ -274,8 +234,37 @@ class PrintBlankController extends Controller
 
         $this->notifier->markDirty();
 
+        /*
+         * Tấm ảnh và hiệu chuẩn khung phải cùng tỉ lệ.
+         *
+         * Ảnh chụp thật thì một milimét nằm ngang và một milimét nằm dọc dài
+         * bằng nhau. Khai 520×700 mm cho một tấm 1000×1150 px là bảo hệ thống
+         * rằng chiều ngang co khác chiều dọc: logo vuông khách kéo hiện ra thành
+         * chữ nhật, và con số mm gửi xuống xưởng lệch theo đúng chừng ấy.
+         *
+         * Cảnh báo chứ không chặn — đôi khi tấm ảnh cố tình cắt cúp và chủ shop
+         * biết mình đang làm gì. Nhưng phải nói ra, vì đây là kiểu sai không ai
+         * nhìn thấy cho tới lúc cầm chiếc áo in xong trên tay.
+         */
+        $calibrationDrift = PrintMockup::aspectDrift(
+            $width,
+            $height,
+            $blank->frame_width_mm,
+            $blank->frame_height_mm,
+        );
+
+        $note = $calibrationDrift > PrintMockup::MAX_ASPECT_DRIFT
+            ? sprintf(
+                ' Lưu ý: tấm này lệch %.1f%% so với hiệu chuẩn khung ảnh (%d×%d mm). '
+                . 'Hình khách kéo sẽ hiện méo và mm gửi xưởng lệch theo — soi lại hai số hiệu chuẩn.',
+                $calibrationDrift,
+                $blank->frame_width_mm,
+                $blank->frame_height_mm,
+            )
+            : '';
+
         return response()->json([
-            'success' => 'Đã tải mockup lên. Khung vùng in đang hiện đè lên tấm này để bạn soi lệch.',
+            'success' => 'Đã tải mockup lên.' . $note,
             'id' => $mockup->id,
             'url' => Storage::url($mockup->path),
         ]);

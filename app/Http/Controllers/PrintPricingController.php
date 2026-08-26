@@ -6,6 +6,7 @@ use App\Models\PrintBlank;
 use App\Models\PrintPricingVersion;
 use App\Models\PrintSizeTier;
 use App\Models\PrintTechnique;
+use App\Services\PrintPositions;
 use App\Services\PrintPricing;
 use App\Services\StorefrontNotifier;
 use Illuminate\Http\Request;
@@ -29,7 +30,8 @@ class PrintPricingController extends Controller
             'draft' => PrintPricing::draft(),
             'techniques' => PrintTechnique::orderBy('sort_order')->orderBy('id')->get(),
             'tiers' => PrintSizeTier::orderBy('sort_order')->orderBy('id')->get(),
-            'blanks' => PrintBlank::with('zones')->orderBy('sort_order')->get(),
+            'blanks' => PrintBlank::orderBy('sort_order')->get(),
+            'positions' => PrintPositions::payload(),
             'versions' => PrintPricingVersion::with('publisher')->orderByDesc('id')->limit(10)->get(),
             'currentVersion' => PrintPricingVersion::latestPublished(),
             'perLabels' => PrintPricing::PER_LABELS,
@@ -53,7 +55,9 @@ class PrintPricingController extends Controller
             'rules.*.enabled' => 'nullable|boolean',
             'rules.*.apply.kind' => 'required|in:add,multiply,percent',
             'rules.*.apply.amount' => 'required|numeric|min:0',
-            'rules.*.apply.per' => 'required|in:order,shirt,zone,placement,inkColor',
+            // `zone` là tên cũ của `position`; nhận vào rồi quy về tên mới ngay
+            // bên dưới, để một tab trình duyệt mở từ trước không làm hỏng lần lưu.
+            'rules.*.apply.per' => 'required|in:order,shirt,position,placement,inkColor,zone',
             'qty_tiers' => 'present|array',
             'qty_tiers.*.from' => 'required|integer|min:1',
             'qty_tiers.*.pct' => 'required|numeric|min:0|max:100',
@@ -83,7 +87,7 @@ class PrintPricingController extends Controller
                 'apply' => [
                     'kind' => $rule['apply']['kind'],
                     'amount' => (float) $rule['apply']['amount'],
-                    'per' => $rule['apply']['per'],
+                    'per' => PrintPricing::normalisePer($rule['apply']['per']),
                 ],
             ];
         }, $data['rules']);
@@ -132,25 +136,30 @@ class PrintPricingController extends Controller
         $data = $request->validate([
             'blank_id' => 'required|exists:print_blanks,id',
             'technique_id' => 'required|exists:print_techniques,id',
-            'zone_key' => 'required|string',
+            'position_key' => 'required|string|in:' . implode(',', PrintPositions::keys()),
             'tier_id' => 'required|exists:print_size_tiers,id',
             'tone' => 'required|in:light,dark',
             'qty' => 'required|integer|min:1|max:10000',
             'ink_colors' => 'nullable|integer|min:1',
         ]);
 
-        $blank = PrintBlank::with(['zones', 'product.variants'])->findOrFail($data['blank_id']);
-        $zone = $blank->zones->firstWhere('key', $data['zone_key']) ?? $blank->zones->first();
+        $blank = PrintBlank::with('product.variants')->findOrFail($data['blank_id']);
         $tier = PrintSizeTier::findOrFail($data['tier_id']);
 
-        if (!$zone) {
-            return response()->json(['error' => 'Phôi này chưa khai vùng in nào.'], 422);
+        $positionKey = $data['position_key'];
+        $position = PrintPositions::get($positionKey);
+
+        if (!in_array($positionKey, $blank->positionKeys(), true)) {
+            return response()->json([
+                'error' => 'Phôi này đang tắt vị trí "' . PrintPositions::label($positionKey) . '".',
+            ], 422);
         }
 
         // Dựng một hình vừa khít bậc khổ đã chọn — đúng thứ cần để đọc ra giá
-        // của ô đó trong ma trận, không hơn.
-        $width = min($tier->width_mm, $zone->width_mm);
-        $height = min($tier->height_mm, $zone->height_mm);
+        // của ô đó trong ma trận, không hơn. Cắt theo trần của vị trí, nếu không
+        // thì thử giá một khổ mà khách không đặt nổi ở chỗ đó.
+        $width = min($tier->width_mm, $position['max_width_mm']);
+        $height = min($tier->height_mm, $position['max_height_mm']);
 
         $quote = PrintPricing::quote([
             'blank' => [
@@ -167,15 +176,9 @@ class PrintPricingController extends Controller
             'technique_id' => (int) $data['technique_id'],
             'ink_colors' => (int) ($data['ink_colors'] ?? 1),
             'qty' => (int) $data['qty'],
-            'zones' => [
-                $zone->key => [
-                    'label' => $zone->label,
-                    'width_mm' => $zone->width_mm,
-                    'height_mm' => $zone->height_mm,
-                ],
-            ],
+            'positions' => PrintPositions::pricingMap([$positionKey]),
             'placements' => [[
-                'zone' => $zone->key,
+                'position' => $positionKey,
                 'x_mm' => 0, 'y_mm' => 0,
                 'w_mm' => $width, 'h_mm' => $height,
                 'rotation' => 0,
