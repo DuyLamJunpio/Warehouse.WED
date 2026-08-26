@@ -96,6 +96,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/blanks', [PrintBlankController::class, 'store'])->name('blanks.store');
         Route::post('/blanks/{blank}', [PrintBlankController::class, 'update'])->name('blanks.update');
         Route::post('/blanks/{blank}/toggle', [PrintBlankController::class, 'toggle'])->name('blanks.toggle');
+        // Xoá hẳn — chỉ đi được khi chưa thiết kế nào trỏ vào, xem controller.
+        Route::delete('/blanks/{blank}', [PrintBlankController::class, 'destroy'])->name('blanks.destroy');
+        Route::delete('/blank-colors/{color}', [PrintBlankController::class, 'destroyColor'])->name('blanks.colors.destroy');
         Route::post('/blanks/{blank}/mockups', [PrintBlankController::class, 'uploadMockup'])->name('blanks.mockups.store');
         Route::delete('/mockups/{mockup}', [PrintBlankController::class, 'destroyMockup'])->name('mockups.destroy');
 

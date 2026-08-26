@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PrintBlank;
 use App\Models\PrintBlankColor;
+use App\Models\PrintDesign;
 use App\Models\PrintMockup;
 use App\Models\PrintTechnique;
 use App\Models\Product;
@@ -78,7 +79,12 @@ class PrintBlankController extends Controller
         return response()->json(['success' => 'Đã lưu phôi "' . $blank->name . '".']);
     }
 
-    /** Bật/tắt. Không có xoá: đơn cũ đang trỏ vào phôi này. */
+    /**
+     * Bật/tắt — cách ẩn phôi khỏi web mà không đụng gì tới đơn cũ.
+     *
+     * Đây vẫn là đường nên đi trong hầu hết trường hợp; xoá hẳn chỉ dành cho phôi
+     * khai nhầm, xem destroy() bên dưới.
+     */
     public function toggle(Request $request, PrintBlank $blank)
     {
         $blank->update(['is_active' => $request->boolean('is_active')]);
@@ -88,6 +94,79 @@ class PrintBlankController extends Controller
             'success' => $blank->is_active
                 ? 'Đã bật phôi "' . $blank->name . '".'
                 : 'Đã tắt phôi "' . $blank->name . '" — ẩn khỏi web, đơn cũ giữ nguyên.',
+        ]);
+    }
+
+    /**
+     * Xoá hẳn một phôi — dành cho phôi khai nhầm, không phải phôi ngừng bán.
+     *
+     * CHẶN nếu còn thiết kế nào trỏ vào: `print_designs.print_blank_id` đặt
+     * restrictOnDelete, nên không chặn ở đây thì cơ sở dữ liệu ném ra một lỗi ràng
+     * buộc khoá ngoại mà nhân viên bán hàng không đọc nổi. Phôi ngừng bán thì tắt,
+     * đừng xoá: hoá đơn tháng trước còn phải đọc được tên phôi.
+     */
+    public function destroy(PrintBlank $blank)
+    {
+        $designs = PrintDesign::where('print_blank_id', $blank->id)->count();
+
+        if ($designs > 0) {
+            return response()->json([
+                'error' => 'Không xoá được phôi "' . $blank->name . '": đang có ' . $designs
+                    . ' thiết kế của khách trỏ vào nó. Tắt phôi để ẩn khỏi web — đơn cũ giữ nguyên.',
+            ], 422);
+        }
+
+        $name = $blank->name;
+        // Gom đường dẫn TRƯỚC khi xoá; sau khi xoá thì không còn bản ghi để hỏi.
+        $paths = $blank->mockups()->pluck('path')->all();
+
+        DB::transaction(function () use ($blank) {
+            // Khoá ngoại của màu, mockup và pivot kỹ thuật đều đặt cascade, nhưng
+            // dọn tay để thứ tự xoá là thứ đọc được ở đây chứ không nằm ẩn trong
+            // lược đồ — và để bản cài nào tắt kiểm khoá ngoại vẫn sạch.
+            $blank->techniques()->detach();
+            PrintMockup::where('print_blank_id', $blank->id)->delete();
+            // Hỏi thẳng bảng màu thay vì qua quan hệ: quan hệ colors() có sẵn
+            // orderBy, mà DELETE kèm ORDER BY thì mỗi hệ quản trị hiểu một kiểu.
+            PrintBlankColor::where('print_blank_id', $blank->id)->delete();
+            $blank->delete();
+        });
+
+        // Dọn tệp SAU khi cơ sở dữ liệu đã chốt: giao dịch quay lui mà ảnh đã xoá
+        // là bản ghi còn nguyên nhưng trỏ vào chỗ trống.
+        Storage::delete($paths);
+        $this->notifier->markDirty();
+
+        return response()->json([
+            'success' => 'Đã xoá phôi "' . $name . '"'
+                . ($paths ? ' cùng ' . count($paths) . ' tấm mockup.' : '.'),
+        ]);
+    }
+
+    /**
+     * Xoá hẳn một màu áo khỏi phôi.
+     *
+     * An toàn với đơn cũ vì `print_designs` lưu `color_name` dưới dạng chuỗi chứ
+     * không trỏ khoá ngoại sang đây — hoá đơn cũ vẫn đọc được "Đen", "Trắng".
+     * Nhưng ảnh mockup thì gắn khoá ngoại cascade, nên xoá màu là mất theo mọi tấm
+     * chụp riêng cho màu đó; đếm ra để báo trước cho người bấm.
+     */
+    public function destroyColor(PrintBlankColor $color)
+    {
+        $name = $color->name;
+        $paths = $color->mockups()->pluck('path')->all();
+
+        DB::transaction(function () use ($color) {
+            $color->mockups()->delete();
+            $color->delete();
+        });
+
+        Storage::delete($paths);
+        $this->notifier->markDirty();
+
+        return response()->json([
+            'success' => 'Đã xoá màu "' . $name . '"'
+                . ($paths ? ' cùng ' . count($paths) . ' tấm mockup của màu này.' : '.'),
         ]);
     }
 

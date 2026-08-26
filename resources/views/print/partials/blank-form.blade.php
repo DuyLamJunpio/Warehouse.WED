@@ -121,16 +121,27 @@
         <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Màu áo</label>
         <div class="space-y-1.5" data-color-list>
             @foreach ($colors->isEmpty() ? [null] : $colors as $color)
-                <div class="flex items-center gap-2" data-color-row>
+                {{--
+                    data-color-id rỗng = dòng chưa lưu, xoá là gỡ khỏi màn hình.
+                    Có id thì nút xoá gọi thẳng máy chủ, vì bỏ dòng rồi bấm Lưu chỉ
+                    TẮT màu chứ không xoá — xem syncColors() bên controller.
+                --}}
+                <div class="flex items-center gap-2" data-color-row data-color-id="{{ $color?->id }}">
                     <input type="color" data-color-hex value="{{ $color->hex ?? '#cccccc' }}"
                         class="w-9 h-9 shrink-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent cursor-pointer p-0.5">
                     <input type="text" data-color-name value="{{ $color->name ?? '' }}" placeholder="Tên màu"
-                        class="flex-1 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
+                        class="flex-1 min-w-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
                     <select data-color-tone class="shrink-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
                         <option value="">tự suy</option>
                         <option value="light" @selected(($color->tone ?? null) === 'light')>sáng</option>
                         <option value="dark" @selected(($color->tone ?? null) === 'dark')>tối</option>
                     </select>
+                    <button type="button" data-color-del title="Xoá màu này"
+                        class="shrink-0 w-8 h-8 grid place-items-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-400 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+                        </svg>
+                    </button>
                 </div>
             @endforeach
         </div>
@@ -138,7 +149,8 @@
             class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">+ Thêm màu</button>
         <p class="mt-1 text-[11px] text-slate-400">
             Tông quyết định phụ phí lót trắng. Để "tự suy" thì hệ thống đoán theo độ sáng —
-            xám mélange nằm giữa nên nhớ soi lại.
+            xám mélange nằm giữa nên nhớ soi lại. Xoá một màu đã lưu là <b>mất luôn ảnh mockup</b>
+            chụp riêng cho màu đó; hoá đơn cũ không sao vì chúng lưu tên màu thành chữ.
         </p>
     </div>
 

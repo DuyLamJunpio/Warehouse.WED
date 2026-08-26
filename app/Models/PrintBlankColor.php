@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Một màu áo của phôi.
@@ -27,6 +28,18 @@ class PrintBlankColor extends Model
     public function blank(): BelongsTo
     {
         return $this->belongsTo(PrintBlank::class, 'print_blank_id');
+    }
+
+    /**
+     * Ảnh mockup chụp riêng cho màu này.
+     *
+     * Khoá ngoại bên `print_mockups` đặt cascade, nên xoá màu là mất luôn những
+     * tấm ảnh này. Có quan hệ ở đây để lúc xoá còn gom được đường dẫn tệp mà dọn
+     * trên đĩa — cascade chỉ dọn bản ghi, ảnh vẫn nằm lại trong storage.
+     */
+    public function mockups(): HasMany
+    {
+        return $this->hasMany(PrintMockup::class, 'print_blank_color_id');
     }
 
     /**
