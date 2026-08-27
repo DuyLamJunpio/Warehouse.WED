@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
@@ -43,10 +42,15 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         if ($request->isMethod('post')) {
+            $request->merge([
+                'customer_phone' => Customer::normalizePhone($request->input('customer_phone')),
+                'customer_email' => Customer::normalizeEmail($request->input('customer_email')),
+            ]);
+
             $validator = Validator::make($request->all(), [
                 'customer_name' => 'required|max:255', // Giới hạn tên nhà cung cấp tối đa 255 ký tự
-                'customer_phone' => ['required', 'numeric', 'digits_between:9,11', 'unique:' . Customer::class], // Cho phép số điện thoại từ 9 đến 11 chữ số
-                'customer_email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . Customer::class],
+                'customer_phone' => ['required', 'digits_between:9,11'],
+                'customer_email' => ['required', 'string', 'email', 'max:255'],
                 'address' => 'required|max:500', // Giới hạn địa chỉ tối đa 500 ký tự
                 'avatar' => 'nullable|file|image|max:2048',
             ]);
@@ -62,9 +66,9 @@ class CustomerController extends Controller
                 $filename = $image->store('public/images');
                 $params['avatar'] = $filename;
             }
-            $customer = Customer::create($params);
+            $customer = Customer::mergeByIdentity($params);
             if ($customer->id) {
-                return response()->json(['success' => 'Khách hàng đã được thêm thành công!']);
+                return response()->json(['success' => 'Khách hàng đã được thêm hoặc gộp thành công!']);
             } else {
                 return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
             }
@@ -122,21 +126,27 @@ class CustomerController extends Controller
         }
 
         if ($request->isMethod('POST')) {
+            $request->merge([
+                'customer_phone' => Customer::normalizePhone($request->input('customer_phone')),
+                'customer_email' => Customer::normalizeEmail($request->input('customer_email')),
+            ]);
+
             $validator = Validator::make($request->all(), [
                 'customer_name' => 'required|max:255',
                 'customer_phone' => [
                     'required',
-                    'numeric',
                     'digits_between:9,11',
-                    Rule::unique('customers')->ignore($id),
+                    function ($attribute, $value, $fail) use ($request, $id) {
+                        if (Customer::findDuplicate($value, $request->input('customer_email'), (int) $id)) {
+                            $fail('Số điện thoại hoặc email này đã thuộc một hồ sơ khách hàng khác.');
+                        }
+                    },
                 ],
                 'customer_email' => [
                     'required',
                     'string',
-                    'lowercase',
                     'email',
                     'max:255',
-                    Rule::unique('customers')->ignore($id),
                 ],
                 'address' => 'required|max:500',
                 'avatar' => 'nullable|file|image|max:2048',

@@ -301,10 +301,11 @@ class OrderController extends Controller
 
             // Có số điện thoại thì gộp vào hồ sơ khách để còn thống kê khách quen.
             $customer = null;
-            if (!empty($data['customer_phone'])) {
+            $customerPhone = Customer::normalizePhone($data['customer_phone'] ?? null);
+            if ($customerPhone !== null) {
                 $customer = Customer::mergeByPhone([
                     'customer_name' => $data['customer_name'] ?: 'Khách lẻ',
-                    'customer_phone' => $data['customer_phone'],
+                    'customer_phone' => $customerPhone,
                 ]);
             }
 

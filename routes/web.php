@@ -136,7 +136,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/content/banner/{id}', [ContentController::class, 'updateBanner'])->name('content.banner.update');
     Route::delete('/content/banner/{id}', [ContentController::class, 'destroyBanner'])->name('content.banner.destroy');
     Route::post('/content/banner/{id}/reorder', [ContentController::class, 'reorderBanner'])->name('content.banner.reorder');
-    Route::post('/content/marquee', [ContentController::class, 'saveMarquee'])->name('content.marquee');
+    Route::post('/content/announcement', [ContentController::class, 'saveAnnouncement'])->name('content.announcement');
     Route::post('/content/headings', [ContentController::class, 'saveHeadings'])->name('content.headings');
     Route::post('/content/collection/{id?}', [ContentController::class, 'saveCollection'])->name('content.collection');
     Route::delete('/content/collection/{id}', [ContentController::class, 'destroyCollection'])->name('content.collection.destroy');

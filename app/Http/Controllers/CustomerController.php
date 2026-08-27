@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Invoice;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
@@ -34,6 +33,7 @@ class CustomerController extends Controller
     {
         $keyword = trim((string) $request->input('keyword'));
         $tier = $request->input('tier');
+        $normalizedPhoneKeyword = Customer::normalizePhone($keyword);
 
         $query = Customer::query()
             ->withCount(['orders as order_count'])
@@ -43,12 +43,17 @@ class CustomerController extends Controller
             ->orderByDesc('total_spent_sum');
 
         if ($keyword !== '') {
-            $query->where(function ($q) use ($keyword) {
+            $query->where(function ($q) use ($keyword, $normalizedPhoneKeyword) {
                 $q->where('customer_name', 'ilike', "%{$keyword}%")
                     ->orWhere('customer_phone', 'ilike', "%{$keyword}%")
                     ->orWhere('customer_email', 'ilike', "%{$keyword}%")
                     ->orWhere('address', 'ilike', "%{$keyword}%")
                     ->orWhere('province', 'ilike', "%{$keyword}%");
+
+                // Cho phép tìm bằng số quốc tế dù hồ sơ đã lưu dạng nội địa.
+                if ($normalizedPhoneKeyword !== null && $normalizedPhoneKeyword !== $keyword) {
+                    $q->orWhere('customer_phone', 'ilike', "%{$normalizedPhoneKeyword}%");
+                }
             });
         }
 
@@ -102,11 +107,18 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         if ($request->isMethod('post') || $request->ajax() || $request->wantsJson()) {
+            $request->merge([
+                'customer_phone' => Customer::normalizePhone($request->input('customer_phone')),
+                'customer_email' => Customer::normalizeEmail($request->input('customer_email')),
+            ]);
+
             // Khách không có tài khoản: số điện thoại là thứ bắt buộc và duy nhất,
             // email có thể bỏ trống vì nhiều khách đặt qua điện thoại.
             $validator = Validator::make($request->all(), [
                 'customer_name' => 'required|max:255',
-                'customer_phone' => ['required', 'numeric', 'digits_between:9,11', 'unique:' . Customer::class],
+                // Đã chuẩn hóa về dạng 0xxxxxxxxx trước khi kiểm tra và lưu.
+                // Nếu trùng email/số, mergeByIdentity sẽ gộp vào hồ sơ cũ.
+                'customer_phone' => ['required', 'digits_between:9,11'],
                 'customer_email' => ['nullable', 'string', 'email', 'max:255'],
                 'address' => 'nullable|max:500',
                 'province' => 'nullable|max:255',
@@ -126,9 +138,9 @@ class CustomerController extends Controller
                 $filename = $image->store('public/images');
                 $params['avatar'] = $filename;
             }
-            $customer = Customer::create($params);
+            $customer = Customer::mergeByIdentity($params);
             if ($customer->id) {
-                return response()->json(['success' => 'Khách hàng đã được thêm thành công!']);
+                return response()->json(['success' => 'Khách hàng đã được thêm hoặc gộp thành công!']);
             } else {
                 return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
             }
@@ -161,13 +173,21 @@ class CustomerController extends Controller
         }
 
         if ($request->ajax() || $request->wantsJson()) {
+            $request->merge([
+                'customer_phone' => Customer::normalizePhone($request->input('customer_phone')),
+                'customer_email' => Customer::normalizeEmail($request->input('customer_email')),
+            ]);
+
             $validator = Validator::make($request->all(), [
                 'customer_name' => 'required|max:255',
                 'customer_phone' => [
                     'required',
-                    'numeric',
                     'digits_between:9,11',
-                    Rule::unique('customers')->ignore($id),
+                    function ($attribute, $value, $fail) use ($request, $id) {
+                        if (Customer::findDuplicate($value, $request->input('customer_email'), (int) $id)) {
+                            $fail('Số điện thoại hoặc email này đã thuộc một hồ sơ khách hàng khác.');
+                        }
+                    },
                 ],
                 'customer_email' => ['nullable', 'string', 'email', 'max:255'],
                 'address' => 'nullable|max:500',

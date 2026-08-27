@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -31,6 +32,82 @@ class Customer extends Model
     protected $appends = ['total_invoices'];
 
     protected $dates = ['deleted_at'];
+
+    protected static function booted(): void
+    {
+        // Chuẩn hóa ngay cả những nơi tạo khách không đi qua controller (seeder,
+        // API cũ, import dữ liệu), để về sau mọi phép so sánh dùng cùng một dạng.
+        static::saving(function (self $customer) {
+            $phone = self::normalizePhone($customer->customer_phone);
+            if ($phone !== null) {
+                $customer->customer_phone = $phone;
+            }
+            $customer->customer_email = self::normalizeEmail($customer->customer_email);
+        });
+    }
+
+    /**
+     * Đưa số điện thoại Việt Nam về dạng nội địa 0xxxxxxxxx.
+     *
+     * Ví dụ: 0862850761, 84862850761, +84862850761 và 0084862850761
+     * đều trở thành 0862850761.
+     */
+    public static function normalizePhone(?string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', trim((string) $phone)) ?? '';
+
+        if ($digits === '') {
+            return null;
+        }
+
+        if (str_starts_with($digits, '0084')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (str_starts_with($digits, '84')) {
+            $local = substr($digits, 2);
+            // Chỉ đổi mã quốc gia khi phần số thuê bao có đúng 9 chữ số,
+            // tránh biến nhầm số quốc tế/đầu số không phải của Việt Nam.
+            if (str_starts_with($local, '0')) {
+                $local = substr($local, 1);
+            }
+            if (strlen($local) === 9) {
+                $digits = '0' . $local;
+            }
+        }
+
+        return $digits;
+    }
+
+    public static function normalizeEmail(?string $email): ?string
+    {
+        $email = mb_strtolower(trim((string) $email));
+
+        return $email === '' ? null : $email;
+    }
+
+    /**
+     * Tìm hồ sơ khác có cùng số điện thoại hoặc email sau khi chuẩn hóa.
+     * Dùng cho form sửa để không tạo thêm hồ sơ thứ hai do nhập khác định dạng.
+     */
+    public static function findDuplicate(?string $phone, ?string $email, ?int $ignoreId = null): ?self
+    {
+        $phone = self::normalizePhone($phone);
+        $email = self::normalizeEmail($email);
+
+        if ($phone === null && $email === null) {
+            return null;
+        }
+
+        return self::query()
+            ->when($ignoreId !== null, fn($query) => $query->whereKeyNot($ignoreId))
+            ->orderBy('id')
+            ->get(['id', 'customer_phone', 'customer_email'])
+            ->first(fn(self $customer) =>
+                ($phone !== null && self::normalizePhone($customer->customer_phone) === $phone)
+                || ($email !== null && self::normalizeEmail($customer->customer_email) === $email)
+            );
+    }
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
@@ -98,11 +175,69 @@ class Customer extends Model
      */
     public static function mergeByPhone(array $data): self
     {
-        $phone = preg_replace('/\D/', '', $data['customer_phone'] ?? '');
+        return self::mergeByIdentity($data);
+    }
 
-        $customer = self::where('customer_phone', $phone)->first() ?? new self();
-        $customer->fill($data);
-        $customer->customer_phone = $phone;
+    /**
+     * Tìm hoặc gộp khách theo số điện thoại/email đã chuẩn hóa.
+     * Nếu dữ liệu cũ đã có nhiều hồ sơ trùng, hóa đơn của các hồ sơ phụ được
+     * chuyển về hồ sơ đầu tiên rồi hồ sơ phụ được soft-delete.
+     */
+    public static function mergeByIdentity(array $data): self
+    {
+        $phone = self::normalizePhone($data['customer_phone'] ?? null);
+        $email = self::normalizeEmail($data['customer_email'] ?? null);
+
+        if ($phone === null) {
+            throw new \InvalidArgumentException('Số điện thoại khách hàng không hợp lệ.');
+        }
+
+        $matches = self::query()
+            ->orderBy('id')
+            ->get()
+            ->filter(fn(self $customer) =>
+                ($phone !== null && self::normalizePhone($customer->customer_phone) === $phone)
+                || ($email !== null && self::normalizeEmail($customer->customer_email) === $email)
+            )
+            ->values();
+
+        $customer = $matches->first() ?? new self();
+        $hasExistingCustomer = $matches->isNotEmpty();
+
+        foreach ($matches->skip(1) as $duplicate) {
+            foreach (['customer_name', 'customer_email', 'address', 'province', 'ward', 'note', 'avatar'] as $field) {
+                if (blank($customer->{$field}) && filled($duplicate->{$field})) {
+                    $customer->{$field} = $duplicate->{$field};
+                }
+            }
+
+            // Giữ nguyên toàn bộ lịch sử mua hàng sau khi gộp.
+            DB::table('invoices')
+                ->where('customer_id', $duplicate->id)
+                ->update(['customer_id' => $customer->id]);
+
+            $duplicate->delete();
+        }
+
+        // Dữ liệu mới từ lần đặt gần nhất được ưu tiên, nhưng không để một
+        // lần đặt thiếu email/địa chỉ xóa thông tin tốt hơn đang có.
+        foreach ($data as $field => $value) {
+            if ($hasExistingCustomer && $field === 'status') {
+                continue;
+            }
+            if ($field === 'customer_phone' || $field === 'customer_email') {
+                continue;
+            }
+            if ($value !== null && $value !== '') {
+                $customer->{$field} = $value;
+            }
+        }
+        if ($phone !== null) {
+            $customer->customer_phone = $phone;
+        }
+        if ($email !== null) {
+            $customer->customer_email = $email;
+        }
         $customer->status = $customer->status ?? 0;
         $customer->save();
 
