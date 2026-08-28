@@ -280,9 +280,10 @@ class PrintStorefrontController extends Controller
      * Giá được ĐÓNG BĂNG tại đây cùng id phiên bản bảng giá. Chủ shop sửa giá
      * sau đó thì đơn này vẫn giữ nguyên con số khách đã nhìn thấy lúc trả tiền.
      *
-     * Trạng thái vào thẳng `pending`: đơn in không được nhảy từ "đã thanh toán"
-     * sang "đang in" mà không có người xem file. Bắt lỗi ở đây rẻ hơn in hỏng
-     * 50 áo.
+     * Mẫu mới chỉ là `draft`: khách còn có thể bỏ giỏ hoặc không thanh toán, nên nó
+     * không được phép xuất hiện trong hàng đợi nhân viên duyệt. Lúc thanh toán PayOS
+     * đã xác nhận, luồng hoàn tất đơn mới gắn mẫu vào hoá đơn, chuyển nó sang
+     * `pending`.
      */
     public function storeDesign(Request $request)
     {
@@ -343,7 +344,7 @@ class PrintStorefrontController extends Controller
             'price_breakdown' => $quote['lines'],
             'unit_price' => $quote['unit_price'],
             'total_price' => $quote['total'],
-            'review_status' => PrintDesign::STATUS_PENDING,
+            'review_status' => PrintDesign::STATUS_DRAFT,
         ]);
 
         return response()->json([

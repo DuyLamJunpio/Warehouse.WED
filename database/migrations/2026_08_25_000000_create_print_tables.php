@@ -18,9 +18,9 @@ use Illuminate\Support\Facades\Schema;
  *   1. MILIMÉT LÀ SỰ THẬT. Toạ độ phần trăm chỉ để vẽ khung lên ảnh mockup cho
  *      người xem; thợ in đọc mm. Lưu theo pixel màn hình là đổi ảnh mockup một
  *      lần thì mọi đơn cũ in lệch.
- *   2. KHÔNG XOÁ CỨNG. Kỹ thuật, bậc khổ, phôi, sticker đều có `is_active`. Đơn
- *      cũ và quy tắc giá cũ đang trỏ vào chúng; xoá thật là hoá đơn tháng trước
- *      mất tên kỹ thuật.
+ *   2. ƯU TIÊN KHÔNG XOÁ CỨNG. Kỹ thuật, bậc khổ, phôi, sticker đều có
+ *      `is_active` để ngừng bán an toàn. Kỹ thuật đã có thiết kế khách thì
+ *      bắt buộc giữ lại; bản ghi khai nhầm chưa được dùng vẫn có thể xoá.
  */
 return new class extends Migration
 {

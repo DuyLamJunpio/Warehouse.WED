@@ -74,8 +74,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Module in áo theo yêu cầu.
      *
      * Bảng giá sửa vào bản nháp, chỉ có hiệu lực với khách sau khi bấm Xuất bản
-     * — xem App\Services\PrintPricing. Kỹ thuật và bậc khổ chỉ bật/tắt, không
-     * có route xoá: đơn cũ và quy tắc giá cũ đang trỏ vào chúng.
+     * — xem App\Services\PrintPricing. Kỹ thuật đã có thiết kế khách thì chỉ
+     * bật/tắt; bản ghi chưa được dùng vẫn có thể sửa hoặc xoá hẳn.
      */
     Route::prefix('print')->name('print.')->group(function () {
         Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
@@ -86,10 +86,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/techniques', [PrintTechniqueController::class, 'index'])->name('techniques');
         Route::post('/techniques', [PrintTechniqueController::class, 'store'])->name('techniques.store');
         Route::post('/techniques/{technique}', [PrintTechniqueController::class, 'update'])->name('techniques.update');
+        Route::delete('/techniques/{technique}', [PrintTechniqueController::class, 'destroy'])->name('techniques.destroy');
         Route::post('/techniques/{technique}/toggle', [PrintTechniqueController::class, 'toggle'])->name('techniques.toggle');
 
         Route::post('/tiers', [PrintTechniqueController::class, 'storeTier'])->name('tiers.store');
         Route::post('/tiers/{tier}', [PrintTechniqueController::class, 'updateTier'])->name('tiers.update');
+        Route::delete('/tiers/{tier}', [PrintTechniqueController::class, 'destroyTier'])->name('tiers.destroy');
         Route::post('/tiers/{tier}/toggle', [PrintTechniqueController::class, 'toggleTier'])->name('tiers.toggle');
 
         Route::get('/blanks', [PrintBlankController::class, 'index'])->name('blanks');
