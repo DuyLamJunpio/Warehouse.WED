@@ -73,7 +73,7 @@ jobs:
 
       - name: Install Google Drive client libraries
         run: |
-          python -m pip install --disable-pip-version-check --quiet google-api-python-client google-auth
+          python -m pip install --disable-pip-version-check --quiet google-api-python-client google-auth requests
 
       - name: Upload backup
         run: python scripts/upload-backup-to-google-drive.py "$BACKUP_FILE"

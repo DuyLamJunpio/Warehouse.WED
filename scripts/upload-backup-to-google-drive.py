@@ -8,6 +8,8 @@ import os
 import sys
 from pathlib import Path
 
+from google.auth.exceptions import RefreshError
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -25,6 +27,17 @@ def required_env(name: str) -> str:
     return value
 
 
+def google_secret(name: str) -> str:
+    value = required_env(name).strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1].strip()
+
+    normalized = value.replace("\\_", "_")
+    if normalized != value:
+        print(f"Normalized markdown-escaped underscores in {name}.", file=sys.stderr)
+    return normalized
+
+
 def resolve_credentials() -> Credentials:
     service_account_file = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_FILE")
     if service_account_file:
@@ -35,21 +48,31 @@ def resolve_credentials() -> Credentials:
 
     return Credentials(
         token=None,
-        refresh_token=required_env("GOOGLE_OAUTH_REFRESH_TOKEN"),
+        refresh_token=google_secret("GOOGLE_OAUTH_REFRESH_TOKEN"),
         token_uri="https://oauth2.googleapis.com/token",
-        client_id=required_env("GOOGLE_OAUTH_CLIENT_ID"),
-        client_secret=required_env("GOOGLE_OAUTH_CLIENT_SECRET"),
+        client_id=google_secret("GOOGLE_OAUTH_CLIENT_ID"),
+        client_secret=google_secret("GOOGLE_OAUTH_CLIENT_SECRET"),
         scopes=[DRIVE_SCOPE],
     )
 
 
 def upload(backup_file: Path) -> dict:
-    folder_id = required_env("GOOGLE_DRIVE_FOLDER_ID")
+    folder_id = google_secret("GOOGLE_DRIVE_FOLDER_ID")
 
     if not backup_file.is_file() or backup_file.stat().st_size == 0:
         raise RuntimeError(f"Backup file is missing or empty: {backup_file}")
 
     credentials = resolve_credentials()
+    try:
+        credentials.refresh(Request())
+    except RefreshError as error:
+        raise RuntimeError(
+            "OAuth refresh failed. Recheck GOOGLE_OAUTH_CLIENT_ID, "
+            "GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REFRESH_TOKEN. "
+            "They must come from the same OAuth client and must not include quotes, "
+            "extra spaces, new lines, or markdown escape backslashes."
+        ) from error
+
     drive = build("drive", "v3", credentials=credentials, cache_discovery=False)
 
     metadata = {
