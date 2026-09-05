@@ -50,6 +50,10 @@ class PrintStorefrontController extends Controller
             'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
             'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->values(),
+            'pricing_mode' => PrintPricing::MODE_SIMPLE,
+            'blank_technique_prices' => $pricing['blank_technique_prices'] ?? [],
+            // Giữ các trường cũ để phiên bản storefront cũ không lỗi khi đọc
+            // catalogue trong lúc được nâng cấp sang bảng giá gọn.
             'tiers' => $pricing['tiers'] ?? [],
             'cells' => $pricing['cells'] ?? [],
             'rules' => $pricing['rules'] ?? [],
@@ -108,7 +112,9 @@ class PrintStorefrontController extends Controller
             // Nối kho thì size lấy từ biến thể thật; không nối thì phôi chỉ có
             // một cỡ duy nhất, và nói thẳng ra thay vì để danh sách rỗng.
             'sizes' => $sizeMap ? array_keys($sizeMap) : ['Một cỡ'],
-            'size_surcharge' => $sizeMap,
+            // Size vẫn gửi sang để khách chọn áo, nhưng không còn làm thay đổi giá.
+            'size_surcharge' => array_fill_keys(array_keys($sizeMap), 0),
+            'size_pricing' => 'flat',
             'colors' => $blank->colors->where('is_active', true)->values()->map(fn ($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
@@ -183,6 +189,16 @@ class PrintStorefrontController extends Controller
      */
     private function quoteFor(PrintBlank $blank, array $data): array
     {
+        if (!$blank->techniques()->whereKey($data['technique_id'])->exists()) {
+            return [
+                'lines' => [],
+                'unit_price' => 0,
+                'total' => 0,
+                'errors' => ['Kỹ thuật này chưa được bật cho phôi đã chọn.'],
+                'warnings' => [],
+            ];
+        }
+
         $color = $blank->colors->firstWhere('name', $data['color_name']);
         $assets = PrintAsset::whereIn('id', collect($data['placements'])->pluck('asset_id')->filter())
             ->get()->keyBy('id');

@@ -33,6 +33,7 @@ class PrintTechniqueController extends Controller
     {
         $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get();
         $draft = PrintPricing::draft();
+        $simplePrices = PrintPricing::resolvedBlankTechniquePrices($draft);
 
         // Đếm tham chiếu treo: tắt một kỹ thuật thì nói ngay bao nhiêu phôi và
         // quy tắc đang dùng nó. Không chặn, chỉ nói.
@@ -41,10 +42,13 @@ class PrintTechniqueController extends Controller
             $usage[$technique->id] = [
                 'blanks' => PrintBlank::whereHas('techniques', fn ($q) => $q->where('print_techniques.id', $technique->id))->count(),
                 'designs' => PrintDesign::where('print_technique_id', $technique->id)->count(),
-                'rules' => collect($draft['rules'])
+                'rules' => collect($draft['rules'] ?? [])
                     ->filter(fn ($r) => in_array($technique->id, (array) ($r['when']['technique_ids'] ?? [])))
                     ->count(),
-                'priced' => collect($draft['cells'][$technique->id] ?? [])->filter(fn ($v) => $v !== null)->count(),
+                'priced' => collect($simplePrices)
+                    ->filter(fn ($row) => array_key_exists((string) $technique->id, (array) $row)
+                        && $row[(string) $technique->id] !== null)
+                    ->count(),
             ];
         }
 
@@ -230,6 +234,14 @@ class PrintTechniqueController extends Controller
                 fn ($row, $id) => (int) $id !== $removedId,
                 ARRAY_FILTER_USE_BOTH,
             );
+            foreach ((array) ($draft['blank_technique_prices'] ?? []) as $blankId => $prices) {
+                if (!is_array($prices)) {
+                    continue;
+                }
+
+                unset($prices[(string) $removedId], $prices[$removedId]);
+                $draft['blank_technique_prices'][$blankId] = $prices;
+            }
         } else {
             foreach ((array) ($draft['cells'] ?? []) as $techniqueId => $row) {
                 if (!is_array($row)) {

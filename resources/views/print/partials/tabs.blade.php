@@ -11,7 +11,7 @@
 
     $printTabs = [
         ['route' => 'print.pricing', 'label' => 'Bảng giá', 'match' => 'print.pricing*'],
-        ['route' => 'print.techniques', 'label' => 'Kỹ thuật & bậc khổ', 'match' => 'print.techniques*'],
+        ['route' => 'print.techniques', 'label' => 'Kỹ thuật in', 'match' => 'print.techniques*'],
         ['route' => 'print.blanks', 'label' => 'Phôi in', 'match' => 'print.blanks*'],
         ['route' => 'print.library', 'label' => 'Thư viện sticker', 'match' => 'print.library*'],
         ['route' => 'print.designs', 'label' => 'Duyệt thiết kế', 'match' => 'print.designs*', 'badge' => $pendingDesigns],

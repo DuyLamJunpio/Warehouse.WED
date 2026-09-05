@@ -30,7 +30,8 @@ class PrintPricingController extends Controller
             'draft' => PrintPricing::draft(),
             'techniques' => PrintTechnique::orderBy('sort_order')->orderBy('id')->get(),
             'tiers' => PrintSizeTier::orderBy('sort_order')->orderBy('id')->get(),
-            'blanks' => PrintBlank::orderBy('sort_order')->get(),
+            'blanks' => PrintBlank::with('techniques')->orderBy('sort_order')->orderBy('id')->get(),
+            'simplePrices' => PrintPricing::resolvedBlankTechniquePrices(),
             'positions' => PrintPositions::payload(),
             'versions' => PrintPricingVersion::with('publisher')->orderByDesc('id')->limit(10)->get(),
             'currentVersion' => PrintPricingVersion::latestPublished(),
@@ -48,62 +49,46 @@ class PrintPricingController extends Controller
     public function saveDraft(Request $request)
     {
         $data = $request->validate([
-            'cells' => 'present|array',
-            'rules' => 'present|array',
-            'rules.*.id' => 'required|string|max:60',
-            'rules.*.label' => 'required|string|max:120',
-            'rules.*.enabled' => 'nullable|boolean',
-            'rules.*.apply.kind' => 'required|in:add,multiply,percent',
-            'rules.*.apply.amount' => 'required|numeric|min:0',
-            // `zone` là tên cũ của `position`; nhận vào rồi quy về tên mới ngay
-            // bên dưới, để một tab trình duyệt mở từ trước không làm hỏng lần lưu.
-            'rules.*.apply.per' => 'required|in:order,shirt,position,placement,inkColor,zone',
-            'qty_tiers' => 'present|array',
-            'qty_tiers.*.from' => 'required|integer|min:1',
-            'qty_tiers.*.pct' => 'required|numeric|min:0|max:100',
-            'rounding' => 'required|integer|min:0',
-            'min_charge' => 'required|integer|min:0',
+            'mode' => 'sometimes|in:simple',
+            'blank_technique_prices' => 'present|array',
+            'blank_technique_prices.*' => 'array',
+            'blank_technique_prices.*.*' => 'nullable|integer|min:0|max:100000000',
+            // Các trường cũ vẫn nhận được để một tab bảng giá cũ không làm
+            // hỏng lần lưu sau khi cập nhật giao diện.
+            'cells' => 'sometimes|array',
         ]);
 
-        $cells = [];
-        foreach ($data['cells'] as $techniqueId => $row) {
-            foreach ((array) $row as $tierId => $price) {
-                if ($price === null || $price === '') {
+        $validPairs = [];
+        foreach (PrintBlank::with('techniques')->get() as $blank) {
+            $validPairs[(string) $blank->id] = $blank->techniques->pluck('id')->map(fn ($id) => (string) $id)->all();
+        }
+
+        $simplePrices = [];
+        foreach ((array) $data['blank_technique_prices'] as $blankId => $row) {
+            $blankKey = (string) $blankId;
+            if (!array_key_exists($blankKey, $validPairs)) {
+                continue;
+            }
+
+            foreach ((array) $row as $techniqueId => $price) {
+                $techniqueKey = (string) $techniqueId;
+                if (!in_array($techniqueKey, $validPairs[$blankKey], true)) {
                     continue;
                 }
-                $cells[(int) $techniqueId][(int) $tierId] = max(0, (int) $price);
+
+                // null là chủ động bỏ giá, khác với việc không có cặp này trong
+                // form. Nó ngăn giá cũ theo kích thước tự quay lại.
+                $simplePrices[$blankKey][$techniqueKey] = $price === null
+                    ? null
+                    : max(0, (int) $price);
             }
         }
 
-        $rules = array_map(function (array $rule) {
-            return [
-                'id' => $rule['id'],
-                'label' => $rule['label'],
-                'enabled' => (bool) ($rule['enabled'] ?? false),
-                // `when` đi thẳng qua: ngữ pháp điều kiện do seeder và mã nguồn
-                // dựng, giao diện chỉ bật/tắt và đổi số tiền. Cho form ghi đè
-                // phần này là mở lại đúng cái bẫy trình soạn công thức.
-                'when' => (array) ($rule['when'] ?? []),
-                'apply' => [
-                    'kind' => $rule['apply']['kind'],
-                    'amount' => (float) $rule['apply']['amount'],
-                    'per' => PrintPricing::normalisePer($rule['apply']['per']),
-                ],
-            ];
-        }, $data['rules']);
-
-        $qtyTiers = collect($data['qty_tiers'])
-            ->map(fn ($q) => ['from' => (int) $q['from'], 'pct' => (float) $q['pct']])
-            ->sortBy('from')
-            ->values()
-            ->all();
-
+        $draft = PrintPricing::draft();
         PrintPricing::putDraft([
-            'cells' => $cells,
-            'rules' => $rules,
-            'qty_tiers' => $qtyTiers,
-            'rounding' => (int) $data['rounding'],
-            'min_charge' => (int) $data['min_charge'],
+            ...$draft,
+            'mode' => PrintPricing::MODE_SIMPLE,
+            'blank_technique_prices' => $simplePrices,
         ]);
 
         return response()->json([
@@ -136,30 +121,18 @@ class PrintPricingController extends Controller
         $data = $request->validate([
             'blank_id' => 'required|exists:print_blanks,id',
             'technique_id' => 'required|exists:print_techniques,id',
-            'position_key' => 'required|string|in:' . implode(',', PrintPositions::keys()),
-            'tier_id' => 'required|exists:print_size_tiers,id',
-            'tone' => 'required|in:light,dark',
             'qty' => 'required|integer|min:1|max:10000',
-            'ink_colors' => 'nullable|integer|min:1',
         ]);
 
         $blank = PrintBlank::with('product.variants')->findOrFail($data['blank_id']);
-        $tier = PrintSizeTier::findOrFail($data['tier_id']);
-
-        $positionKey = $data['position_key'];
-        $position = PrintPositions::get($positionKey);
-
-        if (!in_array($positionKey, $blank->positionKeys(), true)) {
+        if (!$blank->techniques()->whereKey($data['technique_id'])->exists()) {
             return response()->json([
-                'error' => 'Phôi này đang tắt vị trí "' . PrintPositions::label($positionKey) . '".',
+                'error' => 'Kỹ thuật này chưa được bật cho phôi đã chọn.',
             ], 422);
         }
 
-        // Dựng một hình vừa khít bậc khổ đã chọn — đúng thứ cần để đọc ra giá
-        // của ô đó trong ma trận, không hơn. Cắt theo trần của vị trí, nếu không
-        // thì thử giá một khổ mà khách không đặt nổi ở chỗ đó.
-        $width = min($tier->width_mm, $position['max_width_mm']);
-        $height = min($tier->height_mm, $position['max_height_mm']);
+        $positionKey = $blank->positionKeys()[0] ?? PrintPositions::FRONT;
+        $position = PrintPositions::get($positionKey);
 
         $quote = PrintPricing::quote([
             'blank' => [
@@ -169,10 +142,10 @@ class PrintPricingController extends Controller
                 'moq' => $blank->moq,
                 'product_id' => $blank->product_id,
             ],
-            'size' => 'L',
+            'size' => 'Một cỡ',
             'size_surcharge' => 0,
-            'color_name' => $data['tone'] === 'dark' ? 'Màu tối' : 'Màu sáng',
-            'tone' => $data['tone'],
+            'color_name' => '',
+            'tone' => 'light',
             'technique_id' => (int) $data['technique_id'],
             'ink_colors' => (int) ($data['ink_colors'] ?? 1),
             'qty' => (int) $data['qty'],
@@ -180,7 +153,8 @@ class PrintPricingController extends Controller
             'placements' => [[
                 'position' => $positionKey,
                 'x_mm' => 0, 'y_mm' => 0,
-                'w_mm' => $width, 'h_mm' => $height,
+                'w_mm' => min(100, $position['max_width_mm']),
+                'h_mm' => min(100, $position['max_height_mm']),
                 'rotation' => 0,
             ]],
         ], PrintPricing::snapshot());

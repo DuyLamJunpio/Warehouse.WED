@@ -12,12 +12,12 @@
             </ol>
         </nav>
         <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Kỹ thuật in &amp; bậc khổ
+            Kỹ thuật in
         </h1>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
             Ràng buộc của kỹ thuật là <b>dữ liệu, không phải mã</b>: số màu tối đa, có nhận ảnh chụp không,
             DPI tối thiểu. Studio bên web đọc đúng mấy trường này để chặn khách, nên tạo thêm một kỹ thuật lạ
-            không cần ai sửa code.
+            không cần ai sửa code. Giá được nhập đơn giản theo từng phôi ở tab <b>Bảng giá</b>.
         </p>
     </div>
 
@@ -57,7 +57,7 @@
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">chưa có giá</span>
                             @else
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                                    {{ $use['priced'] }}/{{ $tiers->count() }} bậc khổ
+                                    {{ $use['priced'] }} phôi đã có giá
                                 </span>
                             @endif
                             <div class="flex items-center gap-2 ml-auto shrink-0">
@@ -102,7 +102,7 @@
 
                         {{-- Tham chiếu treo: nói rõ tắt cái này thì ảnh hưởng gì --}}
                         <p class="mt-3 text-[11.5px] text-slate-500 dark:text-slate-400">
-                            Đang được dùng bởi <b>{{ $use['blanks'] }} phôi</b>, <b>{{ $use['designs'] }} thiết kế</b> và <b>{{ $use['rules'] }} quy tắc giá</b>.
+                            Đang được dùng bởi <b>{{ $use['blanks'] }} phôi</b> và <b>{{ $use['designs'] }} thiết kế</b>.
                             @unless ($technique->is_active)
                                 <span class="text-amber-600 dark:text-amber-400">Đã tắt — ẩn khỏi web, dữ liệu cũ giữ nguyên.</span>
                             @endunless
@@ -204,7 +204,7 @@
 
         {{-- Tạo / sửa kỹ thuật --}}
         <aside class="xl:sticky xl:top-6">
-            <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+            <section class="hidden bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50">
                     <h2 id="techniqueFormTitle" class="text-sm font-bold text-slate-900 dark:text-white">Thêm kỹ thuật</h2>
                 </div>
@@ -273,8 +273,8 @@
                         </button>
                     </div>
                     <p class="text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 border-l-2 border-indigo-500 pl-3">
-                        Kỹ thuật mới sinh ra một <b>cột rỗng</b> trong ma trận giá. Chưa điền giá thì khách
-                        chưa chọn được — thẻ kỹ thuật sẽ hiện dấu "chưa có giá".
+                         Kỹ thuật mới được tạo ở đây. Sau đó mở tab <b>Bảng giá</b>, chọn phôi tương ứng
+                         và nhập phí in cố định cho mỗi áo.
                     </p>
                 </div>
             </section>
