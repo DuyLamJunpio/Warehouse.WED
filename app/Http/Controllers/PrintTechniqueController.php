@@ -2,27 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PrintBlank;
+use App\Models\PrintTechnique;
 use App\Models\PrintAsset;
 use App\Models\PrintDesign;
-use App\Models\PrintSizeTier;
-use App\Models\PrintTechnique;
 use App\Services\PrintPricing;
 use App\Services\StorefrontNotifier;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
-/**
- * Kỹ thuật in và bậc khổ — hai thứ chủ shop tự tạo được.
- *
- * Ràng buộc của kỹ thuật là DỮ LIỆU: số màu tối đa, có nhận ảnh chụp không, DPI
- * tối thiểu. Studio bên web đọc đúng mấy trường đó để chặn khách, nên tạo thêm
- * một kỹ thuật lạ không cần ai sửa code.
- *
- * Có thể tắt để ẩn khỏi web, hoặc xoá hẳn bản ghi chưa được thiết kế khách sử
- * dụng. Đơn cũ vẫn an toàn vì bản giá đã xuất bản là snapshot bất biến.
- */
+/** Quản lý tên và giá cố định của kỹ thuật; tự lưu phiên bản giá khi thay đổi. */
 class PrintTechniqueController extends Controller
 {
     public function __construct(private StorefrontNotifier $notifier)
@@ -32,31 +21,7 @@ class PrintTechniqueController extends Controller
     public function index()
     {
         $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get();
-        $draft = PrintPricing::draft();
-        $simplePrices = PrintPricing::resolvedBlankTechniquePrices($draft);
-
-        // Đếm tham chiếu treo: tắt một kỹ thuật thì nói ngay bao nhiêu phôi và
-        // quy tắc đang dùng nó. Không chặn, chỉ nói.
-        $usage = [];
-        foreach ($techniques as $technique) {
-            $usage[$technique->id] = [
-                'blanks' => PrintBlank::whereHas('techniques', fn ($q) => $q->where('print_techniques.id', $technique->id))->count(),
-                'designs' => PrintDesign::where('print_technique_id', $technique->id)->count(),
-                'rules' => collect($draft['rules'] ?? [])
-                    ->filter(fn ($r) => in_array($technique->id, (array) ($r['when']['technique_ids'] ?? [])))
-                    ->count(),
-                'priced' => collect($simplePrices)
-                    ->filter(fn ($row) => array_key_exists((string) $technique->id, (array) $row)
-                        && $row[(string) $technique->id] !== null)
-                    ->count(),
-            ];
-        }
-
-        return view('print.techniques', [
-            'techniques' => $techniques,
-            'tiers' => PrintSizeTier::orderBy('sort_order')->orderBy('id')->get(),
-            'usage' => $usage,
-        ]);
+        return view('print.techniques', compact('techniques'));
     }
 
     public function store(Request $request)
@@ -70,18 +35,26 @@ class PrintTechniqueController extends Controller
         $data['sort_order'] = (int) PrintTechnique::max('sort_order') + 1;
         $data['is_active'] = true;
 
-        $technique = PrintTechnique::create($data);
+        $technique = DB::transaction(function () use ($data, $request) {
+            $technique = PrintTechnique::create($data);
+            PrintPricing::publish('Lưu kỹ thuật in', $request->user()?->id);
+            return $technique;
+        });
         $this->notifier->markDirty();
 
         return response()->json([
-            'success' => 'Đã tạo "' . $technique->name . '". Điền giá cho nó trong ma trận thì khách mới chọn được.',
+            'success' => 'Đã tạo "' . $technique->name . '". Giá được áp dụng ngay.',
             'id' => $technique->id,
         ]);
     }
 
     public function update(Request $request, PrintTechnique $technique)
     {
-        $technique->update($this->validated($request));
+        $data = $this->validated($request);
+        DB::transaction(function () use ($technique, $data, $request) {
+            $technique->update($data);
+            PrintPricing::publish('Lưu kỹ thuật in', $request->user()?->id);
+        });
         $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã lưu "' . $technique->name . '".']);
@@ -112,6 +85,7 @@ class PrintTechniqueController extends Controller
             $this->removeTechniqueFromAssets($technique->id);
             $this->removeFromPricingDraft('technique_ids', $technique->id);
             $technique->delete();
+            PrintPricing::publish('Xóa kỹ thuật in');
         });
 
         $this->notifier->markDirty();
@@ -119,10 +93,13 @@ class PrintTechniqueController extends Controller
         return response()->json(['success' => 'Đã xoá kỹ thuật "' . $name . '".']);
     }
 
-    /** Bật/tắt để ẩn kỹ thuật khỏi web mà vẫn giữ nguyên dữ liệu cũ. */
+    /** Bật/tắt. Đây là thứ thay cho nút xoá. */
     public function toggle(Request $request, PrintTechnique $technique)
     {
-        $technique->update(['is_active' => $request->boolean('is_active')]);
+        DB::transaction(function () use ($technique, $request) {
+            $technique->update(['is_active' => $request->boolean('is_active')]);
+            PrintPricing::publish('Bật/tắt kỹ thuật in', $request->user()?->id);
+        });
         $this->notifier->markDirty();
 
         return response()->json([
@@ -137,85 +114,7 @@ class PrintTechniqueController extends Controller
         return $request->validate([
             'name' => 'required|string|max:120',
             'description' => 'nullable|string|max:500',
-            // Chuỗi rỗng = không giới hạn màu, khác hẳn với giới hạn 0 màu.
-            'max_colors' => 'nullable|integer|min:1|max:99',
-            'accepts_photo' => 'nullable|boolean',
-            'accepts_gradient' => 'nullable|boolean',
-            'needs_underbase' => 'nullable|boolean',
-            'min_dpi' => 'required|integer|min:30|max:1200',
-            'file_types' => 'required|string|max:255',
-            'lead_days' => 'required|integer|min:0|max:365',
-            'moq' => 'required|integer|min:1|max:9999',
-        ]);
-    }
-
-    // ── Bậc khổ in ───────────────────────────────────────────────────
-
-    public function storeTier(Request $request)
-    {
-        $data = $this->validatedTier($request);
-        $data['sort_order'] = (int) PrintSizeTier::max('sort_order') + 1;
-        $data['is_active'] = true;
-
-        $tier = PrintSizeTier::create($data);
-        $this->notifier->markDirty();
-
-        return response()->json(['success' => 'Đã thêm bậc khổ ' . $tier->name . '.', 'id' => $tier->id]);
-    }
-
-    /**
-     * Sửa một bậc khổ.
-     *
-     * Sửa kích thước KHÔNG đụng tới đơn cũ: mỗi thiết kế đã chốt mang theo ảnh
-     * chụp bảng giá của chính nó, trong đó có kích thước bậc khổ tại thời điểm
-     * đặt. Thay đổi ở đây chỉ có hiệu lực từ lần xuất bản kế tiếp.
-     */
-    public function updateTier(Request $request, PrintSizeTier $tier)
-    {
-        $tier->update($this->validatedTier($request));
-        $this->notifier->markDirty();
-
-        return response()->json(['success' => 'Đã lưu bậc khổ ' . $tier->name . '.']);
-    }
-
-    /**
-     * Xoá hẳn một bậc khổ.
-     *
-     * Bản giá đã xuất bản chụp riêng kích thước bậc khổ nên không bị ảnh hưởng.
-     * Chỉ bản nháp cần bỏ ô giá và vô hiệu hoá quy tắc còn trỏ vào bậc này.
-     */
-    public function destroyTier(PrintSizeTier $tier)
-    {
-        $name = $tier->name;
-
-        DB::transaction(function () use ($tier) {
-            $this->removeFromPricingDraft('tier_ids', $tier->id);
-            $tier->delete();
-        });
-
-        $this->notifier->markDirty();
-
-        return response()->json(['success' => 'Đã xoá bậc khổ ' . $name . '.']);
-    }
-
-    public function toggleTier(Request $request, PrintSizeTier $tier)
-    {
-        $tier->update(['is_active' => $request->boolean('is_active')]);
-        $this->notifier->markDirty();
-
-        return response()->json([
-            'success' => $tier->is_active
-                ? 'Đã bật bậc khổ ' . $tier->name . '.'
-                : 'Đã tắt bậc khổ ' . $tier->name . ' — đơn cũ giữ nguyên.',
-        ]);
-    }
-
-    private function validatedTier(Request $request): array
-    {
-        return $request->validate([
-            'name' => 'required|string|max:40',
-            'width_mm' => 'required|integer|min:1|max:2000',
-            'height_mm' => 'required|integer|min:1|max:2000',
+            'price' => 'required|integer|min:0|max:1000000000',
         ]);
     }
 

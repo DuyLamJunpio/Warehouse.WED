@@ -47,13 +47,10 @@ class PrintStorefrontController extends Controller
              * bên đó là sớm muộn hai bên lệch nhau, và lệch trần mm nghĩa là
              * studio cho khách kéo một khổ mà máy chủ từ chối ngay sau đó.
              */
+            'pricing_mode' => $pricing['mode'] ?? 'legacy',
             'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
-            'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->values(),
-            'pricing_mode' => PrintPricing::MODE_SIMPLE,
-            'blank_technique_prices' => $pricing['blank_technique_prices'] ?? [],
-            // Giữ các trường cũ để phiên bản storefront cũ không lỗi khi đọc
-            // catalogue trong lúc được nâng cấp sang bảng giá gọn.
+            'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->filter(fn ($t) => ($t['price'] ?? null) !== null)->values(),
             'tiers' => $pricing['tiers'] ?? [],
             'cells' => $pricing['cells'] ?? [],
             'rules' => $pricing['rules'] ?? [],
@@ -230,7 +227,7 @@ class PrintStorefrontController extends Controller
                 'product_id' => $blank->product_id,
             ],
             'size' => $data['size'],
-            'size_surcharge' => (int) ($sizeMap[$data['size']] ?? 0),
+            'size_surcharge' => 0,
             'color_name' => $data['color_name'],
             'tone' => $color?->tone ?? 'light',
             'technique_id' => (int) $data['technique_id'],

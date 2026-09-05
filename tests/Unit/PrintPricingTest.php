@@ -84,6 +84,62 @@ class PrintPricingTest extends TestCase
         return ['position' => $position, 'x_mm' => $x, 'y_mm' => $y, 'w_mm' => $w, 'h_mm' => $h, 'rotation' => $rot];
     }
 
+    private function flatPricing(?int $price = 30000): array
+    {
+        $pricing = $this->pricing();
+        $pricing['mode'] = 'flat';
+        $pricing['techniques'][0]['price'] = $price;
+        $pricing['techniques'][0]['is_active'] = true;
+        $pricing['tiers'] = [];
+        $pricing['cells'] = [];
+        $pricing['rules'] = [];
+        $pricing['qty_tiers'] = [];
+        $pricing['rounding'] = 0;
+        return $pricing;
+    }
+
+    public function test_flat_price_does_not_depend_on_size_or_number_of_images(): void
+    {
+        foreach ([
+            [$this->place('front', 0, 0, 20, 20)],
+            [$this->place('front', 0, 0, 300, 400)],
+            [$this->place('front', 0, 0, 20, 20), $this->place('front', 40, 40, 20, 20)],
+        ] as $placements) {
+            $quote = PrintPricing::quote($this->design($placements), $this->flatPricing(30123));
+            $this->assertSame(150123, $quote['unit_price']);
+            $this->assertEmpty($quote['errors']);
+        }
+    }
+
+    public function test_flat_price_charges_each_position_and_multiplies_quantity(): void
+    {
+        $quote = PrintPricing::quote($this->design([
+            $this->place('front', 0, 0, 100, 100),
+            $this->place('back', 0, 0, 100, 100),
+        ], ['qty' => 10, 'tone' => 'dark']), $this->flatPricing());
+        $this->assertSame(180000, $quote['unit_price']);
+        $this->assertSame(1800000, $quote['total']);
+        $this->assertEmpty($quote['errors']);
+    }
+
+    public function test_flat_price_distinguishes_missing_price_from_zero(): void
+    {
+        $design = $this->design([$this->place('front', 0, 0, 100, 100)]);
+        $this->assertNotEmpty(PrintPricing::quote($design, $this->flatPricing(null))['errors']);
+        $free = PrintPricing::quote($design, $this->flatPricing(0));
+        $this->assertEmpty($free['errors']);
+        $this->assertSame(120000, $free['unit_price']);
+    }
+
+    public function test_flat_price_still_checks_physical_limits_and_disabled_techniques(): void
+    {
+        $design = $this->design([$this->place('front', 0, 0, 400, 500)]);
+        $this->assertNotEmpty(PrintPricing::quote($design, $this->flatPricing())['errors']);
+        $pricing = $this->flatPricing();
+        $pricing['techniques'][0]['is_active'] = false;
+        $this->assertNotEmpty(PrintPricing::quote($this->design([]), $pricing)['errors']);
+    }
+
     public function test_khong_co_hinh_thi_chi_tinh_tien_phoi(): void
     {
         $result = PrintPricing::quote($this->design([]), $this->pricing());

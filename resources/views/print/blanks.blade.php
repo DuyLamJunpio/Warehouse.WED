@@ -13,12 +13,7 @@
         </nav>
         <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Phôi in</h1>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-            Nối vào sản phẩm trong kho là <b>tuỳ chọn</b> — có nối thì thừa hưởng giá và size từ biến thể,
-            không nối thì phôi đứng riêng với giá khai tay. Vị trí in <b>không phải khai</b>: bốn chỗ
-            mặt trước, mặt sau, vai trái, vai phải luôn có sẵn, ở đây chỉ tick chỗ nào phôi này bán được.
-            Phần <b>mặt trước / mặt sau</b> vẫn dùng bình thường dù bảng giá đã được đơn giản hoá.
-            <b>Danh mục</b> dùng chung với hàng bán sẵn và là thứ dựng nên hàng nút lọc bên trang In áo —
-            phôi để trống vẫn bày bán, chỉ là khách không lọc tới nó được.
+            Tạo phôi, nhập giá, chọn kỹ thuật in và thêm màu áo. Mở phôi để tải ảnh áo lên.
         </p>
     </div>
 

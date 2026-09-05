@@ -11,7 +11,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PrintAssetController;
 use App\Http\Controllers\PrintBlankController;
 use App\Http\Controllers\PrintDesignController;
-use App\Http\Controllers\PrintPricingController;
 use App\Http\Controllers\PrintTechniqueController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -73,15 +72,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /*
      * Module in áo theo yêu cầu.
      *
-     * Bảng giá sửa vào bản nháp, chỉ có hiệu lực với khách sau khi bấm Xuất bản
-     * — xem App\Services\PrintPricing. Kỹ thuật đã có thiết kế khách thì chỉ
-     * bật/tắt; bản ghi chưa được dùng vẫn có thể sửa hoặc xoá hẳn.
+     * Giá nằm trực tiếp trên phôi và kỹ thuật; lưu kỹ thuật tự ghi phiên bản giá.
      */
     Route::prefix('print')->name('print.')->group(function () {
-        Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
-        Route::post('/pricing/draft', [PrintPricingController::class, 'saveDraft'])->name('pricing.draft');
-        Route::post('/pricing/publish', [PrintPricingController::class, 'publish'])->name('pricing.publish');
-        Route::post('/pricing/simulate', [PrintPricingController::class, 'simulate'])->name('pricing.simulate');
+        Route::redirect('/pricing', '/print/techniques')->name('pricing');
 
         Route::get('/techniques', [PrintTechniqueController::class, 'index'])->name('techniques');
         Route::post('/techniques', [PrintTechniqueController::class, 'store'])->name('techniques.store');
@@ -89,10 +83,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/techniques/{technique}', [PrintTechniqueController::class, 'destroy'])->name('techniques.destroy');
         Route::post('/techniques/{technique}/toggle', [PrintTechniqueController::class, 'toggle'])->name('techniques.toggle');
 
-        Route::post('/tiers', [PrintTechniqueController::class, 'storeTier'])->name('tiers.store');
-        Route::post('/tiers/{tier}', [PrintTechniqueController::class, 'updateTier'])->name('tiers.update');
-        Route::delete('/tiers/{tier}', [PrintTechniqueController::class, 'destroyTier'])->name('tiers.destroy');
-        Route::post('/tiers/{tier}/toggle', [PrintTechniqueController::class, 'toggleTier'])->name('tiers.toggle');
 
         Route::get('/blanks', [PrintBlankController::class, 'index'])->name('blanks');
         Route::post('/blanks', [PrintBlankController::class, 'store'])->name('blanks.store');

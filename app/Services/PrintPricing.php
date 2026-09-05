@@ -9,42 +9,12 @@ use App\Models\PrintTechnique;
 use App\Models\Setting;
 
 /**
- * Bộ máy tính tiền in — nguồn sự thật duy nhất về giá.
- *
- * Web bán hàng có một bản dịch của lớp này bằng TypeScript để hiện giá xem
- * trước trong studio, nhưng con số tính tiền thật luôn dựng lại ở đây. Đúng
- * khuôn mà phí giao hàng đang chạy (App\Models\Setting::shippingFeeFor).
- *
- * ─── Vì sao không phải là một mã hàng "dịch vụ in" ───────────────────
- *
- * Khi khách được tự chọn chỗ in, tiền in phụ thuộc cùng lúc vào kỹ thuật, khổ
- * in, vị trí nào trên áo, tông màu áo, số màu mực và số lượng. Không biến thể nào
- * phủ được tổ hợp đó. Nên đây là một hàm, và phần chủ shop chỉnh được là DỮ
- * LIỆU đầu vào của hàm chứ không phải bản thân hàm.
- *
- * ─── Vì sao không phải là trình soạn công thức ───────────────────────
- *
- * Cho chủ shop gõ công thức nghe thì linh hoạt, thực tế là một ngôn ngữ lập
- * trình mini: không ai dám đụng vào, và hai bản cài đặt (PHP ở đây, TypeScript
- * bên web) sẽ diễn giải khác nhau. Thay vào đó là một NGỮ PHÁP ĐÓNG — tập điều
- * kiện hữu hạn, tập tác động hữu hạn — mỗi quy tắc là một dòng chọn từ ô thả
- * xuống. Vì nó là dữ liệu chứ không phải mã, hai bên tính ra cùng một số.
- *
- * ─── Sáu bước, thứ tự CỐ ĐỊNH ────────────────────────────────────────
- *
- *   1. giá phôi (+ phụ thu size)
- *   2. giá in cơ bản — ma trận kỹ thuật × bậc khổ, tính cho từng vị trí
- *   3. phụ phí CỘNG
- *   4. hệ số NHÂN
- *   5. chiết khấu số lượng
- *   6. sàn giá rồi làm tròn
- *
- * Thứ tự này không cho cấu hình. Mở ra là hai bản cài đặt tính lệch nhau, và
- * lệch một đồng thì khách trả một số còn hoá đơn ghi số khác.
+ * Giá hiện tại: giá phôi + giá kỹ thuật cho mỗi vị trí có in.
+ * Giữ bộ tính theo khổ để đọc lại các bảng giá lịch sử.
  */
 class PrintPricing
 {
-    /** Chế độ giá gọn: một mức phí in cho mỗi cặp phôi + kỹ thuật. */
+    /** Historical per-blank pricing snapshots from master. */
     public const MODE_SIMPLE = 'simple';
 
     /** Khoá của bản nháp đang sửa trong bảng settings. */
@@ -102,9 +72,6 @@ class PrintPricing
     public static function draftDefaults(): array
     {
         return [
-            'mode' => self::MODE_SIMPLE,
-            'blank_technique_prices' => [],
-            // Các khoá cũ giữ lại để những bản giá đã xuất bản vẫn đọc được.
             'cells' => [],
             'rules' => [],
             'qty_tiers' => [],
@@ -128,13 +95,7 @@ class PrintPricing
         );
     }
 
-    /**
-     * Đóng băng bản nháp thành một phiên bản mới.
-     *
-     * Chụp TRỌN kỹ thuật và bậc khổ vào snapshot chứ không chỉ giữ id: chủ shop
-     * sửa "A4" thành 210×310mm sau khi xuất bản mà snapshot chỉ có id thì đơn cũ
-     * tính lại ra con số khác — đúng thứ mà việc đánh phiên bản sinh ra để chặn.
-     */
+    /** Tự lưu ảnh chụp giá để đơn đã chốt giữ nguyên giá cũ. */
     public static function publish(?string $note = null, ?int $userId = null): PrintPricingVersion
     {
         return PrintPricingVersion::create([
@@ -145,51 +106,34 @@ class PrintPricing
         ]);
     }
 
-    /** Bản nháp + kỹ thuật + bậc khổ hiện tại, gộp thành một khối tự đủ. */
+    /** Giá cố định đang cấu hình, kèm dữ liệu tương thích studio cũ. */
     public static function snapshot(): array
     {
-        $draft = self::draft();
+        $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get()
+            ->map(fn (PrintTechnique $t) => $t->toPricingArray())->all();
 
-        $draft['mode'] = self::MODE_SIMPLE;
-        $draft['blank_technique_prices'] = self::resolvedBlankTechniquePrices($draft);
+        // Một ô giá cố định để studio cũ vẫn xem trước đúng giá theo vị trí.
+        // Đây là dữ liệu tương thích API, không phải bậc khổ do shop cấu hình.
+        $cells = [];
+        foreach ($techniques as $technique) {
+            $cells[$technique['id']] = [1 => $technique['price']];
+        }
 
-        $draft['techniques'] = PrintTechnique::query()
-            ->orderBy('sort_order')->orderBy('id')
-            ->get()
-            ->map(fn (PrintTechnique $t) => $t->toPricingArray())
-            ->all();
-
-        $draft['tiers'] = PrintSizeTier::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')->orderBy('id')
-            ->get()
-            ->map(fn (PrintSizeTier $t) => $t->toPricingArray())
-            ->all();
-
-        return $draft;
+        return [
+            'mode' => 'flat',
+            'techniques' => $techniques,
+            'tiers' => [['id' => 1, 'name' => 'Đồng giá', 'width_mm' => 2000, 'height_mm' => 2000]],
+            'cells' => $cells,
+            'rules' => [], 'qty_tiers' => [], 'rounding' => 0, 'min_charge' => 0,
+        ];
     }
 
-    /**
-     * Bảng giá đang có hiệu lực.
-     *
-     * Chưa xuất bản lần nào thì lùi về ảnh chụp của bản nháp: shop mới cài đặt
-     * vẫn báo giá được ngay thay vì trả về 0 đồng cho mọi đơn — một cửa hàng bán
-     * đồ miễn phí là hỏng nặng hơn nhiều so với một bảng giá chưa đóng dấu.
-     */
+    /** Chỉ áp dụng giá cố định cho đơn mới; bảng giá lịch sử giữ nguyên. */
     public static function current(): array
     {
         $version = PrintPricingVersion::latestPublished();
-        $pricing = $version ? (array) $version->data : self::snapshot();
 
-        // Bản giá cũ dùng ma trận theo khổ. Khi đọc lại, chuyển nó sang một mức
-        // giá cố định cho từng phôi + kỹ thuật để lần cập nhật này không làm mất
-        // khả năng báo giá cho dữ liệu đã có.
-        if (($pricing['mode'] ?? null) !== self::MODE_SIMPLE) {
-            $pricing['mode'] = self::MODE_SIMPLE;
-            $pricing['blank_technique_prices'] = self::resolvedBlankTechniquePrices($pricing);
-        }
-
-        return $pricing;
+        return ($version?->data['mode'] ?? null) === 'flat' ? $version->data : self::snapshot();
     }
 
     /**
@@ -279,7 +223,9 @@ class PrintPricing
 
     public static function currentVersionId(): ?int
     {
-        return PrintPricingVersion::latestPublished()?->id;
+        $version = PrintPricingVersion::latestPublished();
+
+        return ($version?->data['mode'] ?? null) === 'flat' ? $version->id : null;
     }
 
     // ── Hình học ─────────────────────────────────────────────────────
@@ -435,7 +381,7 @@ class PrintPricing
         $techniqueId = $design['technique_id'] ?? null;
 
         $technique = collect($pricing['techniques'] ?? [])->firstWhere('id', $techniqueId);
-        if (!$technique) {
+        if (!$technique || (($pricing['mode'] ?? null) === 'flat' && (empty($technique['is_active']) || $technique['price'] === null))) {
             return [
                 'lines' => [],
                 'unit_price' => 0,
@@ -507,7 +453,8 @@ class PrintPricing
                 continue;
             }
 
-            $tier = self::pickTier($bbox, $tiers);
+            $flat = ($pricing['mode'] ?? null) === 'flat';
+            $tier = $flat ? ['id' => null, 'name' => 'Đồng giá'] : self::pickTier($bbox, $tiers);
 
             if (!$tier) {
                 $errors[] = sprintf(
@@ -519,7 +466,7 @@ class PrintPricing
                 continue;
             }
 
-            $cell = $cells[$technique['id']][$tier['id']] ?? null;
+            $cell = $flat ? $technique['price'] : ($cells[$technique['id']][$tier['id']] ?? null);
             if ($cell === null) {
                 $errors[] = sprintf(
                     '%s không nhận khổ %s — đổi kỹ thuật hoặc thu nhỏ hình ở %s.',
@@ -531,7 +478,8 @@ class PrintPricing
             }
 
             $lines[] = self::line(
-                sprintf('%s · %s · khổ %s', $technique['name'], $position['label'], $tier['name']),
+                $flat ? sprintf('%s · %s', $technique['name'], $position['label'])
+                    : sprintf('%s · %s · khổ %s', $technique['name'], $position['label'], $tier['name']),
                 (float) $cell,
                 sprintf('khung bao %s × %s mm · %d hình', round($bbox['w'], 1), round($bbox['h'], 1), count($placements)),
             );
