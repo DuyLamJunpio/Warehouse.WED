@@ -128,7 +128,9 @@ Route::post('/login', [AuthController::class, 'login']);
  * Giới hạn số lần gọi để tránh bị spam đơn rác; mọi số tiền do server tự tính.
  */
 Route::middleware('throttle:20,1')->group(function () {
-    Route::post('/checkout', [CheckoutController::class, 'store']);
+    // Invoice chỉ được tạo từ luồng PayOS đã xác nhận. Webstore gọi controller này
+    // qua StorefrontOrderController::fulfill bằng request nội bộ, còn HTTP trực tiếp phải có bí mật.
+    Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('storefront.secret');
     Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
     // Chi web ban hang duoc goi: no da xac thuc chu ky PayOS truoc do.
     Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid'])
@@ -193,6 +195,9 @@ Route::middleware(['throttle:600,1', 'storefront.secret'])
         Route::prefix('{ref}')->whereAlphaNumeric('ref')->group(function () {
             Route::get('/', [StorefrontOrderController::class, 'show']);
             Route::patch('/', [StorefrontOrderController::class, 'update']);
+            // Chỉ gọi sau khi PayOS đã xác nhận. Endpoint tạo hoá đơn thật trong
+            // transaction, nên webhook và trang khách kiểm tra song song không sinh đơn trùng.
+            Route::post('/fulfill', [StorefrontOrderController::class, 'fulfill']);
             Route::post('/email-claim', [StorefrontOrderController::class, 'claimEmail']);
             Route::delete('/email-claim', [StorefrontOrderController::class, 'releaseEmail']);
         });

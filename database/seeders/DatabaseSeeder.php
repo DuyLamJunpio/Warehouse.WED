@@ -14,6 +14,9 @@ use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
+    private const DEFAULT_ADMIN_EMAIL = 'thebasicconcept.official@gmail.com';
+    private const DEFAULT_ADMIN_NAME = 'The Basic Concept Official';
+
     /** Bảng size/màu dùng để sinh biến thể mẫu. */
     private const SIZES = ['S', 'M', 'L', 'XL'];
     private const COLORS = ['Đen', 'Trắng', 'Be'];
@@ -29,17 +32,25 @@ class DatabaseSeeder extends Seeder
 
     private function seedUsers(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@warehouse.local'],
-            [
-                'name' => 'Administrator',
-                // Mật khẩu lấy từ biến môi trường ADMIN_SEED_PASSWORD, mặc định 'password'.
-                'password' => Hash::make(env('ADMIN_SEED_PASSWORD', 'password')),
-                'role' => 1,
-                'status' => 1,
-                'email_verified_at' => now(),
-            ]
-        );
+        // Tìm cả bản ghi đã soft-delete để không tạo trùng email hoặc xóa dữ liệu.
+        $admin = User::withTrashed()
+            ->where('email', self::DEFAULT_ADMIN_EMAIL)
+            ->first();
+
+        if (!$admin) {
+            $admin = new User();
+            $admin->email = self::DEFAULT_ADMIN_EMAIL;
+        } elseif ($admin->trashed()) {
+            $admin->restore();
+        }
+
+        $admin->name = self::DEFAULT_ADMIN_NAME;
+        // Mật khẩu lấy từ biến môi trường ADMIN_SEED_PASSWORD, mặc định 'password'.
+        $admin->password = Hash::make(env('ADMIN_SEED_PASSWORD', 'password'));
+        $admin->role = 1;
+        $admin->status = 1;
+        $admin->email_verified_at = now();
+        $admin->save();
     }
 
     /**

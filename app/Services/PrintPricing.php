@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PrintPricingVersion;
+use App\Models\PrintBlank;
 use App\Models\PrintSizeTier;
 use App\Models\PrintTechnique;
 use App\Models\Setting;
@@ -43,6 +44,9 @@ use App\Models\Setting;
  */
 class PrintPricing
 {
+    /** Chế độ giá gọn: một mức phí in cho mỗi cặp phôi + kỹ thuật. */
+    public const MODE_SIMPLE = 'simple';
+
     /** Khoá của bản nháp đang sửa trong bảng settings. */
     public const DRAFT_KEY = 'print_pricing_draft';
 
@@ -98,6 +102,9 @@ class PrintPricing
     public static function draftDefaults(): array
     {
         return [
+            'mode' => self::MODE_SIMPLE,
+            'blank_technique_prices' => [],
+            // Các khoá cũ giữ lại để những bản giá đã xuất bản vẫn đọc được.
             'cells' => [],
             'rules' => [],
             'qty_tiers' => [],
@@ -143,6 +150,9 @@ class PrintPricing
     {
         $draft = self::draft();
 
+        $draft['mode'] = self::MODE_SIMPLE;
+        $draft['blank_technique_prices'] = self::resolvedBlankTechniquePrices($draft);
+
         $draft['techniques'] = PrintTechnique::query()
             ->orderBy('sort_order')->orderBy('id')
             ->get()
@@ -169,8 +179,102 @@ class PrintPricing
     public static function current(): array
     {
         $version = PrintPricingVersion::latestPublished();
+        $pricing = $version ? (array) $version->data : self::snapshot();
 
-        return $version ? $version->data : self::snapshot();
+        // Bản giá cũ dùng ma trận theo khổ. Khi đọc lại, chuyển nó sang một mức
+        // giá cố định cho từng phôi + kỹ thuật để lần cập nhật này không làm mất
+        // khả năng báo giá cho dữ liệu đã có.
+        if (($pricing['mode'] ?? null) !== self::MODE_SIMPLE) {
+            $pricing['mode'] = self::MODE_SIMPLE;
+            $pricing['blank_technique_prices'] = self::resolvedBlankTechniquePrices($pricing);
+        }
+
+        return $pricing;
+    }
+
+    /**
+     * Giá phôi + kỹ thuật đã hoà đủ cho màn hình quản trị và API.
+     *
+     * Ô đã được lưu, kể cả null, luôn được ưu tiên. Nhờ vậy người bán có thể
+     * xoá một mức giá cũ mà không bị giá ma trận cũ tự động quay lại.
+     */
+    public static function resolvedBlankTechniquePrices(?array $pricing = null): array
+    {
+        $pricing = $pricing ?? self::draft();
+        $explicit = (array) ($pricing['blank_technique_prices'] ?? []);
+        $cells = (array) ($pricing['cells'] ?? []);
+        $tiers = collect((array) ($pricing['tiers'] ?? []));
+        if ($tiers->isEmpty()) {
+            $tiers = PrintSizeTier::query()
+                ->where('is_active', true)
+                ->get()
+                ->map(fn (PrintSizeTier $tier) => $tier->toPricingArray());
+        }
+        $tiers = $tiers
+            ->sortBy(fn ($tier) => ((int) ($tier['width_mm'] ?? 0)) * ((int) ($tier['height_mm'] ?? 0)));
+
+        $legacyPrices = [];
+        foreach ($cells as $techniqueId => $row) {
+            foreach ($tiers as $tier) {
+                $tierId = $tier['id'] ?? null;
+                if ($tierId !== null && array_key_exists($tierId, (array) $row) && $row[$tierId] !== null) {
+                    $legacyPrices[(string) $techniqueId] = max(0, (int) $row[$tierId]);
+                    break;
+                }
+            }
+        }
+
+        $prices = [];
+        $blanks = PrintBlank::with('techniques')->get();
+        foreach ($blanks as $blank) {
+            $blankKey = (string) $blank->id;
+            $savedRow = (array) ($explicit[$blankKey] ?? $explicit[$blank->id] ?? []);
+
+            foreach ($blank->techniques as $technique) {
+                $techniqueKey = (string) $technique->id;
+                if (array_key_exists($techniqueKey, $savedRow) || array_key_exists($technique->id, $savedRow)) {
+                    $value = array_key_exists($techniqueKey, $savedRow)
+                        ? $savedRow[$techniqueKey]
+                        : $savedRow[$technique->id];
+                    $prices[$blankKey][$techniqueKey] = $value === null ? null : max(0, (int) $value);
+                    continue;
+                }
+
+                if (array_key_exists($techniqueKey, $legacyPrices)) {
+                    $prices[$blankKey][$techniqueKey] = $legacyPrices[$techniqueKey];
+                }
+            }
+        }
+
+        return $prices;
+    }
+
+    /** Đọc một giá cố định từ snapshot, hiểu cả khoá JSON dạng chuỗi và số. */
+    public static function simplePriceFor(array $pricing, int $blankId, int $techniqueId): ?int
+    {
+        $rows = (array) ($pricing['blank_technique_prices'] ?? []);
+        $row = $rows[(string) $blankId] ?? $rows[$blankId] ?? null;
+
+        if (is_array($row) && (array_key_exists((string) $techniqueId, $row) || array_key_exists($techniqueId, $row))) {
+            $value = array_key_exists((string) $techniqueId, $row) ? $row[(string) $techniqueId] : $row[$techniqueId];
+
+            return $value === null ? null : max(0, (int) $value);
+        }
+
+        // Snapshot cũ chưa có bảng giá theo phôi. Dùng bậc khổ nhỏ nhất đang có
+        // làm cầu nối tạm thời; khi người bán bấm Lưu nháp, giá sẽ được chốt
+        // thành dữ liệu mới và không còn phụ thuộc vào kích thước.
+        $tiers = collect((array) ($pricing['tiers'] ?? []))
+            ->sortBy(fn ($tier) => ((int) ($tier['width_mm'] ?? 0)) * ((int) ($tier['height_mm'] ?? 0)));
+        $cells = (array) ($pricing['cells'][$techniqueId] ?? $pricing['cells'][(string) $techniqueId] ?? []);
+        foreach ($tiers as $tier) {
+            $tierId = $tier['id'] ?? null;
+            if ($tierId !== null && array_key_exists($tierId, $cells) && $cells[$tierId] !== null) {
+                return max(0, (int) $cells[$tierId]);
+            }
+        }
+
+        return null;
     }
 
     public static function currentVersionId(): ?int
@@ -315,6 +419,10 @@ class PrintPricing
     public static function quote(array $design, ?array $pricing = null): array
     {
         $pricing = $pricing ?? self::current();
+
+        if (($pricing['mode'] ?? null) === self::MODE_SIMPLE) {
+            return self::quoteSimple($design, $pricing);
+        }
 
         $lines = [];
         $errors = [];
@@ -606,6 +714,110 @@ class PrintPricing
         if ($qty < (int) ($blank['moq'] ?? 1)) {
             $warnings[] = sprintf('Phôi "%s" nhận đơn tối thiểu %d áo.', $blank['name'], $blank['moq']);
         }
+
+        return [
+            'lines' => $lines,
+            'unit_price' => $unitPrice,
+            'total' => $unitPrice * $qty,
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Báo giá gọn: giá phôi + một phí in cố định theo kỹ thuật.
+     *
+     * Vị trí và khung mm vẫn được kiểm tra để giữ an toàn cho xưởng, nhưng không
+     * còn ảnh hưởng tới tiền. Một thiết kế có cả mặt trước và mặt sau vẫn chỉ
+     * dùng đúng mức phí của cặp phôi + kỹ thuật đã chọn.
+     */
+    private static function quoteSimple(array $design, array $pricing): array
+    {
+        $lines = [];
+        $errors = [];
+        $warnings = [];
+
+        $blank = (array) ($design['blank'] ?? []);
+        $blankId = (int) ($blank['id'] ?? 0);
+        $qty = max(1, (int) ($design['qty'] ?? 1));
+        $inkColors = max(1, (int) ($design['ink_colors'] ?? 1));
+        $techniqueId = (int) ($design['technique_id'] ?? 0);
+        $technique = collect($pricing['techniques'] ?? [])->firstWhere('id', $techniqueId);
+
+        if (!$technique) {
+            return [
+                'lines' => [],
+                'unit_price' => 0,
+                'total' => 0,
+                'errors' => ['Kỹ thuật in này không còn trong bảng giá đang áp dụng.'],
+                'warnings' => [],
+            ];
+        }
+
+        $basePrice = max(0, (int) ($blank['base_price'] ?? 0));
+        $printPrice = self::simplePriceFor($pricing, $blankId, $techniqueId);
+        $color = trim((string) ($design['color_name'] ?? ''));
+        $blankLabel = trim((string) ($blank['name'] ?? 'Phôi')) . ($color !== '' ? ' — ' . $color : '');
+
+        $lines[] = self::line(
+            $blankLabel,
+            $basePrice,
+            empty($blank['product_id']) ? 'giá phôi' : 'giá lấy từ sản phẩm trong kho',
+        );
+
+        if ($printPrice === null) {
+            $errors[] = sprintf('Phôi "%s" chưa có giá cho kỹ thuật "%s".', $blank['name'] ?? 'này', $technique['name']);
+        } else {
+            $lines[] = self::line($technique['name'] . ' · giá cố định / áo', $printPrice, 'không tính theo kích thước');
+        }
+
+        $positions = (array) ($design['positions'] ?? []);
+        $byPosition = [];
+        foreach ((array) ($design['placements'] ?? []) as $placement) {
+            $key = $placement['position'] ?? $placement['zone'] ?? '';
+            $byPosition[$key][] = $placement;
+        }
+
+        foreach ($byPosition as $positionKey => $placements) {
+            $position = $positions[$positionKey] ?? null;
+            if (!$position) {
+                $errors[] = sprintf('Vị trí in "%s" không còn nhận đơn trên phôi này.', $positionKey);
+                continue;
+            }
+
+            $bbox = self::boundingBox($placements);
+            $maxW = (float) ($position['max_width_mm'] ?? INF);
+            $maxH = (float) ($position['max_height_mm'] ?? INF);
+            if ($bbox['w'] > $maxW + 0.5 || $bbox['h'] > $maxH + 0.5) {
+                $errors[] = sprintf(
+                    '%s: hình vượt giới hạn %s×%s mm của vị trí này.',
+                    $position['label'] ?? $positionKey,
+                    round($maxW),
+                    round($maxH),
+                );
+            }
+        }
+
+        if (!$byPosition) {
+            $warnings[] = 'Chưa có hình nào trên áo — giá vẫn giữ nguyên theo phôi và kỹ thuật.';
+        }
+
+        if ($technique['max_colors'] !== null && $inkColors > (int) $technique['max_colors']) {
+            $errors[] = sprintf(
+                '%s chỉ in tối đa %d màu, đang khai %d.',
+                $technique['name'],
+                $technique['max_colors'],
+                $inkColors,
+            );
+        }
+        if ($qty < (int) ($technique['moq'] ?? 1)) {
+            $warnings[] = sprintf('%s nhận đơn tối thiểu %d áo.', $technique['name'], $technique['moq']);
+        }
+        if ($qty < (int) ($blank['moq'] ?? 1)) {
+            $warnings[] = sprintf('Phôi "%s" nhận đơn tối thiểu %d áo.', $blank['name'] ?? 'này', $blank['moq']);
+        }
+
+        $unitPrice = $printPrice === null ? 0 : $basePrice + $printPrice;
 
         return [
             'lines' => $lines,

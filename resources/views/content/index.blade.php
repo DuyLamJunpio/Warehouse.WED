@@ -45,9 +45,10 @@
             <div class="p-4 mx-5 mt-4 text-xs text-indigo-900 dark:text-indigo-200 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50">
                 <p class="font-bold text-indigo-950 dark:text-indigo-300 mb-1">💡 Khuyến nghị kích thước & chất lượng banner</p>
                 <ul class="space-y-0.5 list-disc list-inside text-[11px] text-slate-600 dark:text-slate-400">
-                    <li><strong>Ảnh:</strong> tối thiểu {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, xuất 2400×1600 (3:2) hoặc 2560×1440 (16:9). Dung lượng dưới {{ $limits['anh_mb'] }}MB.</li>
+                    <li><strong>Ảnh:</strong> khuyến nghị từ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, xuất 2400×1600 (3:2) hoặc 2560×1440 (16:9), dung lượng dưới {{ $limits['anh_mb'] }}MB.</li>
                     <li><strong>Bố cục:</strong> Giữ chủ thể người mẫu nằm ở 70–80% trung tâm khung hình để không bị che khi hiển thị trên mobile (4:5) và desktop (16:7).</li>
-                    <li><strong>Video:</strong> 1920×1080 (16:9), MP4 dưới {{ $limits['video_mb'] }}MB, lặp 5–10s kèm ảnh bìa tĩnh.</li>
+                    <li><strong>Video:</strong> khuyến nghị 1920×1080 (16:9), MP4 dưới {{ $limits['video_mb'] }}MB, lặp 5–10s kèm ảnh bìa tĩnh.</li>
+                    <li class="font-semibold text-amber-700 dark:text-amber-300">Không đạt các mức trên vẫn được phép tải lên; hệ thống chỉ cảnh báo để tham khảo.</li>
                 </ul>
             </div>
 
@@ -158,49 +159,12 @@
             </div>
         </div>
 
-        {{-- ══ 3. Chữ chạy lớn ════════════════════════════════════════ --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs p-5">
-            <div class="flex items-center justify-between mb-1">
-                <div>
-                    <h2 class="text-base font-bold text-slate-900 dark:text-white">Dải chữ chạy lớn giữa trang chủ (Marquee)</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Dải chữ nghệ thuật chạy ngang trang chủ. Khuyên dùng 2–4 từ ngắn gọn.</p>
-                </div>
-                <button type="button" id="btn-them-chu"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl shadow-xs dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600">
-                    + Thêm dòng
-                </button>
-            </div>
-
-            <div id="danh-sach-chu" class="space-y-2 mt-4">
-                @foreach ($marquees as $m)
-                    <div class="grid items-center grid-cols-12 gap-2 dong-chu">
-                        <input type="text" value="{{ $m->value }}" maxlength="120"
-                            placeholder="Ví dụ: SALE UP TO 50% • NEW ARRIVALS"
-                            class="chu-value col-span-12 sm:col-span-6 text-xs rounded-xl bg-slate-50 border-slate-300 px-3 py-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                        <input type="datetime-local" value="{{ $m->starts_at?->format('Y-m-d\TH:i') }}"
-                            class="chu-start col-span-5 sm:col-span-2.5 text-xs rounded-xl bg-slate-50 border-slate-300 px-3 py-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                        <input type="datetime-local" value="{{ $m->ends_at?->format('Y-m-d\TH:i') }}"
-                            class="chu-end col-span-5 sm:col-span-2.5 text-xs rounded-xl bg-slate-50 border-slate-300 px-3 py-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                        <button type="button"
-                            class="col-span-2 sm:col-span-1 px-2 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl xoa-dong-chu dark:hover:bg-rose-950/40">✕</button>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="flex justify-end mt-4">
-                <button type="button" id="btn-luu-chu"
-                    class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
-                    Lưu chữ chạy lớn
-                </button>
-            </div>
-        </div>
-
-        {{-- ══ 4. Bộ sưu tập ══════════════════════════════════════════ --}}
+        {{-- ══ 3. Bộ sưu tập ══════════════════════════════════════════ --}}
         <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs p-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div>
                     <h2 class="text-base font-bold text-slate-900 dark:text-white">Bộ sưu tập nổi bật (Collections)</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Nhóm sản phẩm nổi bật theo chủ đề theo mùa (Mùa hè, Đồ công sở, Tết,...)</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Mỗi bộ đang bật sẽ hiển thị thành một khối riêng trên trang chủ. Có thể tạo nhiều bộ theo mùa hoặc chủ đề.</p>
                 </div>
                 <button type="button" id="btn-them-bst"
                     class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
@@ -214,6 +178,13 @@
             <div class="space-y-3">
                 @forelse ($collections as $bst)
                     <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-slate-200/80 dark:border-slate-700/80 rounded-xl bg-slate-50/40 dark:bg-slate-700/20">
+                        <div class="w-24 h-20 shrink-0 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
+                            @if ($bst->image_path)
+                                <img src="{{ Storage::url($bst->image_path) }}" alt="{{ $bst->title }}" class="w-full h-full object-cover">
+                            @else
+                                <div class="flex items-center justify-center w-full h-full text-[10px] text-slate-400 text-center px-2">Chưa có ảnh đại diện</div>
+                            @endif
+                        </div>
                         <div class="flex-1 min-w-0">
                             <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $bst->title }}</div>
                             <div class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{{ $bst->subtitle ?: '—' }}</div>
@@ -232,7 +203,7 @@
                             </x-badge>
                             <div class="flex gap-1.5 shrink-0">
                                 <button type="button"
-                                    data-bst="{{ $bst->only(['id','title','subtitle','cta_label','cta_link','status']) ? json_encode(array_merge($bst->only(['id','title','subtitle','cta_label','cta_link','status']), ['starts_at'=>$bst->starts_at?->format('Y-m-d\TH:i'),'ends_at'=>$bst->ends_at?->format('Y-m-d\TH:i'),'product_ids'=>$bst->products->pluck('id')]), JSON_UNESCAPED_UNICODE) : '{}' }}"
+                                    data-bst="{{ $bst->only(['id','title','subtitle','cta_label','cta_link','status']) ? json_encode(array_merge($bst->only(['id','title','subtitle','cta_label','cta_link','status']), ['image_url'=>$bst->image_path ? Storage::url($bst->image_path) : null,'starts_at'=>$bst->starts_at?->format('Y-m-d\TH:i'),'ends_at'=>$bst->ends_at?->format('Y-m-d\TH:i'),'product_ids'=>$bst->products->pluck('id')]), JSON_UNESCAPED_UNICODE) : '{}' }}"
                                     class="sua-bst px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg shadow-xs dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600">Sửa</button>
                                 <button type="button" data-id="{{ $bst->id }}" data-name="{{ $bst->title }}"
                                     class="xoa-bst px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg dark:bg-rose-950/40 dark:text-rose-400">Xoá</button>
@@ -241,13 +212,13 @@
                     </div>
                 @empty
                     <p class="py-8 text-xs text-center text-slate-400">
-                        Chưa có bộ sưu tập nào. Khối này trên web bán lẻ đang tạm ẩn.
+                        Chưa có bộ sưu tập nào. Hãy tạo bộ mới, chọn ảnh đại diện và các sản phẩm muốn giới thiệu.
                     </p>
                 @endforelse
             </div>
         </div>
 
-        {{-- ══ 5. Tiêu đề các khối ════════════════════════════════════ --}}
+        {{-- ══ 4. Tiêu đề các khối ════════════════════════════════════ --}}
         <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs p-5">
             <h2 class="text-base font-bold text-slate-900 dark:text-white mb-1">Tiêu đề các phân khu trang chủ</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
@@ -295,7 +266,7 @@
                         accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm"
                         class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-950 dark:file:text-indigo-300">
                     <p class="mt-1 text-[11px] text-slate-400">
-                        Ảnh ≥ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, dưới {{ $limits['anh_mb'] }}MB · Video MP4 dưới {{ $limits['video_mb'] }}MB
+                        Khuyến nghị: ảnh ≥ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, dưới {{ $limits['anh_mb'] }}MB · video MP4 dưới {{ $limits['video_mb'] }}MB. Không đạt vẫn được lưu.
                     </p>
                     <p id="canh-bao-anh" class="hidden mt-1 text-xs font-medium text-rose-600"></p>
                 </div>
@@ -330,9 +301,56 @@
                             class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Đường dẫn đích (URL)</label>
-                        <input type="text" name="cta_link" maxlength="255" placeholder="/shop"
+                        <label for="slide-cta-link-select" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nút sẽ đưa khách đến đâu?</label>
+                        <select id="slide-cta-link-select"
                             class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <option value="">Không gắn liên kết</option>
+                            <optgroup label="Trang chính">
+                                <option value="/">Trang chủ</option>
+                                <option value="/shop">Tất cả sản phẩm</option>
+                                <option value="/shop?new=1">Hàng mới về</option>
+                                <option value="/shop?sale=1">Sản phẩm đang giảm giá</option>
+                                <option value="/shop?audience=Nam">Thời trang nam</option>
+                                <option value="/shop?audience=N%E1%BB%AF">Thời trang nữ</option>
+                                <option value="/shop?audience=Tr%E1%BA%BB%20em">Thời trang trẻ em</option>
+                                <option value="/cart">Giỏ hàng</option>
+                                <option value="/checkout">Thanh toán</option>
+                                <option value="/in-ao">In áo theo yêu cầu</option>
+                            </optgroup>
+                            <optgroup label="Khu vực trên trang chủ">
+                                <option value="/#new-arrivals">Khối hàng mới</option>
+                                <option value="/#categories">Khối danh mục</option>
+                                <option value="/#seasonal-drop">Khối bộ sưu tập</option>
+                                <option value="/#newsletter">Khu vực đăng ký nhận tin</option>
+                            </optgroup>
+                            @if ($linkCategories->isNotEmpty())
+                                <optgroup label="Danh mục sản phẩm">
+                                    @foreach ($linkCategories as $category)
+                                        <option value="/shop?category={{ rawurlencode($category->name) }}">
+                                            Xem danh mục: {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if ($allProducts->isNotEmpty())
+                                <optgroup label="Sản phẩm đang bán">
+                                    @foreach ($allProducts as $product)
+                                        @if ($product->slug)
+                                            <option value="/products/{{ $product->slug }}">
+                                                Xem sản phẩm: {{ $product->product_name }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            <option value="__custom__">Tự nhập đường dẫn khác...</option>
+                        </select>
+                        <input type="text" name="cta_link" id="slide-cta-link" maxlength="255"
+                            placeholder="Chọn ở danh sách phía trên hoặc nhập /shop"
+                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <p class="mt-1 text-[11px] text-slate-400">
+                            Chọn một mục có sẵn để không cần nhớ URL. Nếu dẫn sang website khác, chọn “Tự nhập...” rồi nhập địa chỉ bắt đầu bằng <span class="font-mono">https://</span>.
+                        </p>
                     </div>
                 </div>
                 <div>
@@ -380,12 +398,21 @@
             <button type="button" id="dong-drawer-bst" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">✕</button>
         </div>
 
-        <form id="form-bst" class="flex-1 flex flex-col justify-between">
+        <form id="form-bst" enctype="multipart/form-data" class="flex-1 flex flex-col justify-between">
             <div class="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tên bộ sưu tập <span class="text-rose-500">*</span></label>
                     <input type="text" name="title" maxlength="255" required placeholder="Ví dụ: BST Thu Đông 2026"
                         class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
+                <div>
+                    <label for="bst-image" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ảnh đại diện <span id="bst-image-required-mark" class="text-rose-500">*</span></label>
+                    <div id="bst-image-preview-wrap" class="hidden mb-2 h-36 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
+                        <img id="bst-image-preview" src="" alt="Xem trước ảnh đại diện" class="w-full h-full object-cover">
+                    </div>
+                    <input type="file" name="image" id="bst-image" accept="image/jpeg,image/png,image/webp,image/avif" required
+                        class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-950 dark:file:text-indigo-300">
+                    <p class="mt-1 text-[11px] text-slate-400">Bắt buộc khi tạo bộ mới; khi sửa có thể bỏ qua để giữ ảnh cũ. Nhận JPG, PNG, WebP, AVIF, tối đa 5MB.</p>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Dòng mô tả phụ</label>
@@ -462,6 +489,31 @@
             const csrf = () => ({ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') });
             const moDrawer = () => window.openDrawer('drawer-slide');
             const dongDrawer = () => window.closeDrawer('drawer-slide');
+            const slideCtaSelect = $('#slide-cta-link-select');
+            const slideCtaInput = $('#slide-cta-link');
+            let linkSlideDangChonSan = false;
+            const capNhatLinkSlide = (value = '') => {
+                const option = slideCtaSelect.find('option').filter(function() {
+                    return this.value === value;
+                }).first();
+
+                slideCtaSelect.val(option.length ? value : (value ? '__custom__' : ''));
+                slideCtaInput.val(value);
+                linkSlideDangChonSan = option.length > 0;
+            };
+
+            slideCtaSelect.on('change', function() {
+                const value = $(this).val();
+                if (value === '__custom__') {
+                    if (linkSlideDangChonSan) slideCtaInput.val('');
+                    linkSlideDangChonSan = false;
+                    slideCtaInput.focus();
+                    return;
+                }
+                slideCtaInput.val(value || '');
+                linkSlideDangChonSan = true;
+            });
+
             $('#dong-drawer').click(dongDrawer);
 
 
@@ -470,6 +522,7 @@
                 idDangSua = null;
                 $('#tieu-de-drawer').text('Thêm slide');
                 $('#form-slide')[0].reset();
+                capNhatLinkSlide();
                 $('#vung-video, #canh-bao-anh').addClass('hidden');
                 $('#slide-media').prop('required', true);
                 moDrawer();
@@ -485,7 +538,7 @@
                 f.find('[name=heading]').val(s.heading || '');
                 f.find('[name=subheading]').val(s.subheading || '');
                 f.find('[name=cta_label]').val(s.cta_label || '');
-                f.find('[name=cta_link]').val(s.cta_link || '');
+                capNhatLinkSlide(s.cta_link || '');
                 f.find('[name=alt]').val(s.alt || '');
                 f.find('[name=starts_at]').val(s.starts_at ? s.starts_at.slice(0, 16).replace(' ', 'T') : '');
                 f.find('[name=ends_at]').val(s.ends_at ? s.ends_at.slice(0, 16).replace(' ', 'T') : '');
@@ -506,17 +559,22 @@
                 $('#vung-video').toggleClass('hidden', !laVideo);
 
                 const mbToiDa = laVideo ? {{ $limits['video_mb'] }} : {{ $limits['anh_mb'] }};
+                const canhBaos = [];
                 if (file.size > mbToiDa * 1024 * 1024) {
-                    canhBao.removeClass('hidden').text(`File nặng ${(file.size / 1048576).toFixed(1)}MB, vượt mức ${mbToiDa}MB.`);
+                    canhBaos.push(`File nặng ${(file.size / 1048576).toFixed(1)}MB, vượt mức khuyến nghị ${mbToiDa}MB; vẫn có thể lưu.`);
+                }
+
+                if (laVideo) {
+                    canhBao.toggleClass('hidden', canhBaos.length === 0).text(canhBaos.join(' '));
                     return;
                 }
 
-                if (laVideo) return;
                 const img = new Image();
                 img.onload = function() {
                     if (img.width < {{ $limits['anh_rong'] }} || img.height < {{ $limits['anh_cao'] }}) {
-                        canhBao.removeClass('hidden').text(`Ảnh ${img.width}×${img.height}px, nhỏ hơn mức tối thiểu {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px.`);
+                        canhBaos.push(`Ảnh ${img.width}×${img.height}px, nhỏ hơn mức khuyến nghị {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px; vẫn có thể lưu.`);
                     }
+                    canhBao.toggleClass('hidden', canhBaos.length === 0).text(canhBaos.join(' '));
                     URL.revokeObjectURL(img.src);
                 };
                 img.src = URL.createObjectURL(file);
@@ -556,46 +614,7 @@
                 });
             });
 
-            // ── Chữ chạy ─────────────────────────────────────────────
-            const dongChuMoi = () => $(`
-                <div class="dong-chu grid grid-cols-12 gap-2 items-center">
-                    <input type="text" maxlength="120" placeholder="Ví dụ: SALE UP TO 50% • NEW ARRIVALS"
-                        class="chu-value col-span-12 sm:col-span-6 text-xs rounded-xl bg-slate-50 border-slate-300 px-3 py-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                    <input type="datetime-local"
-                        class="chu-start col-span-5 sm:col-span-2.5 text-xs rounded-xl bg-slate-50 border-slate-300 px-3 py-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                    <input type="datetime-local"
-                        class="chu-end col-span-5 sm:col-span-2.5 text-xs rounded-xl bg-slate-50 border-slate-300 px-3 py-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                    <button type="button" class="col-span-2 sm:col-span-1 px-2 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl xoa-dong-chu dark:hover:bg-rose-950/40">✕</button>
-                </div>`);
-
-            $('#btn-them-chu').click(() => $('#danh-sach-chu').append(dongChuMoi()));
-            $(document).on('click', '.xoa-dong-chu', function() { $(this).closest('.dong-chu').remove(); });
-
-            $('#btn-luu-chu').click(function() {
-                const items = [];
-                $('#danh-sach-chu .dong-chu').each(function() {
-                    const value = $(this).find('.chu-value').val().trim();
-                    if (!value) return;
-                    items.push({
-                        value: value,
-                        starts_at: $(this).find('.chu-start').val() || null,
-                        ends_at: $(this).find('.chu-end').val() || null
-                    });
-                });
-
-                $.ajax({
-                    url: '{{ route('content.marquee') }}',
-                    type: 'POST',
-                    headers: csrf(),
-                    data: { items: items },
-                    success: function(r) {
-                        window.showToast(r.success);
-                    },
-                    error: window.showAjaxError
-                });
-            });
-
-            // ── Chữ chạy trên cùng ───────────────────────────────────
+            // ── Chữ thông báo trên cùng ───────────────────────────────
             const dongTbMoi = () => $(`
                 <div class="dong-tb grid grid-cols-12 gap-2 items-center">
                     <input type="text" maxlength="120" placeholder="Ví dụ: Miễn phí giao hàng cho đơn từ 500.000 ₫"
@@ -623,10 +642,14 @@
                 });
 
                 $.ajax({
-                    url: '{{ route('content.marquee') }}',
+                    url: '{{ route('content.announcement') }}',
                     type: 'POST',
                     headers: csrf(),
-                    data: { items: items, group: 'announcement' },
+                    // Top Banner có thể được lưu với danh sách rỗng khi người
+                    // dùng xoá dòng cuối cùng, vì vậy không dùng form encoding.
+                    contentType: 'application/json; charset=UTF-8',
+                    processData: false,
+                    data: JSON.stringify({ items: items }),
                     success: function(r) {
                         window.showToast(r.success);
                     },
@@ -636,10 +659,31 @@
 
             // ── Bộ sưu tập ───────────────────────────────────────────
             let idBst = null;
+            let bstPreviewUrl = null;
             const demDaChon = () => $('#so-da-chon').text($('.chon-sp:checked').length);
             const moBst = () => window.openDrawer('drawer-bst');
             $('#dong-drawer-bst').click(() => window.closeDrawer('drawer-bst'));
             $(document).on('change', '.chon-sp', demDaChon);
+
+            const datAnhDaiDienBst = (src = '') => {
+                if (bstPreviewUrl) {
+                    URL.revokeObjectURL(bstPreviewUrl);
+                    bstPreviewUrl = null;
+                }
+                $('#bst-image-preview').attr('src', src);
+                $('#bst-image-preview-wrap').toggleClass('hidden', !src);
+            };
+
+            $('#bst-image').on('change', function() {
+                const file = this.files?.[0];
+                if (!file) {
+                    datAnhDaiDienBst();
+                    return;
+                }
+                const previewUrl = URL.createObjectURL(file);
+                datAnhDaiDienBst(previewUrl);
+                bstPreviewUrl = previewUrl;
+            });
 
 
             $('#loc-sp').on('input', function() {
@@ -653,6 +697,9 @@
                 idBst = null;
                 $('#tieu-de-bst').text('Tạo bộ sưu tập');
                 $('#form-bst')[0].reset();
+                $('#bst-image').prop('required', true);
+                $('#bst-image-required-mark').removeClass('hidden');
+                datAnhDaiDienBst();
                 $('.chon-sp').prop('checked', false);
                 $('#loc-sp').val('').trigger('input');
                 demDaChon();
@@ -670,6 +717,9 @@
                 f.find('[name=subtitle]').val(b.subtitle || '');
                 f.find('[name=cta_label]').val(b.cta_label || '');
                 f.find('[name=cta_link]').val(b.cta_link || '');
+                $('#bst-image').prop('required', false);
+                $('#bst-image-required-mark').addClass('hidden');
+                datAnhDaiDienBst(b.image_url || '');
                 f.find('[name=starts_at]').val(b.starts_at || '');
                 f.find('[name=ends_at]').val(b.ends_at || '');
                 f.find('[name=status]').prop('checked', !!b.status);
@@ -686,21 +736,17 @@
             $('#form-bst').submit(function(e) {
                 e.preventDefault();
                 const ids = $('.chon-sp:checked').map(function() { return $(this).val(); }).get();
+                const formData = new FormData($('#form-bst')[0]);
+                formData.set('status', $('#form-bst [name=status]').is(':checked') ? '1' : '0');
+                ids.forEach((id) => formData.append('product_ids[]', id));
 
                 $.ajax({
                     url: '/content/collection' + (idBst ? '/' + idBst : ''),
                     type: 'POST',
                     headers: csrf(),
-                    data: {
-                        title: $('#form-bst [name=title]').val(),
-                        subtitle: $('#form-bst [name=subtitle]').val(),
-                        cta_label: $('#form-bst [name=cta_label]').val(),
-                        cta_link: $('#form-bst [name=cta_link]').val(),
-                        starts_at: $('#form-bst [name=starts_at]').val() || null,
-                        ends_at: $('#form-bst [name=ends_at]').val() || null,
-                        status: $('#form-bst [name=status]').is(':checked') ? 1 : 0,
-                        product_ids: ids
-                    },
+                    data: formData,
+                    contentType: false,
+                    processData: false,
                     success: function(r) {
                         window.showToast(r.success);
                         setTimeout(() => location.reload(), 600);

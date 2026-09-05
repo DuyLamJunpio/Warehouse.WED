@@ -33,7 +33,7 @@ class PrintDesign extends Model
     ];
 
     protected $fillable = [
-        'code', 'invoice_id', 'print_blank_id', 'print_technique_id', 'color_name', 'color_tone',
+        'code', 'invoice_id', 'pending_payment_ref', 'print_blank_id', 'print_technique_id', 'color_name', 'color_tone',
         'size', 'ink_colors', 'qty', 'placements', 'preview_path',
         'pricing_version_id', 'price_breakdown', 'unit_price', 'total_price',
         'review_status', 'review_note', 'reviewed_by', 'reviewed_at',

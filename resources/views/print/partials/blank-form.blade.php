@@ -8,6 +8,9 @@
 @php($colors = $blank?->colors->where('is_active', true)->values() ?? collect())
 @php($positions = \App\Services\PrintPositions::payload())
 @php($enabled = $blank?->positionKeys() ?? \App\Services\PrintPositions::keys())
+{{-- Nhóm cha-con để ô chọn đọc được khi danh mục nhiều lên. --}}
+@php($rootCategories = $categories->whereNull('parent_id'))
+@php($childCategories = $categories->whereNotNull('parent_id')->groupBy('parent_id'))
 
 <div data-blank-form="{{ $blank?->id }}" class="space-y-3">
     <div>
@@ -20,6 +23,34 @@
         <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Mô tả cho khách</label>
         <textarea data-f-desc rows="2" placeholder="Chất liệu, form dáng — một hai câu."
             class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">{{ $blank?->description }}</textarea>
+    </div>
+
+    <div>
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Danh mục phôi</label>
+        <select data-f-category class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
+            <option value="">— chưa xếp danh mục —</option>
+            @foreach ($rootCategories as $root)
+                @php($children = $childCategories->get($root->id, collect()))
+                @if ($children->isEmpty())
+                    <option value="{{ $root->id }}" @selected($blank?->categories_id === $root->id)>{{ $root->name }}</option>
+                @else
+                    {{-- Danh mục cha vẫn chọn được: có phôi không thuộc nhánh con nào. --}}
+                    <optgroup label="{{ $root->name }}">
+                        <option value="{{ $root->id }}" @selected($blank?->categories_id === $root->id)>{{ $root->name }} (chung)</option>
+                        @foreach ($children as $child)
+                            <option value="{{ $child->id }}" @selected($blank?->categories_id === $child->id)>{{ $child->name }}</option>
+                        @endforeach
+                    </optgroup>
+                @endif
+            @endforeach
+        </select>
+        <p class="mt-1 text-[11px] text-slate-400">
+            Dùng chung danh mục với hàng bán sẵn — thêm mục mới ở trang <b>Danh mục</b>. Bên web bán hàng,
+            trang In áo dựng hàng nút lọc từ đây; phôi để trống vẫn bày bán, chỉ là không lọc theo mục nào được.
+            @if ($blank?->categories_id && $blank->category?->trashed())
+                <span class="text-amber-600 dark:text-amber-400">Danh mục hiện tại đã bị xoá — chọn lại một mục còn dùng.</span>
+            @endif
+        </p>
     </div>
 
     <div>

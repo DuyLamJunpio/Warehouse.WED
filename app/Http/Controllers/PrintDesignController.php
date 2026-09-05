@@ -23,11 +23,21 @@ class PrintDesignController extends Controller
 
     public function index(Request $request)
     {
+        // Bản nháp chỉ là dữ liệu tạm giữ giá cho giỏ hàng chưa thanh toán. Nó không
+        // thuộc hàng đợi nhân viên, và cũng không có tên trong bộ lọc của màn hình này.
+        $allowedStatuses = [
+            PrintDesign::STATUS_PENDING,
+            PrintDesign::STATUS_APPROVED,
+            PrintDesign::STATUS_REJECTED,
+        ];
         $status = $request->query('status', PrintDesign::STATUS_PENDING);
+        if (! in_array($status, $allowedStatuses, true)) {
+            $status = PrintDesign::STATUS_PENDING;
+        }
 
         $designs = PrintDesign::with(['blank', 'technique'])
             ->when(
-                in_array($status, array_keys(PrintDesign::STATUS_LABELS), true),
+                in_array($status, $allowedStatuses, true),
                 fn ($q) => $q->where('review_status', $status),
             )
             ->orderByDesc('id')
@@ -35,7 +45,8 @@ class PrintDesignController extends Controller
             ->withQueryString();
 
         // Đếm theo từng trạng thái để nhân viên thấy ngay còn bao nhiêu việc.
-        $counts = PrintDesign::selectRaw('review_status, count(*) as total')
+        $counts = PrintDesign::whereIn('review_status', $allowedStatuses)
+            ->selectRaw('review_status, count(*) as total')
             ->groupBy('review_status')
             ->pluck('total', 'review_status');
 
@@ -43,7 +54,7 @@ class PrintDesignController extends Controller
             'designs' => $designs,
             'status' => $status,
             'counts' => $counts,
-            'labels' => PrintDesign::STATUS_LABELS,
+            'labels' => array_intersect_key(PrintDesign::STATUS_LABELS, array_flip($allowedStatuses)),
         ]);
     }
 
@@ -83,6 +94,12 @@ class PrintDesignController extends Controller
      */
     public function review(Request $request, PrintDesign $design)
     {
+        if ($design->review_status !== PrintDesign::STATUS_PENDING || ! $design->invoice_id) {
+            return response()->json([
+                'error' => 'Chỉ duyệt thiết kế đã thanh toán và đang chờ duyệt.',
+            ], 422);
+        }
+
         $data = $request->validate([
             'decision' => 'required|in:approved,rejected',
             'note' => 'required_if:decision,rejected|nullable|string|max:500',

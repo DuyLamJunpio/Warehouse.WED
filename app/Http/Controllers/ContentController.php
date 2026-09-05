@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Banner;
+use App\Models\Categories;
 use App\Models\Collection;
 use App\Models\Product;
 use App\Models\SiteText;
@@ -36,14 +37,18 @@ class ContentController extends Controller
     {
         return view('content.index', [
             'banners' => Banner::orderBy('sort_order')->get(),
-            'marquees' => SiteText::marquee()->orderBy('sort_order')->get(),
             'announcements' => SiteText::announcement()->orderBy('sort_order')->get(),
             'collections' => Collection::with('products:id,product_name')->orderBy('sort_order')->get(),
             // Danh sách để tích chọn. Chỉ sản phẩm còn kinh doanh.
             'allProducts' => Product::where('status', '!=', 0)
                 ->with('category:id,name')
                 ->orderBy('product_name')
-                ->get(['id', 'product_name', 'categories_id']),
+                ->get(['id', 'product_name', 'slug', 'categories_id']),
+            // Dùng cho danh sách liên kết trong CTA của Hero Banner.
+            'linkCategories' => Categories::where('status', 1)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'headings' => $this->headingValues(),
             'headingLabels' => SiteText::HEADINGS,
             'limits' => [
@@ -159,25 +164,18 @@ class ContentController extends Controller
     }
 
     /**
-     * Kiểm tra file tải lên theo đúng khuyến nghị kích thước.
+     * Kiểm tra định dạng file của Hero Banner.
      *
-     * Ảnh hẹp hơn 2400px sẽ vỡ trên màn lớn vì hero trải hết chiều rộng màn
-     * hình. Video quá nặng làm trang tải chậm trên mạng di động.
+     * Kích thước và dung lượng chỉ là mức khuyến nghị hiển thị ở giao diện;
+     * không được dùng để chặn chủ shop lưu banner thực tế.
      */
     private function validateBanner(Request $request, ?Banner $banner = null): array
     {
-        $luatMedia = ['file', 'mimetypes:image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm'];
-
-        if ($request->hasFile('media') && !$this->laVideo($request)) {
-            $luatMedia[] = 'max:' . self::ANH_MB_TOI_DA * 1024;
-            $luatMedia[] = 'dimensions:min_width=' . self::ANH_RONG_TOI_THIEU
-                . ',min_height=' . self::ANH_CAO_TOI_THIEU;
-        } else {
-            $luatMedia[] = 'max:' . self::VIDEO_MB_TOI_DA * 1024;
-        }
-
         return $request->validate([
-            'media' => array_merge($banner ? ['nullable'] : ['required'], $luatMedia),
+            'media' => array_merge(
+                $banner ? ['nullable'] : ['required'],
+                ['file', 'mimetypes:image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm'],
+            ),
             'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'mobile' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:2048'],
             'alt' => ['nullable', 'string', 'max:255'],
@@ -189,10 +187,6 @@ class ContentController extends Controller
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ], [
             'media.required' => 'Chưa chọn ảnh hoặc video cho slide.',
-            'media.dimensions' => 'Ảnh phải rộng ít nhất ' . self::ANH_RONG_TOI_THIEU . 'px và cao ít nhất '
-                . self::ANH_CAO_TOI_THIEU . 'px, nếu không sẽ bị vỡ trên màn hình lớn.',
-            'media.max' => 'File quá nặng. Ảnh tối đa ' . self::ANH_MB_TOI_DA . 'MB, video tối đa '
-                . self::VIDEO_MB_TOI_DA . 'MB.',
             'media.mimetypes' => 'Chỉ nhận ảnh JPG/PNG/WebP/AVIF hoặc video MP4/WebM.',
             'ends_at.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu.',
         ]);
@@ -205,34 +199,27 @@ class ContentController extends Controller
             : null;
     }
 
-    // ── Chữ chạy ─────────────────────────────────────────────────────
+    // ── Thông báo trên cùng ──────────────────────────────────────────
 
-    public function saveMarquee(Request $request)
+    public function saveAnnouncement(Request $request)
     {
-        // Cùng một hàm phục vụ hai dải chữ: dải nhỏ trên cùng (mọi trang) và
-        // dải chữ lớn giữa trang chủ. Chúng khác nhau ở vị trí chứ không khác
-        // cách lưu, nên tách hai hàm gần giống hệt nhau là thừa.
-        $group = $request->input('group') === SiteText::GROUP_ANNOUNCEMENT
-            ? SiteText::GROUP_ANNOUNCEMENT
-            : SiteText::GROUP_MARQUEE;
-
         $data = $request->validate([
             'items' => ['present', 'array'],
             'items.*.value' => ['required', 'string', 'max:120'],
             'items.*.starts_at' => ['nullable', 'date'],
             'items.*.ends_at' => ['nullable', 'date'],
         ], [
-            'items.*.value.required' => 'Dòng chữ chạy không được để trống.',
-            'items.*.value.max' => 'Mỗi dòng chữ chạy tối đa 120 ký tự.',
+            'items.*.value.required' => 'Thông báo không được để trống.',
+            'items.*.value.max' => 'Mỗi thông báo tối đa 120 ký tự.',
         ]);
 
         // Lưu lại toàn bộ danh sách: dòng bị bỏ khỏi form nghĩa là người dùng đã
         // xoá, nên xoá khỏi CSDL cho khớp đúng thứ họ nhìn thấy trên màn hình.
-        SiteText::where('group', $group)->delete();
+        SiteText::announcement()->delete();
 
         foreach (array_values($data['items']) as $i => $item) {
             SiteText::create([
-                'group' => $group,
+                'group' => SiteText::GROUP_ANNOUNCEMENT,
                 'value' => $item['value'],
                 'sort_order' => $i,
                 'status' => true,
@@ -243,7 +230,7 @@ class ContentController extends Controller
 
         $this->notifier->markDirty();
 
-        return response()->json(['success' => 'Đã lưu ' . count($data['items']) . ' dòng chữ chạy.']);
+        return response()->json(['success' => 'Đã lưu ' . count($data['items']) . ' thông báo trên cùng.']);
     }
 
     // ── Tiêu đề các khối ─────────────────────────────────────────────
@@ -291,21 +278,32 @@ class ContentController extends Controller
      */
     public function saveCollection(Request $request, ?string $id = null)
     {
+        $imageRules = $id ? ['nullable'] : ['required'];
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:500'],
+            'image' => array_merge($imageRules, [
+                'file',
+                'mimetypes:image/jpeg,image/png,image/webp,image/avif',
+                'max:5120',
+            ]),
             'cta_label' => ['nullable', 'string', 'max:60'],
             'cta_link' => ['nullable', 'string', 'max:255'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-            'product_ids' => ['present', 'array'],
+            'product_ids' => ['nullable', 'array'],
             'product_ids.*' => ['integer', 'exists:products,id'],
         ], [
             'title.required' => 'Bộ sưu tập cần có tên, ví dụ "Bộ sưu tập mùa đông".',
+            'image.required' => 'Bộ sưu tập cần có ảnh đại diện.',
+            'image.mimetypes' => 'Ảnh đại diện chỉ nhận JPG, PNG, WebP hoặc AVIF.',
+            'image.max' => 'Ảnh đại diện tối đa 5MB.',
             'ends_at.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu.',
         ]);
 
         $collection = $id ? Collection::findOrFail($id) : new Collection();
+        $oldImagePath = $collection->image_path;
         $collection->fill([
             'title' => $data['title'],
             'subtitle' => $data['subtitle'] ?? null,
@@ -316,14 +314,24 @@ class ContentController extends Controller
             'status' => $request->boolean('status', true),
         ]);
 
+        if ($request->hasFile('image')) {
+            $collection->image_path = $request->file('image')->store('public/collections');
+        }
+
         if (!$collection->exists) {
             $collection->sort_order = (int) Collection::max('sort_order') + 1;
         }
         $collection->save();
 
+        if ($oldImagePath && $oldImagePath !== $collection->image_path) {
+            Storage::delete($oldImagePath);
+        }
+
+        $productIds = $data['product_ids'] ?? [];
+
         // Giữ đúng thứ tự tích: sync với sort_order theo vị trí trong mảng.
         $collection->products()->sync(
-            collect($data['product_ids'])
+            collect($productIds)
                 ->values()
                 ->mapWithKeys(fn($pid, $i) => [$pid => ['sort_order' => $i]])
                 ->all()
@@ -333,7 +341,7 @@ class ContentController extends Controller
 
         return response()->json([
             'success' => 'Đã lưu bộ sưu tập "' . $collection->title . '" với '
-                . count($data['product_ids']) . ' sản phẩm.',
+                . count($productIds) . ' sản phẩm.',
         ]);
     }
 
@@ -341,8 +349,12 @@ class ContentController extends Controller
     {
         $collection = Collection::findOrFail($id);
         $ten = $collection->title;
+        $imagePath = $collection->image_path;
         // Bảng nối khai cascade nên sản phẩm trong bộ sưu tập tự rời theo.
         $collection->delete();
+        if ($imagePath) {
+            Storage::delete($imagePath);
+        }
         $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã xoá bộ sưu tập "' . $ten . '".']);

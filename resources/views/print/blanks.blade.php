@@ -16,6 +16,9 @@
             Nối vào sản phẩm trong kho là <b>tuỳ chọn</b> — có nối thì thừa hưởng giá và size từ biến thể,
             không nối thì phôi đứng riêng với giá khai tay. Vị trí in <b>không phải khai</b>: bốn chỗ
             mặt trước, mặt sau, vai trái, vai phải luôn có sẵn, ở đây chỉ tick chỗ nào phôi này bán được.
+            Phần <b>mặt trước / mặt sau</b> vẫn dùng bình thường dù bảng giá đã được đơn giản hoá.
+            <b>Danh mục</b> dùng chung với hàng bán sẵn và là thứ dựng nên hàng nút lọc bên trang In áo —
+            phôi để trống vẫn bày bán, chỉ là khách không lọc tới nó được.
         </p>
     </div>
 
@@ -42,6 +45,16 @@
                                 MOQ {{ $blank->moq }} · {{ $blank->lead_days }} ngày
                             </p>
                         </div>
+                        @if ($blank->category)
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                {{ $blank->category->name }}
+                            </span>
+                        @else
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                                title="Phôi chưa xếp danh mục sẽ không lọc được bên web bán hàng.">
+                                chưa xếp danh mục
+                            </span>
+                        @endif
                         @if ($blank->product_id)
                             <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                                 nối kho · {{ $blank->product?->product_name }}
@@ -278,12 +291,15 @@
                 .filter(c => c.name !== '');
 
             const product = val('[data-f-product]');
+            const category = val('[data-f-category]');
 
             return {
                 name: val('[data-f-name]'),
                 description: val('[data-f-desc]') || null,
                 // Chuỗi rỗng nghĩa là KHÔNG nối kho, khác hẳn với id 0.
                 product_id: product === '' ? null : parseInt(product, 10),
+                // Cũng vậy: rỗng = chưa xếp danh mục, không phải danh mục số 0.
+                categories_id: category === '' ? null : parseInt(category, 10),
                 base_price: parseInt(val('[data-f-price]'), 10) || 0,
                 frame_width_mm: parseInt(val('[data-f-fw]'), 10) || 520,
                 frame_height_mm: parseInt(val('[data-f-fh]'), 10) || 700,

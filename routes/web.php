@@ -74,8 +74,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Module in áo theo yêu cầu.
      *
      * Bảng giá sửa vào bản nháp, chỉ có hiệu lực với khách sau khi bấm Xuất bản
-     * — xem App\Services\PrintPricing. Kỹ thuật và bậc khổ chỉ bật/tắt, không
-     * có route xoá: đơn cũ và quy tắc giá cũ đang trỏ vào chúng.
+     * — xem App\Services\PrintPricing. Kỹ thuật đã có thiết kế khách thì chỉ
+     * bật/tắt; bản ghi chưa được dùng vẫn có thể sửa hoặc xoá hẳn.
      */
     Route::prefix('print')->name('print.')->group(function () {
         Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
@@ -86,10 +86,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/techniques', [PrintTechniqueController::class, 'index'])->name('techniques');
         Route::post('/techniques', [PrintTechniqueController::class, 'store'])->name('techniques.store');
         Route::post('/techniques/{technique}', [PrintTechniqueController::class, 'update'])->name('techniques.update');
+        Route::delete('/techniques/{technique}', [PrintTechniqueController::class, 'destroy'])->name('techniques.destroy');
         Route::post('/techniques/{technique}/toggle', [PrintTechniqueController::class, 'toggle'])->name('techniques.toggle');
 
         Route::post('/tiers', [PrintTechniqueController::class, 'storeTier'])->name('tiers.store');
         Route::post('/tiers/{tier}', [PrintTechniqueController::class, 'updateTier'])->name('tiers.update');
+        Route::delete('/tiers/{tier}', [PrintTechniqueController::class, 'destroyTier'])->name('tiers.destroy');
         Route::post('/tiers/{tier}/toggle', [PrintTechniqueController::class, 'toggleTier'])->name('tiers.toggle');
 
         Route::get('/blanks', [PrintBlankController::class, 'index'])->name('blanks');
@@ -136,7 +138,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/content/banner/{id}', [ContentController::class, 'updateBanner'])->name('content.banner.update');
     Route::delete('/content/banner/{id}', [ContentController::class, 'destroyBanner'])->name('content.banner.destroy');
     Route::post('/content/banner/{id}/reorder', [ContentController::class, 'reorderBanner'])->name('content.banner.reorder');
-    Route::post('/content/marquee', [ContentController::class, 'saveMarquee'])->name('content.marquee');
+    Route::post('/content/announcement', [ContentController::class, 'saveAnnouncement'])->name('content.announcement');
     Route::post('/content/headings', [ContentController::class, 'saveHeadings'])->name('content.headings');
     Route::post('/content/collection/{id?}', [ContentController::class, 'saveCollection'])->name('content.collection');
     Route::delete('/content/collection/{id}', [ContentController::class, 'destroyCollection'])->name('content.collection.destroy');

@@ -398,4 +398,40 @@ class PrintPricingTest extends TestCase
         // Đúng bằng test_he_so_nhan_chi_an_vao_gia_in_cua_vi_tri_do.
         $this->assertSame(162000, $result['unit_price']);
     }
+
+    public function test_gia_gon_theo_phoi_va_ky_thuat_khong_phu_thuoc_kich_thuoc(): void
+    {
+        $pricing = $this->pricing() + [
+            'mode' => PrintPricing::MODE_SIMPLE,
+            'blank_technique_prices' => [1 => [1 => 45000]],
+        ];
+
+        $result = PrintPricing::quote(
+            $this->design([
+                $this->place('front', 0, 0, 300, 400),
+                $this->place('back', 0, 0, 300, 400),
+            ], ['qty' => 3]),
+            $pricing,
+        );
+
+        $this->assertSame(165000, $result['unit_price']);
+        $this->assertSame(495000, $result['total']);
+        $this->assertEmpty($result['errors']);
+    }
+
+    public function test_gia_gon_bao_loi_khi_chua_nhap_gia_cho_cap_phoi_ky_thuat(): void
+    {
+        $pricing = $this->pricing() + [
+            'mode' => PrintPricing::MODE_SIMPLE,
+            'blank_technique_prices' => [1 => [1 => null]],
+        ];
+
+        $result = PrintPricing::quote(
+            $this->design([$this->place('front', 0, 0, 100, 100)]),
+            $pricing,
+        );
+
+        $this->assertSame(0, $result['unit_price']);
+        $this->assertStringContainsString('chưa có giá', $result['errors'][0]);
+    }
 }

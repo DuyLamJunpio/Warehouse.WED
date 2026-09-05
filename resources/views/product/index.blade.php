@@ -1,4 +1,25 @@
 <x-app-layout>
+    @php
+        $variantQuickSizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Freesize'];
+        $variantQuickColors = ['Trắng', 'Kem', 'Đỏ Tươi', 'Đỏ Đô', 'Hồng Pastel', 'Đen', 'Nâu', 'Xanh Lá Đậm'];
+        $variantCombinationPresets = [
+            [
+                'label' => 'Áo nhiều màu S-4XL',
+                'count' => '56 biến thể',
+                'value' => 'S,M,L,XL,2XL,3XL,4XL | Trắng/Kem/Đỏ Tươi/Đỏ Đô/Hồng Pastel/Đen/Nâu/Xanh Lá Đậm',
+            ],
+            [
+                'label' => 'Áo basic S-XL',
+                'count' => '12 biến thể',
+                'value' => 'S,M,L,XL | Trắng/Kem/Đen',
+            ],
+            [
+                'label' => 'Freesize nhiều màu',
+                'count' => '8 biến thể',
+                'value' => 'Freesize | Trắng/Kem/Đỏ Tươi/Đỏ Đô/Hồng Pastel/Đen/Nâu/Xanh Lá Đậm',
+            ],
+        ];
+    @endphp
     {{-- Page Header & Breadcrumb --}}
     <div class="mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -280,29 +301,51 @@
                     </div>
 
                     {{-- Quick Suggestion Chips --}}
-                    <div class="space-y-2 text-xs">
+                    <div class="space-y-3 text-xs">
                         <div class="flex flex-wrap items-center gap-1.5">
                             <span class="text-slate-400 font-medium mr-1">Size gợi ý:</span>
-                            @foreach (['S', 'M', 'L', 'XL', '2XL', 'Freesize'] as $sz)
-                                <button type="button" class="btn-chip-size px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-val="{{ $sz }}">
+                            @foreach ($variantQuickSizes as $sz)
+                                <button type="button" class="btn-chip-size px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-add" data-val="{{ $sz }}">
                                     + {{ $sz }}
                                 </button>
                             @endforeach
                         </div>
                         <div class="flex flex-wrap items-center gap-1.5">
                             <span class="text-slate-400 font-medium mr-1">Màu gợi ý:</span>
-                            @foreach (['Đen', 'Trắng', 'Be', 'Xanh Navy', 'Hồng', 'Nâu', 'Xám', 'Đỏ'] as $cl)
-                                <button type="button" class="btn-chip-color px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-val="{{ $cl }}">
+                            @foreach ($variantQuickColors as $cl)
+                                <button type="button" class="btn-chip-color px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-add" data-val="{{ $cl }}">
                                     + {{ $cl }}
                                 </button>
                             @endforeach
                         </div>
+                        <div class="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-3 space-y-2 dark:border-indigo-900/70 dark:bg-indigo-950/20">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Gợi ý tổ hợp:</span>
+                                @foreach ($variantCombinationPresets as $preset)
+                                    <button type="button"
+                                        class="btn-variant-preset inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white text-indigo-700 border border-indigo-100 hover:border-indigo-400 hover:bg-indigo-50 dark:bg-slate-800 dark:text-indigo-300 dark:border-indigo-900/70 dark:hover:bg-indigo-950/50"
+                                        data-input="#variant-generator-add"
+                                        data-val="{{ $preset['value'] }}"
+                                        title="{{ $preset['value'] }}">
+                                        {{ $preset['label'] }}
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ $preset['count'] }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                Bấm một mẫu để điền vào ô bên dưới, có thể sửa lại rồi nhấn Tạo nhanh hoặc Enter.
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="relative">
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="variant-generator-add"
-                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                            placeholder="Gõ nhanh tổ hợp: S,M,L | Đen,Trắng  →  nhấn Enter">
+                            class="block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                            placeholder="VD: S,M,L,XL,2XL,3XL,4XL | Trắng/Kem/Đỏ Tươi/Đỏ Đô">
+                        <button type="button" class="btn-generate-variants inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all"
+                            data-input="#variant-generator-add" data-target="#variants-add">
+                            Tạo nhanh
+                        </button>
                     </div>
 
                     <div class="space-y-2" id="variants-add">
@@ -501,10 +544,52 @@
                         </button>
                     </div>
 
-                    <div class="relative">
+                    {{-- Quick Suggestion Chips --}}
+                    <div class="space-y-3 text-xs">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-slate-400 font-medium mr-1">Size gợi ý:</span>
+                            @foreach ($variantQuickSizes as $sz)
+                                <button type="button" class="btn-chip-size px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-edit" data-val="{{ $sz }}">
+                                    + {{ $sz }}
+                                </button>
+                            @endforeach
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-slate-400 font-medium mr-1">Màu gợi ý:</span>
+                            @foreach ($variantQuickColors as $cl)
+                                <button type="button" class="btn-chip-color px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-edit" data-val="{{ $cl }}">
+                                    + {{ $cl }}
+                                </button>
+                            @endforeach
+                        </div>
+                        <div class="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-3 space-y-2 dark:border-indigo-900/70 dark:bg-indigo-950/20">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Gợi ý tổ hợp:</span>
+                                @foreach ($variantCombinationPresets as $preset)
+                                    <button type="button"
+                                        class="btn-variant-preset inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white text-indigo-700 border border-indigo-100 hover:border-indigo-400 hover:bg-indigo-50 dark:bg-slate-800 dark:text-indigo-300 dark:border-indigo-900/70 dark:hover:bg-indigo-950/50"
+                                        data-input="#variant-generator-edit"
+                                        data-val="{{ $preset['value'] }}"
+                                        title="{{ $preset['value'] }}">
+                                        {{ $preset['label'] }}
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ $preset['count'] }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                Bấm một mẫu để điền vào ô bên dưới, có thể sửa lại rồi nhấn Tạo nhanh hoặc Enter.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="variant-generator-edit"
-                            class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                            placeholder="Gõ nhanh tổ hợp: S,M,L | Đen,Trắng  →  nhấn Enter">
+                            class="block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                            placeholder="VD: S,M,L,XL,2XL,3XL,4XL | Trắng/Kem/Đỏ Tươi/Đỏ Đô">
+                        <button type="button" class="btn-generate-variants inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all"
+                            data-input="#variant-generator-edit" data-target="#variants-edit">
+                            Tạo nhanh
+                        </button>
                     </div>
 
                     <div class="space-y-2" id="variants-edit">
@@ -570,35 +655,99 @@
 
             // Gợi ý chips nhanh
             $(document).on('click', '.btn-chip-size', function() {
-                const target = $(this).closest('.space-y-4').find('#variants-add');
-                target.append(variantRow({ size: $(this).data('val'), color: '', quantity: 0 }));
-            });
-            $(document).on('click', '.btn-chip-color', function() {
-                const target = $(this).closest('.space-y-4').find('#variants-add');
-                target.append(variantRow({ size: '', color: $(this).data('val'), quantity: 0 }));
+                const target = $($(this).data('target'));
+                const size = $(this).attr('data-val');
+                if (!variantExists(target, size, '')) {
+                    target.append(variantRow({ size: size, color: '', quantity: 0 }));
+                }
             });
 
-            // Generator: S,M,L | Đen,Trắng
+            $(document).on('click', '.btn-chip-color', function() {
+                const target = $($(this).data('target'));
+                const color = $(this).attr('data-val');
+                if (!variantExists(target, '', color)) {
+                    target.append(variantRow({ size: '', color: color, quantity: 0 }));
+                }
+            });
+
+            const normalizeVariantValue = (value) => String(value || '').trim().toLowerCase();
+
+            const variantExists = (container, size, color) => {
+                const wantedSize = normalizeVariantValue(size);
+                const wantedColor = normalizeVariantValue(color);
+                let exists = false;
+
+                container.find('.variant-row').each(function() {
+                    const row = $(this);
+                    const rowSize = normalizeVariantValue(row.find('input[name*="[size]"]').val());
+                    const rowColor = normalizeVariantValue(row.find('input[name*="[color]"]').val());
+
+                    if (rowSize === wantedSize && rowColor === wantedColor) {
+                        exists = true;
+                        return false;
+                    }
+                });
+
+                return exists;
+            };
+
+            const parseVariantGenerator = (value) => {
+                const parts = String(value || '').split('|');
+                const split = (s) => String(s || '').split(/[,;/\n]+/)
+                    .map(v => v.trim().slice(0, 50))
+                    .filter(Boolean);
+
+                return {
+                    sizes: split(parts[0]),
+                    colors: split(parts.slice(1).join('|')),
+                };
+            };
+
+            const appendGeneratedVariants = (value, containerId) => {
+                const parsed = parseVariantGenerator(value);
+                if (!parsed.sizes.length && !parsed.colors.length) return 0;
+
+                const container = $(containerId);
+                let added = 0;
+
+                (parsed.sizes.length ? parsed.sizes : ['']).forEach(size => {
+                    (parsed.colors.length ? parsed.colors : ['']).forEach(color => {
+                        if (variantExists(container, size, color)) return;
+
+                        container.append(variantRow({ size: size, color: color, quantity: 0 }));
+                        added++;
+                    });
+                });
+
+                return added;
+            };
+
+            const runVariantGenerator = (inputId, containerId) => {
+                const input = $(inputId);
+                const value = input.val();
+                const added = appendGeneratedVariants(value, containerId);
+
+                if (added > 0) {
+                    input.val('');
+                }
+            };
+
+            $(document).on('click', '.btn-variant-preset', function() {
+                const input = $($(this).data('input'));
+                input.val($(this).attr('data-val')).focus();
+            });
+
+            $(document).on('click', '.btn-generate-variants', function() {
+                runVariantGenerator($(this).data('input'), $(this).data('target'));
+            });
+
+            // Generator: S,M,L | Đen,Trắng hoặc S,M,L | Đen/Trắng
             const bindVariantGenerator = (inputId, containerId) => {
                 $(inputId).on('keydown', function(e) {
                     if (e.key !== 'Enter') return;
                     e.preventDefault();
 
-                    const parts = $(this).val().split('|');
-                    const split = (s) => (s || '').split(/[,;/\n]+/).map(v => v.trim().slice(0, 50)).filter(Boolean);
-                    const sizes = split(parts[0]);
-                    const colors = split(parts[1]);
-
-                    if (!sizes.length && !colors.length) return;
-
-                    const container = $(containerId);
-                    (sizes.length ? sizes : ['']).forEach(s => {
-                        (colors.length ? colors : ['']).forEach(c => {
-                            container.append(variantRow({ size: s, color: c, quantity: 0 }));
-                        });
-                    });
-
-                    $(this).val('');
+                    runVariantGenerator(inputId, containerId);
                 });
             };
 

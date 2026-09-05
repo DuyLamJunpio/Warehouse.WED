@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\PrintDesign;
 use App\Models\StorefrontOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Chỗ lưu đơn cho trang thanh toán của web bán hàng.
@@ -21,6 +23,10 @@ use Illuminate\Support\Facades\DB;
  */
 class StorefrontOrderController extends Controller
 {
+    public function __construct(private CheckoutController $checkout)
+    {
+    }
+
     /**
      * Lưu một đơn mới.
      *
@@ -52,14 +58,92 @@ class StorefrontOrderController extends Controller
             ], 409);
         }
 
-        $order = StorefrontOrder::updateOrCreate(
-            ['ref' => $data['ref']],
-            ['order_code' => $data['order_code'], 'payload' => $data['payload']],
-        );
+        $result = DB::transaction(function () use ($data) {
+            $reservationError = $this->reservePrintDesigns($data['payload'], $data['ref']);
+            if ($reservationError) {
+                return ['error' => $reservationError];
+            }
+
+            $order = StorefrontOrder::updateOrCreate(
+                ['ref' => $data['ref']],
+                ['order_code' => $data['order_code'], 'payload' => $data['payload']],
+            );
+
+            return ['payload' => $order->payload];
+        });
+
+        if (! empty($result['error'])) {
+            return response()->json(['error' => $result['error']], 409);
+        }
 
         StorefrontOrder::prune();
 
-        return response()->json($order->payload, 201);
+        return response()->json($result['payload'], 201);
+    }
+
+    /**
+     * Giữ một mẫu in cho đúng một QR còn hiệu lực, nhưng không tạo Invoice hay
+     * thông báo nào cho nhân viên. Nếu QR cũ đã hết hạn, mẫu chuyển sang phiên mới.
+     */
+    private function reservePrintDesigns(array $payload, string $ref): ?string
+    {
+        $codes = collect((array) data_get($payload, 'cart.prints', []))
+            ->pluck('code')
+            ->filter(fn ($code) => is_string($code) && $code !== '')
+            ->unique()
+            ->values();
+
+        if ($codes->isEmpty()) {
+            return null;
+        }
+
+        $designs = PrintDesign::whereIn('code', $codes)->lockForUpdate()->get()->keyBy('code');
+        if ($designs->count() !== $codes->count()) {
+            return 'Một mẫu in trong giỏ không còn tồn tại. Vui lòng thiết kế lại.';
+        }
+
+        foreach ($codes as $code) {
+            /** @var PrintDesign $design */
+            $design = $designs->get($code);
+
+            if ($design->invoice_id) {
+                return 'Mẫu ' . $code . ' đã được đặt trong một đơn khác.';
+            }
+
+            $previousRef = $design->pending_payment_ref;
+            if (! $previousRef || $previousRef === $ref) {
+                if ($previousRef !== $ref) {
+                    $design->pending_payment_ref = $ref;
+                    $design->save();
+                }
+                continue;
+            }
+
+            $previous = StorefrontOrder::where('ref', $previousRef)->lockForUpdate()->first();
+            $previousPayload = (array) ($previous?->payload ?? []);
+            if (($previousPayload['status'] ?? null) === 'PAID') {
+                return 'Mẫu ' . $code . ' đang được hoàn tất sau một thanh toán trước đó.';
+            }
+
+            if ($previous && $this->paymentIsOpen($previousPayload)) {
+                return 'Mẫu ' . $code . ' đang chờ thanh toán qua một mã QR khác.';
+            }
+
+            // QR cũ hết hạn hoặc bản ghi đã được dọn: nhận giữ cho phiên mới.
+            $design->pending_payment_ref = $ref;
+            $design->save();
+        }
+
+        return null;
+    }
+
+    private function paymentIsOpen(array $payload): bool
+    {
+        $status = $payload['status'] ?? null;
+        $expiresAt = (int) ($payload['expiresAt'] ?? 0);
+
+        return in_array($status, ['PENDING', 'PROCESSING', 'UNDERPAID'], true)
+            && $expiresAt > now()->getTimestampMs();
     }
 
     /** Đơn khách đang mở, tra theo mã trên URL. */
@@ -80,6 +164,115 @@ class StorefrontOrderController extends Controller
         return $order
             ? response()->json($order->payload)
             : response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+    }
+
+    /**
+     * Tạo đơn quản trị sau khi PayOS đã xác nhận thanh toán.
+     *
+     * Webhook và trang thanh toán có thể cùng nhìn thấy trạng thái PAID. Khoá
+     * dòng StorefrontOrder giúp chúng gọi cùng lúc vẫn chỉ sinh duy nhất một
+     * Invoice và một lần đưa mẫu in vào hàng đợi duyệt.
+     */
+    public function fulfill(string $ref)
+    {
+        try {
+            $result = DB::transaction(function () use ($ref) {
+                $order = StorefrontOrder::where('ref', $ref)->lockForUpdate()->first();
+                if (! $order) {
+                    return ['status' => 404, 'body' => ['error' => 'Không tìm thấy đơn hàng.']];
+                }
+
+                $payload = $order->payload;
+                if (($payload['status'] ?? null) !== 'PAID') {
+                    return ['status' => 409, 'body' => ['error' => 'Đơn chưa được xác nhận thanh toán.']];
+                }
+
+                if (! empty($payload['warehouseOrderCode'])) {
+                    return [
+                        'status' => 200,
+                        'body' => [
+                            'order_code' => $payload['warehouseOrderCode'],
+                            'already_fulfilled' => true,
+                        ],
+                    ];
+                }
+
+                // Tái dùng đúng bộ máy tạo Invoice, kiểm kho và gắn mẫu hiện có.
+                // Request này không đi qua route công khai: dữ liệu lấy từ payload nội bộ đã
+                // lưu và API này đã nằm sau `storefront.secret`.
+                $created = $this->checkout->store(
+                    Request::create('/api/checkout', 'POST', $this->checkoutPayload($payload)),
+                );
+                $createdBody = $created->getData(true);
+                if ($created->getStatusCode() >= 400) {
+                    return [
+                        'status' => $created->getStatusCode(),
+                        'body' => ['error' => $createdBody['error'] ?? 'Không tạo được đơn hàng.'],
+                    ];
+                }
+
+                $orderCode = (string) ($createdBody['order_code'] ?? '');
+                if ($orderCode === '') {
+                    throw new \RuntimeException('Checkout không trả về mã đơn quản trị.');
+                }
+
+                $paid = $this->checkout->markPaid($orderCode);
+                if ($paid->getStatusCode() >= 400) {
+                    $paidBody = $paid->getData(true);
+                    throw new \RuntimeException($paidBody['error'] ?? 'Không ghi nhận được thanh toán.');
+                }
+
+                $payload['warehouseOrderCode'] = $orderCode;
+                $order->payload = $payload;
+                $order->save();
+
+                return ['status' => 201, 'body' => ['order_code' => $orderCode]];
+            });
+
+            return response()->json($result['body'], $result['status']);
+        } catch (\Throwable $error) {
+            Log::error('Hoàn tất đơn web đã thanh toán thất bại.', [
+                'ref' => $ref,
+                'error' => $error->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Không ghi nhận được đơn hàng đã thanh toán.'], 500);
+        }
+    }
+
+    /** Nắn payload nội bộ của Next thành hình dạng CheckoutController nhận. */
+    private function checkoutPayload(array $payload): array
+    {
+        $customer = (array) ($payload['customer'] ?? []);
+        $cart = (array) ($payload['cart'] ?? []);
+        $refund = (array) ($payload['refund'] ?? []);
+
+        return [
+            'customer_name' => (string) ($customer['fullName'] ?? ''),
+            'customer_phone' => (string) ($customer['phone'] ?? ''),
+            'customer_email' => (string) ($customer['email'] ?? ''),
+            'province' => (string) ($customer['city'] ?? ''),
+            'ward' => (string) ($customer['ward'] ?? ''),
+            'address' => (string) ($customer['address'] ?? ''),
+            'note' => (string) ($customer['note'] ?? ''),
+            'payment_method' => ($payload['paymentMethod'] ?? null) === 'cod' ? 'cod' : 'banking',
+            'storefront_ref' => (string) ($payload['ref'] ?? ''),
+            'refund_bank_name' => (string) ($refund['bankName'] ?? ''),
+            'refund_account_number' => (string) ($refund['accountNumber'] ?? ''),
+            'refund_account_name' => (string) ($refund['accountName'] ?? ''),
+            'items' => collect((array) ($cart['lines'] ?? []))
+                ->map(fn (array $line) => [
+                    'variant_id' => (int) ($line['id'] ?? 0),
+                    'quantity' => (int) ($line['qty'] ?? 0),
+                ])
+                ->values()
+                ->all(),
+            'print_design_codes' => collect((array) ($cart['prints'] ?? []))
+                ->pluck('code')
+                ->filter(fn ($code) => is_string($code) && $code !== '')
+                ->values()
+                ->all(),
+        ];
     }
 
     /**

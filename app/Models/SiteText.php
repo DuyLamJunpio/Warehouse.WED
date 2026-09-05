@@ -7,13 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Chữ chạy ngang và tiêu đề các khối trên trang chủ.
+ * Dải thông báo trên cùng và tiêu đề các khối trên trang chủ.
  */
 class SiteText extends Model
 {
     use HasFactory;
 
-    public const GROUP_MARQUEE = 'marquee';
     /** Dải chữ nhỏ chạy trên cùng, hiện ở MỌI trang chứ không riêng trang chủ. */
     public const GROUP_ANNOUNCEMENT = 'announcement';
     public const GROUP_HEADING = 'heading';
@@ -49,11 +48,6 @@ class SiteText extends Model
             ->where(fn($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
             ->where(fn($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
             ->orderBy('sort_order');
-    }
-
-    public function scopeMarquee(Builder $query): Builder
-    {
-        return $query->where('group', self::GROUP_MARQUEE);
     }
 
     public function scopeHeading(Builder $query): Builder

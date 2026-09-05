@@ -75,7 +75,7 @@ class StorefrontController extends Controller
     }
 
     /**
-     * Nội dung trang chủ chỉnh từ trang quản trị: slide hero, chữ chạy, tiêu đề.
+     * Nội dung trang chủ chỉnh từ trang quản trị: slide hero, bộ sưu tập và tiêu đề.
      *
      * Chỉ trả về những mục đang trong thời gian hiển thị. Tiêu đề chưa ai sửa
      * thì không có trong danh sách, web tự dùng chữ mặc định của nó.
@@ -95,19 +95,29 @@ class StorefrontController extends Controller
             'cta_link' => $b->cta_link,
         ])->values();
 
-        // Khối bộ sưu tập trên trang chủ chỉ có một chỗ, lấy cái đang hiện đầu tiên.
-        $collection = Collection::live()->with(['products' => fn($q) => $q->where('status', '!=', 0)])->first();
-
-        return response()->json([
-            'banners' => $banners,
-            'collection' => $collection ? [
+        // Mỗi bộ sưu tập đang hiện được dựng thành một khối riêng trên trang chủ.
+        $collections = Collection::live()
+            ->with(['products' => fn($q) => $q->where('status', '!=', 0)])
+            ->get()
+            ->map(fn($collection) => [
+                'id' => $collection->id,
                 'title' => $collection->title,
                 'subtitle' => $collection->subtitle,
+                'image' => $collection->image_path ? $this->url($collection->image_path) : null,
                 'cta_label' => $collection->cta_label,
                 'cta_link' => $collection->cta_link,
                 'product_slugs' => $collection->products->pluck('slug')->values(),
-            ] : null,
-            'marquee' => SiteText::marquee()->live()->pluck('value')->values(),
+            ])
+            ->values();
+
+        return response()->json([
+            'banners' => $banners,
+            // Giữ khoá đơn để các bản web bán hàng cũ vẫn đọc được bộ đầu tiên.
+            'collection' => $collections->first(),
+            'collections' => $collections,
+            // Marquee giữa trang chủ đã ngừng sử dụng. Giữ lại khoá với mảng
+            // rỗng để các phiên bản web bán hàng cũ không bị lỗi khi đọc API.
+            'marquee' => [],
             'announcement' => SiteText::announcement()->live()->pluck('value')->values(),
             'headings' => SiteText::heading()->live()->pluck('value', 'key'),
             // Hình thức thanh toán và phí giao hàng do trang quản trị quyết định.

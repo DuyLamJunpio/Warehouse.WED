@@ -43,6 +43,9 @@ class CheckoutController extends Controller
             'address' => 'required|string|max:255',
             'note' => 'nullable|string|max:1000',
             'payment_method' => 'nullable|string|max:50',
+            // Chỉ StorefrontOrderController gọi nội bộ sau khi PayOS xác nhận. Nó phải
+            // khớp với khóa QR tạm của từng mẫu in để không nhận tiền trùng hai lần.
+            'storefront_ref' => 'nullable|string|max:32|regex:/^[A-Za-z0-9]+$/',
 
             /*
              * `items` được phép rỗng KHI đơn có mã thiết kế in: khách đặt in áo
@@ -100,6 +103,20 @@ class CheckoutController extends Controller
                     'success' => false,
                     'error' => 'Mẫu ' . $taken->pluck('code')->implode(', ') . ' đã được đặt rồi. Vui lòng thiết kế mẫu mới.',
                 ], 409);
+            }
+
+            if (! empty($data['storefront_ref'])) {
+                $reservedElsewhere = $printDesigns->filter(
+                    fn (PrintDesign $d) => $d->pending_payment_ref !== $data['storefront_ref'],
+                );
+
+                if ($reservedElsewhere->isNotEmpty()) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Mẫu ' . $reservedElsewhere->pluck('code')->implode(', ')
+                            . ' không còn thuộc phiên thanh toán này.',
+                    ], 409);
+                }
             }
         }
 
@@ -253,9 +270,14 @@ class CheckoutController extends Controller
              * Ở đây tồn kho và tiền là hai việc tách rời.
              */
             foreach ($printDesigns as $printDesign) {
-                // Gắn mẫu vào hoá đơn. Đây cũng chính là dấu "đã đặt rồi" mà lần
-                // đặt sau đọc để chặn tính tiền hai lần.
-                $printDesign->update(['invoice_id' => $invoice->id]);
+                // Chỉ đến đây mẫu mới thuộc một đơn thật. `store()` chỉ được gọi sau
+                // khi PayOS đã xác nhận, nên chuyển draft → pending tại đây là lúc duy nhất
+                // nó được phép vào hàng đợi duyệt. `invoice_id` cũng chặn mẫu được đặt hai lần.
+                $printDesign->update([
+                    'invoice_id' => $invoice->id,
+                    'pending_payment_ref' => null,
+                    'review_status' => PrintDesign::STATUS_PENDING,
+                ]);
 
                 if (!$printDesign->blank?->product_id) {
                     continue;
@@ -361,8 +383,10 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Khách trả tiền xong thì đơn không còn là "chờ xác nhận" nữa.
-            if ($order->order_status === Invoice::STATUS_PENDING) {
+            // Đơn thường được xác nhận ngay sau khi đã trả tiền. Riêng đơn in phải giữ
+            // "chờ xác nhận" cho tới khi nhân viên duyệt xong file; PrintDesignController sẽ
+            // chuyển nó sang confirmed khi tất cả mẫu đều được duyệt.
+            if ($order->order_status === Invoice::STATUS_PENDING && ! $order->printDesigns()->exists()) {
                 $order->order_status = Invoice::STATUS_CONFIRMED;
             }
 

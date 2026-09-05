@@ -32,7 +32,7 @@ class PrintStorefrontController extends Controller
     {
         $pricing = PrintPricing::current();
 
-        $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants'])
+        $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants', 'category'])
             ->where('is_active', true)
             ->orderBy('sort_order')->orderBy('id')
             ->get()
@@ -50,6 +50,10 @@ class PrintStorefrontController extends Controller
             'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
             'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->values(),
+            'pricing_mode' => PrintPricing::MODE_SIMPLE,
+            'blank_technique_prices' => $pricing['blank_technique_prices'] ?? [],
+            // Giữ các trường cũ để phiên bản storefront cũ không lỗi khi đọc
+            // catalogue trong lúc được nâng cấp sang bảng giá gọn.
             'tiers' => $pricing['tiers'] ?? [],
             'cells' => $pricing['cells'] ?? [],
             'rules' => $pricing['rules'] ?? [],
@@ -81,6 +85,24 @@ class PrintStorefrontController extends Controller
             'description' => $blank->description,
             'base_price' => $blank->effectiveBasePrice(),
             'product_id' => $blank->product_id,
+            /*
+             * Danh mục để web bán hàng dựng hàng nút lọc trên trang In áo.
+             *
+             * Bên đó KHÔNG có danh sách danh mục riêng: nó gom từ chính các phôi
+             * gửi sang, nên chip lọc nào hiện ra cũng chắc chắn có phôi đặt được
+             * đằng sau. Phôi chưa xếp danh mục trả `null` và rơi vào nhóm "Khác".
+             *
+             * Danh mục xoá mềm coi như chưa xếp: quan hệ category() cố ý
+             * `withTrashed` để trang quản trị còn đọc được tên cũ, nhưng bày một
+             * chip trỏ vào danh mục đã xoá thì khách bấm vào một cái tên chết.
+             */
+            'category' => $blank->category && !$blank->category->trashed()
+                ? [
+                    'id' => $blank->category->id,
+                    'name' => $blank->category->name,
+                    'slug' => $blank->category->slug,
+                ]
+                : null,
             'frame_width_mm' => $blank->frame_width_mm,
             'frame_height_mm' => $blank->frame_height_mm,
             'moq' => $blank->moq,
@@ -90,7 +112,9 @@ class PrintStorefrontController extends Controller
             // Nối kho thì size lấy từ biến thể thật; không nối thì phôi chỉ có
             // một cỡ duy nhất, và nói thẳng ra thay vì để danh sách rỗng.
             'sizes' => $sizeMap ? array_keys($sizeMap) : ['Một cỡ'],
-            'size_surcharge' => $sizeMap,
+            // Size vẫn gửi sang để khách chọn áo, nhưng không còn làm thay đổi giá.
+            'size_surcharge' => array_fill_keys(array_keys($sizeMap), 0),
+            'size_pricing' => 'flat',
             'colors' => $blank->colors->where('is_active', true)->values()->map(fn ($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
@@ -165,6 +189,16 @@ class PrintStorefrontController extends Controller
      */
     private function quoteFor(PrintBlank $blank, array $data): array
     {
+        if (!$blank->techniques()->whereKey($data['technique_id'])->exists()) {
+            return [
+                'lines' => [],
+                'unit_price' => 0,
+                'total' => 0,
+                'errors' => ['Kỹ thuật này chưa được bật cho phôi đã chọn.'],
+                'warnings' => [],
+            ];
+        }
+
         $color = $blank->colors->firstWhere('name', $data['color_name']);
         $assets = PrintAsset::whereIn('id', collect($data['placements'])->pluck('asset_id')->filter())
             ->get()->keyBy('id');
@@ -262,9 +296,10 @@ class PrintStorefrontController extends Controller
      * Giá được ĐÓNG BĂNG tại đây cùng id phiên bản bảng giá. Chủ shop sửa giá
      * sau đó thì đơn này vẫn giữ nguyên con số khách đã nhìn thấy lúc trả tiền.
      *
-     * Trạng thái vào thẳng `pending`: đơn in không được nhảy từ "đã thanh toán"
-     * sang "đang in" mà không có người xem file. Bắt lỗi ở đây rẻ hơn in hỏng
-     * 50 áo.
+     * Mẫu mới chỉ là `draft`: khách còn có thể bỏ giỏ hoặc không thanh toán, nên nó
+     * không được phép xuất hiện trong hàng đợi nhân viên duyệt. Lúc thanh toán PayOS
+     * đã xác nhận, luồng hoàn tất đơn mới gắn mẫu vào hoá đơn, chuyển nó sang
+     * `pending`.
      */
     public function storeDesign(Request $request)
     {
@@ -325,7 +360,7 @@ class PrintStorefrontController extends Controller
             'price_breakdown' => $quote['lines'],
             'unit_price' => $quote['unit_price'],
             'total_price' => $quote['total'],
-            'review_status' => PrintDesign::STATUS_PENDING,
+            'review_status' => PrintDesign::STATUS_DRAFT,
         ]);
 
         return response()->json([
