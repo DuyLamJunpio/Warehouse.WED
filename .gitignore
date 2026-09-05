@@ -9,6 +9,11 @@
 .env.backup
 .env.production
 .phpunit.result.cache
+
+# Database backups are kept outside Git and should be copied to separate storage.
+/backups/database/*.dump
+/backups/database/*.sql
+/backups/database/*.gpg
 Homestead.json
 Homestead.yaml
 auth.json
