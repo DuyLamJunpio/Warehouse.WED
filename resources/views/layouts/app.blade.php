@@ -321,6 +321,16 @@
                                     <span>Khách hàng & VIP</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="{{ route('vouchers.index') }}"
+                                    class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('vouchers.*') ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-white font-medium' }}">
+                                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('vouchers.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 8h.01M15 12h.01" />
+                                    </svg>
+                                    <span>Voucher & Khuyến mãi</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
@@ -489,4 +499,3 @@
 </body>
 
 </html>
-

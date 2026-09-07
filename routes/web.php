@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatisticalController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\VoucherController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -154,6 +155,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/search-customer', [CustomerController::class, 'search'])->name('customer.search');
     Route::get('/customer/{id}/profile', [CustomerController::class, 'show'])->name('customer.show');
     Route::post('/customer/{id}/note', [CustomerController::class, 'updateNote'])->name('customer.note');
+
+    // Voucher: không có route xoá dữ liệu. Khi ngừng chương trình chỉ tắt mã để
+    // giữ nguyên lịch sử sử dụng và có thể bật lại khi cần.
+    Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
+    Route::post('/vouchers', [VoucherController::class, 'store'])->name('vouchers.store');
+    Route::post('/vouchers/{voucher}', [VoucherController::class, 'update'])->name('vouchers.update');
+    Route::post('/vouchers/{voucher}/toggle', [VoucherController::class, 'toggle'])->name('vouchers.toggle');
+    Route::post('/vouchers/{voucher}/deactivate', [VoucherController::class, 'deactivate'])->name('vouchers.deactivate');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
