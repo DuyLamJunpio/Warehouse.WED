@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +44,9 @@ class CheckoutController extends Controller
             'address' => 'required|string|max:255',
             'note' => 'nullable|string|max:1000',
             'payment_method' => 'nullable|string|max:50',
+            // Mã này chỉ đến từ route handler của storefront (sau bí mật dùng
+            // chung). Giá trị giảm vẫn được dựng lại ở transaction bên dưới.
+            'voucher_code' => 'nullable|string|max:50|regex:/^[A-Za-z0-9_-]+$/',
             // Chỉ StorefrontOrderController gọi nội bộ sau khi PayOS xác nhận. Nó phải
             // khớp với khóa QR tạm của từng mẫu in để không nhận tiền trùng hai lần.
             'storefront_ref' => 'nullable|string|max:32|regex:/^[A-Za-z0-9]+$/',
@@ -152,6 +156,7 @@ class CheckoutController extends Controller
         $itemCount = array_sum($wanted) + (int) $printDesigns->sum('qty');
         $shippingFee = Setting::shippingFeeFor($methodKey, $itemCount, $salesSettings);
         $shopShippingFee = Setting::shopShippingCost($methodKey, $itemCount, $salesSettings);
+        $shippingBeforeVoucher = $shippingFee;
 
         DB::beginTransaction();
         try {
@@ -198,6 +203,30 @@ class CheckoutController extends Controller
                 $subtotal += $unitPrice * $quantity;
             }
 
+            $discount = 0;
+            $voucherCode = isset($data['voucher_code']) ? strtoupper(trim((string) $data['voucher_code'])) : null;
+            if ($voucherCode) {
+                // Khoá đúng voucher trước khi kiểm lượt dùng. Hai khách thanh
+                // toán cùng mã giới hạn không thể cùng vượt qua lượt cuối.
+                $voucher = Voucher::where('code', $voucherCode)->lockForUpdate()->first();
+                if (! $voucher) {
+                    throw new \RuntimeException('Mã giảm giá không hợp lệ.');
+                }
+
+                $quote = $voucher->quote($subtotal + $printFee, $shippingFee);
+                if (isset($quote['error'])) {
+                    throw new \RuntimeException($quote['error']);
+                }
+
+                $discount = (int) $quote['discount'];
+                $shippingFee = (int) $quote['shipping'];
+                // Miễn phí vận chuyển là shop chịu thêm phần khách đáng lẽ trả.
+                if ($shippingFee < $shippingBeforeVoucher) {
+                    $shopShippingFee += $shippingBeforeVoucher - $shippingFee;
+                }
+                $voucher->increment('used_count');
+            }
+
             $customer = Customer::mergeByPhone([
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
@@ -207,17 +236,23 @@ class CheckoutController extends Controller
                 'ward' => $data['ward'],
             ]);
 
+            $note = $data['note'] ?? null;
+            if ($voucherCode) {
+                $note = trim(($note ? $note . "\n" : '') . "Voucher: {$voucherCode}");
+            }
+
             $invoice = Invoice::create([
                 'invoice_type' => Invoice::TYPE_ORDER,
                 'order_code' => $this->generateOrderCode(),
                 'order_status' => Invoice::STATUS_PENDING,
                 'customer_id' => $customer->id,
                 'user_id' => $this->systemUserId(),
-                'total_amount' => $subtotal + $printFee + $shippingFee,
+                'total_amount' => $subtotal + $printFee + $shippingFee - $discount,
                 // Tách riêng tiền in khỏi tiền hàng: lúc tính lãi phải biết
                 // khoản nào là phôi và khoản nào là công in. Đầu mối tới từng
                 // mẫu đi chiều ngược lại, gắn ngay sau khi có id hoá đơn.
                 'print_fee' => $printFee,
+                'discount' => $discount,
                 'shipping_fee' => $shippingFee,
                 // Khoản shop tự gánh: không cộng vào tiền khách trả, nhưng vẫn phải
                 // lưu lại, nếu không thì lúc tính lãi khoản này biến mất.
@@ -234,7 +269,7 @@ class CheckoutController extends Controller
                     : now()->addMinutes((int) config('services.storefront.payment_window_minutes', 30)),
                 // Chưa nhận được tiền: đơn chỉ được xác nhận sau khi chuyển khoản thành công.
                 'pay_status' => 0,
-                'note' => $data['note'] ?? null,
+                'note' => $note,
                 'signature_name' => $data['customer_name'],
             ]);
 
@@ -315,7 +350,8 @@ class CheckoutController extends Controller
                 'subtotal' => $subtotal,
                 'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
-                'total_amount' => $subtotal + $printFee + $shippingFee,
+                'discount' => $discount,
+                'total_amount' => $subtotal + $printFee + $shippingFee - $discount,
                 'message' => 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
             ], 201);
         } catch (\RuntimeException $e) {

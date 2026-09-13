@@ -11,6 +11,7 @@ use App\Http\Controllers\API\CheckoutController;
 use App\Http\Controllers\API\PrintStorefrontController;
 use App\Http\Controllers\API\StorefrontController;
 use App\Http\Controllers\API\StorefrontOrderController;
+use App\Http\Controllers\API\StorefrontVoucherController;
 use App\Http\Controllers\API\CustomerController;
 use App\Http\Controllers\API\InvoiceController;
 use App\Http\Controllers\API\LocationController;
@@ -201,4 +202,12 @@ Route::middleware(['throttle:600,1', 'storefront.secret'])
             Route::post('/email-claim', [StorefrontOrderController::class, 'claimEmail']);
             Route::delete('/email-claim', [StorefrontOrderController::class, 'releaseEmail']);
         });
+    });
+
+/* Voucher rules are database-owned; only the storefront server may read them. */
+Route::middleware(['throttle:120,1', 'storefront.secret'])
+    ->prefix('storefront/vouchers')
+    ->group(function () {
+        Route::get('/', [StorefrontVoucherController::class, 'index']);
+        Route::post('/validate', [StorefrontVoucherController::class, 'validateVoucher']);
     });

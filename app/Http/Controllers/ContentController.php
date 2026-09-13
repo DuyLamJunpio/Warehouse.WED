@@ -9,7 +9,9 @@ use App\Models\Product;
 use App\Models\SiteText;
 use App\Services\StorefrontNotifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -158,6 +160,79 @@ class ContentController extends Controller
         return response()->json(['success' => 'Đã đổi thứ tự.']);
     }
 
+    /**
+     * Lưu thứ tự kéo-thả. Danh sách phải đầy đủ để không vô tình làm xáo trộn
+     * các slide mà người dùng không nhìn thấy trên màn hình.
+     */
+    public function reorderBanners(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct', 'exists:banners,id'],
+        ]);
+
+        $ids = array_map('intval', $data['ids']);
+        if (count($ids) !== Banner::count()) {
+            return response()->json(['error' => 'Danh sách slide không còn đồng bộ. Vui lòng tải lại trang rồi thử lại.'], 422);
+        }
+
+        DB::transaction(function () use ($ids) {
+            foreach ($ids as $order => $id) {
+                Banner::whereKey($id)->update(['sort_order' => $order + 1]);
+            }
+        });
+
+        $this->notifier->markDirty();
+
+        return response()->json(['success' => 'Đã lưu thứ tự slide.']);
+    }
+
+    /** Bật/tắt nhanh mà không cần mở màn hình chỉnh sửa. */
+    public function toggleBanner(string $id)
+    {
+        $banner = Banner::findOrFail($id);
+        $banner->update(['status' => ! $banner->status]);
+        $this->notifier->markDirty();
+
+        return response()->json([
+            'success' => $banner->status ? 'Slide đã được bật hiển thị.' : 'Slide đã được tạm ẩn.',
+            'status' => $banner->status,
+        ]);
+    }
+
+    /**
+     * Tạo bản nháp từ slide đang có, kể cả ảnh/video đi kèm. File được sao
+     * riêng để việc thay hoặc xoá ảnh ở một slide không ảnh hưởng slide kia.
+     */
+    public function duplicateBanner(string $id)
+    {
+        $source = Banner::findOrFail($id);
+        if (!Storage::exists($source->media_path)) {
+            return response()->json(['error' => 'Không tìm thấy file banner gốc để nhân bản. Vui lòng tải lại ảnh hoặc video cho slide này.'], 422);
+        }
+
+        $copy = $source->replicate(['sort_order']);
+
+        foreach (['media_path', 'poster_path', 'mobile_path'] as $column) {
+            $copy->$column = $this->copyBannerFile($source->$column);
+        }
+
+        if (!$copy->media_path) {
+            return response()->json(['error' => 'Không thể sao chép file banner. Vui lòng thử lại.'], 422);
+        }
+
+        $copy->heading = $source->heading ? $source->heading.' (bản sao)' : null;
+        $copy->sort_order = (int) Banner::max('sort_order') + 1;
+        // Bản sao luôn là nháp: không tự xuất hiện hoặc giữ lại lịch cũ.
+        $copy->status = false;
+        $copy->starts_at = null;
+        $copy->ends_at = null;
+        $copy->save();
+        $this->notifier->markDirty();
+
+        return response()->json(['success' => 'Đã tạo bản sao ở cuối danh sách. Slide mới đang tạm ẩn để bạn kiểm tra trước.']);
+    }
+
     private function laVideo(Request $request): bool
     {
         return str_starts_with((string) $request->file('media')->getMimeType(), 'video/');
@@ -197,6 +272,21 @@ class ContentController extends Controller
         return $request->hasFile($field)
             ? $request->file($field)->store('public/banners')
             : null;
+    }
+
+    private function copyBannerFile(?string $path): ?string
+    {
+        if (! $path || ! Storage::exists($path)) {
+            return null;
+        }
+
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $target = 'public/banners/'.Str::uuid().($extension ? '.'.$extension : '');
+        if (!Storage::copy($path, $target)) {
+            return null;
+        }
+
+        return $target;
     }
 
     // ── Thông báo trên cùng ──────────────────────────────────────────

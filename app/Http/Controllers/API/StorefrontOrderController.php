@@ -256,6 +256,7 @@ class StorefrontOrderController extends Controller
             'address' => (string) ($customer['address'] ?? ''),
             'note' => (string) ($customer['note'] ?? ''),
             'payment_method' => ($payload['paymentMethod'] ?? null) === 'cod' ? 'cod' : 'banking',
+            'voucher_code' => (string) data_get($cart, 'voucherCode') ?: null,
             'storefront_ref' => (string) ($payload['ref'] ?? ''),
             'refund_bank_name' => (string) ($refund['bankName'] ?? ''),
             'refund_account_number' => (string) ($refund['accountNumber'] ?? ''),
