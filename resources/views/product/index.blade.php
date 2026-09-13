@@ -260,16 +260,23 @@
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                 Giá vốn / Giá nhập (VNĐ)
                             </label>
-                            <input type="text" inputmode="numeric" name="import_price" placeholder="0"
+                            <input type="text" inputmode="numeric" name="import_price" placeholder="Để trống nếu chưa có"
                                 class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                                Giá khuyến mãi (VNĐ)
+                                Giá khuyến mãi
                             </label>
-                            <input type="text" inputmode="numeric" name="discount_price" placeholder="Bỏ trống nếu không giảm"
-                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <div class="flex gap-2">
+                                <select name="discount_type" class="discount-type w-28 shrink-0 text-xs rounded-xl border-slate-300 bg-white px-2.5 py-2.5 focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                    <option value="amount">Giảm tiền</option>
+                                    <option value="percent">Giảm %</option>
+                                </select>
+                                <input type="text" inputmode="numeric" name="discount_value" placeholder="Số tiền giảm"
+                                    class="discount-value o-tien min-w-0 flex-1 text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            </div>
+                            <p class="discount-preview mt-1 text-[11px] text-slate-500 dark:text-slate-400">Để trống nếu không giảm.</p>
                         </div>
                     </div>
 
@@ -523,16 +530,23 @@
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                 Giá vốn / Giá nhập (VNĐ)
                             </label>
-                            <input type="text" inputmode="numeric" name="import_price" id="import_price_edit"
+                            <input type="text" inputmode="numeric" name="import_price" id="import_price_edit" placeholder="Để trống nếu chưa có"
                                 class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                                Giá khuyến mãi (VNĐ)
+                                Giá khuyến mãi
                             </label>
-                            <input type="text" inputmode="numeric" name="discount_price" id="discount_price_edit"
-                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <div class="flex gap-2">
+                                <select name="discount_type" class="discount-type w-28 shrink-0 text-xs rounded-xl border-slate-300 bg-white px-2.5 py-2.5 focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                    <option value="amount">Giảm tiền</option>
+                                    <option value="percent">Giảm %</option>
+                                </select>
+                                <input type="text" inputmode="numeric" name="discount_value" id="discount_value_edit" placeholder="Số tiền giảm"
+                                    class="discount-value o-tien min-w-0 flex-1 text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            </div>
+                            <p class="discount-preview mt-1 text-[11px] text-slate-500 dark:text-slate-400">Để trống nếu không giảm.</p>
                         </div>
                     </div>
 
@@ -665,6 +679,52 @@
             const styleQuickSizes = @json($variantQuickSizes);
             const styleQuickColors = @json($variantQuickColors);
             const stylePresets = @json($variantCombinationPresets);
+
+            const renderDiscountPreview = (form) => {
+                const mode = form.find('[name="discount_type"]').val();
+                const rawValue = form.find('[name="discount_value"]').val();
+                const sellPrice = parseInt(String(form.find('[name="sell_price"]').val() || '').replace(/\D/g, ''), 10) || 0;
+                const preview = form.find('.discount-preview');
+
+                if (!rawValue || !sellPrice) {
+                    preview.text('Để trống nếu không giảm.');
+                    return;
+                }
+
+                const reduction = mode === 'percent'
+                    ? Math.round(sellPrice * (parseFloat(rawValue) || 0) / 100)
+                    : (parseInt(String(rawValue).replace(/\D/g, ''), 10) || 0);
+                const salePrice = Math.max(0, sellPrice - reduction);
+                const actualPercent = Math.round((reduction / sellPrice) * 1000) / 10;
+                const percentLabel = String(actualPercent).replace('.', ',');
+                preview.text(`Giá khuyến mãi dự kiến: ${window.nhomNghin(salePrice)} ₫ · giảm ${percentLabel}%`);
+            };
+
+            const configureDiscountInput = (form, clearValue = false) => {
+                const input = form.find('[name="discount_value"]');
+                const isPercent = form.find('[name="discount_type"]').val() === 'percent';
+                if (clearValue) input.val('');
+
+                if (isPercent) {
+                    input.removeClass('o-tien').attr({ type: 'number', inputmode: 'decimal', min: '0', max: '100', step: '0.1', placeholder: 'Ví dụ 10' });
+                } else {
+                    input.addClass('o-tien').attr({ type: 'text', inputmode: 'numeric', placeholder: 'Số tiền giảm' });
+                    input.removeAttr('min max step');
+                }
+
+                renderDiscountPreview(form);
+            };
+
+            $('#formAdd, #formEdit').each(function() {
+                const form = $(this);
+                configureDiscountInput(form);
+                form.on('change', '[name="discount_type"]', function() {
+                    configureDiscountInput(form, true);
+                });
+                form.on('input change', '[name="discount_value"], [name="sell_price"]', function() {
+                    renderDiscountPreview(form);
+                });
+            });
 
             const variantRow = (data) => {
                 data = data || {};
@@ -1240,6 +1300,7 @@
                     window.showToast(response.success);
                     $('#closeDrawerAdd').click();
                     $('#formAdd').trigger('reset');
+                    configureDiscountInput($('#formAdd'));
                     $('#image-preview').empty();
                     addPicker.reset();
                     $('#variants-add').empty();
@@ -1273,6 +1334,7 @@
                 $('#image-preview-edit-new').empty();
                 editPicker.reset();
                 $('#formEdit').trigger('reset');
+                configureDiscountInput($('#formEdit'));
                 disposeStyleCards('#styles-edit');
                 $('#variants-edit').empty();
                 currentProductImages = [];
@@ -1285,7 +1347,13 @@
                         $('#product_name_edit').val(item.product_name);
                         $('#import_price_edit').val(window.nhomNghin(item.import_price ?? ''));
                         $('#export_price_edit').val(window.nhomNghin(item.sell_price ?? ''));
-                        $('#discount_price_edit').val(window.nhomNghin(item.discount_price ?? ''));
+                        $('#formEdit [name="discount_type"]').val('amount');
+                        const discountReduction = item.discount_price !== null && item.discount_price !== undefined
+                            && Number(item.discount_price) < Number(item.sell_price)
+                            ? Number(item.sell_price) - Number(item.discount_price)
+                            : '';
+                        $('#discount_value_edit').val(discountReduction === '' ? '' : window.nhomNghin(discountReduction));
+                        configureDiscountInput($('#formEdit'));
                         $('#material_edit').val(item.material);
                         $('#brand_edit').val(item.brand);
                         $('#audience_edit').val(item.audience || 'Nữ');

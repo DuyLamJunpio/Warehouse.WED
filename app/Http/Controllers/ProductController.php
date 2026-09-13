@@ -9,6 +9,7 @@ use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\ProductMediaService;
+use App\Support\ProductPricing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -233,7 +234,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate($this->productRules());
+        $data = $this->validatedProductData($request);
 
         DB::beginTransaction();
         try {
@@ -324,7 +325,7 @@ class ProductController extends Controller
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $data = $request->validate($this->productRules($product));
+        $data = $this->validatedProductData($request, $product);
 
         DB::beginTransaction();
         try {
@@ -372,7 +373,7 @@ class ProductController extends Controller
             // Khớp đúng 4 giá trị bộ lọc "đối tượng" của web bán hàng.
             'audience' => 'nullable|in:Nam,Nữ,Trẻ em,Unisex',
             'unit' => 'nullable|max:30',
-            'import_price' => 'required|integer|min:0',
+            'import_price' => 'nullable|integer|min:0',
             'sell_price' => 'required|integer|min:0',
             'discount_price' => 'nullable|integer|min:0|lte:sell_price',
             'is_featured' => 'nullable|boolean',
@@ -408,6 +409,36 @@ class ProductController extends Controller
             'variants.*.quantity' => 'nullable|integer|min:0',
             'variants.*.price_override' => 'nullable|integer|min:0',
         ];
+    }
+
+    /** Validate product fields and translate the selected discount mode to its stored sale price. */
+    private function validatedProductData(Request $request, ?Product $product = null): array
+    {
+        $data = $request->validate($this->productRules($product));
+        $input = $request->all();
+
+        // Keep accepting discount_price from older clients while the admin form
+        // sends discount_type + discount_value.
+        if (array_key_exists('discount_type', $input) || array_key_exists('discount_value', $input)) {
+            $discountType = $request->input('discount_type');
+            $discountInput = $request->validate([
+                'discount_type' => 'required|in:amount,percent',
+                'discount_value' => $discountType === 'percent'
+                    ? 'nullable|numeric|min:0|max:100'
+                    : 'nullable|integer|min:0|max:' . (int) $data['sell_price'],
+            ]);
+
+            $value = $discountInput['discount_value'] ?? null;
+            $data['discount_price'] = $value === null || $value === ''
+                ? null
+                : ProductPricing::discountedPrice(
+                    (int) $data['sell_price'],
+                    $discountInput['discount_type'],
+                    $value,
+                );
+        }
+
+        return $data;
     }
 
     /**

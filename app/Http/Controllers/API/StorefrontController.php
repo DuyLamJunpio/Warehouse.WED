@@ -203,9 +203,12 @@ class StorefrontController extends Controller
                 ->sum('quantity'),
             'price' => $price,
             // Chỉ có giá gạch ngang khi thực sự đang giảm giá.
-            'compare_price' => $product->discount_price && $product->discount_price < $product->sell_price
+            'compare_price' => $product->discount_percent !== null
                 ? (int) $product->sell_price
                 : null,
+            // Phần trăm luôn tính từ giá gốc và giá khuyến mại đã lưu, bất kể
+            // người quản trị nhập mức giảm theo tiền hay theo phần trăm.
+            'discount_percent' => $product->discount_percent,
             'is_featured' => (bool) $product->is_featured,
             // Hàng không theo dõi tồn kho (đặt may, hàng order) luôn bán được, kho
             // ghi 0 cũng mặc kệ. Web bán hàng đọc cờ này để khỏi chặn nhầm.

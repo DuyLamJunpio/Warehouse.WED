@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ProductPricing;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -39,6 +40,15 @@ class Product extends Model
     ];
 
     protected $dates = ['deleted_at'];
+
+    /** Percentage discount derived from the stored sale price, for storefront display. */
+    public function getDiscountPercentAttribute(): ?float
+    {
+        return ProductPricing::discountPercent(
+            $this->sell_price === null ? null : (int) $this->sell_price,
+            $this->discount_price === null ? null : (int) $this->discount_price,
+        );
+    }
 
     public function supplier()
     {
