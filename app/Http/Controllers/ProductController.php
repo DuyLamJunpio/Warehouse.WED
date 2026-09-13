@@ -396,8 +396,9 @@ class ProductController extends Controller
             'styles.*.image' => 'nullable|file|image|max:5120',
             'styles.*.variants' => 'required_with:styles|array|min:1',
             'styles.*.variants.*.id' => 'nullable|integer|exists:product_variants,id',
-            'styles.*.variants.*.size' => 'required_with:styles|string|max:50',
-            'styles.*.variants.*.color' => 'required_with:styles|string|max:50',
+            'styles.*.variants.*.paused' => 'nullable|boolean',
+            'styles.*.variants.*.size' => 'nullable|string|max:50',
+            'styles.*.variants.*.color' => 'nullable|string|max:50',
             'styles.*.variants.*.quantity' => 'nullable|integer|min:0',
             'styles.*.variants.*.price_override' => 'nullable|integer|min:0',
 
@@ -601,6 +602,37 @@ class ProductController extends Controller
             // Tương tự, giữ key biến thể để thông báo validation trỏ đúng dòng
             // ngay cả khi một dòng mới đã bị xóa ở giữa danh sách.
             foreach (($styleRow['variants'] ?? []) as $variantIndex => $row) {
+                $variantId = (int) ($row['id'] ?? 0);
+                $isPaused = $variantId > 0 && filter_var($row['paused'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if ($isPaused) {
+                    $variant = $existingVariants->get($variantId);
+                    if (!$variant || (int) $variant->product_style_id !== (int) $style->id) {
+                        throw ValidationException::withMessages([
+                            "styles.$styleIndex.variants.$variantIndex.id" => 'Biến thể không thuộc mẫu đang sửa.',
+                        ]);
+                    }
+
+                    // Tạm dừng chỉ đổi tồn kho về 0; giữ màu/size cũ kể cả khi
+                    // dữ liệu legacy của biến thể đó đang thiếu một trong hai.
+                    $combinationKey = $style->id . '||' . mb_strtolower(
+                        trim((string) $variant->color) . '||' . trim((string) $variant->size),
+                        'UTF-8',
+                    );
+                    if (isset($seenCombinations[$combinationKey])) {
+                        throw ValidationException::withMessages([
+                            "styles.$styleIndex.variants.$variantIndex" => 'Biến thể màu/size bị trùng trong cùng mẫu.',
+                        ]);
+                    }
+                    $seenCombinations[$combinationKey] = true;
+
+                    if ((int) $variant->quantity !== 0) {
+                        $variant->quantity = 0;
+                        $variant->save();
+                    }
+                    continue;
+                }
+
                 $size = preg_replace('/\s+/u', ' ', trim((string) ($row['size'] ?? '')));
                 $color = preg_replace('/\s+/u', ' ', trim((string) ($row['color'] ?? '')));
                 if ($size === '' || $color === '') {
@@ -617,7 +649,6 @@ class ProductController extends Controller
                 }
                 $seenCombinations[$combinationKey] = true;
 
-                $variantId = (int) ($row['id'] ?? 0);
                 $variant = $variantId ? $existingVariants->get($variantId) : null;
                 if ($variantId && (!$variant || (int) $variant->product_style_id !== (int) $style->id)) {
                     throw ValidationException::withMessages([

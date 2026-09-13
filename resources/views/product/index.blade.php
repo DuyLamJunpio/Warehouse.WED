@@ -753,9 +753,12 @@
                 data = data || {};
                 const i = variantRowIndex++;
                 const prefix = `styles[${styleIndex}][variants][${i}]`;
+                const isPaused = !!data.paused || (!!data.id && Number(data.quantity) === 0
+                    && (!String(data.color || '').trim() || !String(data.size || '').trim()));
                 const row = $(`
                     <div class="style-variant-row grid grid-cols-12 items-center gap-2 p-2.5 bg-slate-50/80 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-600">
                         <input type="hidden" class="style-variant-id" name="${prefix}[id]">
+                        <input type="hidden" class="style-variant-paused" name="${prefix}[paused]" value="0">
                         <input type="text" class="style-variant-color col-span-3 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[color]" maxlength="50" required placeholder="Màu (Đen, Be...)">
                         <input type="text" class="style-variant-size col-span-2 text-xs font-semibold rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[size]" maxlength="50" required placeholder="Size">
                         <input type="number" class="style-variant-quantity col-span-2 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center font-medium" min="0" name="${prefix}[quantity]" placeholder="SL tồn">
@@ -771,9 +774,22 @@
                 row.find('.style-variant-size').val(data.size || '');
                 row.find('.style-variant-quantity').val(data.quantity !== undefined ? data.quantity : 0);
                 row.find('.style-variant-price').val(data.price_override ? window.nhomNghin(data.price_override) : '');
+                row.find('.style-variant-paused').val(isPaused ? '1' : '0');
                 row.attr('data-existing', data.id ? '1' : '0');
+                row.attr('data-paused', isPaused ? '1' : '0');
+                if (isPaused) {
+                    row.find('.style-variant-color, .style-variant-size').prop('required', false);
+                }
                 if (data.id) {
-                    row.find('.removeStyleVariant').attr('title', 'Tạm dừng bán biến thể (đưa tồn kho về 0)');
+                    const button = row.find('.removeStyleVariant');
+                    button.data('default-icon', button.html());
+                    if (isPaused) {
+                        button.text('↺')
+                            .attr('title', 'Khôi phục tồn kho trước khi tạm dừng')
+                            .addClass('text-emerald-600 hover:text-emerald-700');
+                    } else {
+                        button.attr('title', 'Tạm dừng bán biến thể (đưa tồn kho về 0)');
+                    }
                 }
                 return row;
             };
@@ -1156,7 +1172,7 @@
                 const card = $(this).closest('.style-card');
                 const container = card.parent();
                 if (container.find('.style-card').length <= 1) {
-                    card.find('.style-name').trigger('focus');
+                    window.showToast('Sản phẩm cần giữ lại ít nhất một mẫu.', 'warning');
                     return;
                 }
 
@@ -1177,9 +1193,7 @@
 
                 if (row.attr('data-existing') !== '1') {
                     if (container.find('.style-variant-row').length <= 1) {
-                        row.find('input:not([type="hidden"])').val('');
-                        row.find('.style-variant-quantity').val(0);
-                        row.find('.style-variant-color').trigger('focus');
+                        window.showToast('Mỗi mẫu cần ít nhất một biến thể có đủ màu và size.', 'warning');
                         return;
                     }
                     row.remove();
@@ -1190,6 +1204,8 @@
                 if (row.attr('data-paused') === '1') {
                     const previousQuantity = row.data('previous-quantity');
                     quantity.val(previousQuantity !== undefined ? previousQuantity : 0);
+                    row.find('.style-variant-paused').val('0');
+                    row.find('.style-variant-color, .style-variant-size').prop('required', true);
                     row.attr('data-paused', '0')
                         .removeClass('opacity-60 ring-1 ring-amber-300 dark:ring-amber-700');
                     button.html(button.data('default-icon'))
@@ -1201,6 +1217,8 @@
                 button.data('default-icon', button.html());
                 row.data('previous-quantity', quantity.val());
                 quantity.val(0);
+                row.find('.style-variant-paused').val('1');
+                row.find('.style-variant-color, .style-variant-size').prop('required', false);
                 row.attr('data-paused', '1')
                     .addClass('opacity-60 ring-1 ring-amber-300 dark:ring-amber-700');
                 button.text('↺')
