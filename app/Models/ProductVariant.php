@@ -12,8 +12,12 @@ class ProductVariant extends Model
 {
     use HasFactory;
 
+    /** Nhãn biến thể ở đơn hàng/kho luôn có sẵn tên mẫu, không phát sinh N+1. */
+    protected $with = ['style'];
+
     protected $fillable = [
         'product_id',
+        'product_style_id',
         'size',
         'color',
         'sku',
@@ -35,17 +39,22 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class)->withTrashed();
     }
 
+    public function style()
+    {
+        return $this->belongsTo(ProductStyle::class, 'product_style_id');
+    }
+
     public function productInvoices()
     {
         return $this->hasMany(ProductInvoice::class, 'variant_id');
     }
 
     /**
-     * Nhãn hiển thị: "M / Đen". Bỏ qua phần rỗng.
+     * Nhãn hiển thị: "Trống đồng / Đen / M". Bỏ qua phần rỗng.
      */
     public function getLabelAttribute(): string
     {
-        return implode(' / ', array_filter([$this->size, $this->color])) ?: 'Mặc định';
+        return implode(' / ', array_filter([$this->style?->name, $this->color, $this->size])) ?: 'Mặc định';
     }
 
     /**

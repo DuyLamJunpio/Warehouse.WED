@@ -1024,7 +1024,7 @@
                 $('#productTableAdd tr').slice(0, -1).each(function(index) {
                     var productId = $(this).find('.delete-product-button').data('productId');
                     var quantity = $(this).find('.quantity').val();
-                    // Biến thể size/màu - bắt buộc cho cả phiếu nhập lẫn đơn bán.
+                    // Biến thể mẫu/màu/size - bắt buộc cho cả phiếu nhập lẫn đơn bán.
                     var variantId = $(this).find('.variant').val();
 
                     if (productId && quantity !== undefined && quantity !== '' && variantId) {

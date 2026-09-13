@@ -9,6 +9,7 @@ use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\ProductLocation;
 use App\Models\Supplier;
+use App\Services\ProductMediaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +24,14 @@ use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
-
+    public function __construct(private readonly ProductMediaService $productMedia)
+    {
+    }
 
     public function index(Request $request)
     {
         $perPage = 15;
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
             ->withSum('variants', 'quantity')
             ->paginate($perPage);
 
@@ -44,7 +47,7 @@ class ProductController extends Controller
         $key = "search_" . ($keyword ?: "all") . ($supplierId ? "_supplier_{$supplierId}" : "");
 
         $products = Cache::remember($key, 60 * 60, function () use ($keyword, $supplierId) {
-            $query = Product::with(['supplier', 'category', 'productImage', 'location'])
+            $query = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                 ->withSum('variants', 'quantity');
 
             if (!empty ($keyword)) {
@@ -66,7 +69,7 @@ class ProductController extends Controller
         $perPage = 15;
         $supplierId = $request->input('supplier_id'); // Lấy ID nhà cung cấp từ request
 
-        $query = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $query = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
             ->withSum('variants', 'quantity')->whereHas('supplier', function ($query) {
                 $query->whereNull('deleted_at');
             });
@@ -85,7 +88,7 @@ class ProductController extends Controller
         $supplierId = $request->input('supplier_id'); // Lấy ID của nhà cung cấp từ request
 
         if (!empty($supplierId)) {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+            $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                 ->withSum('variants', 'quantity')
                 ->where('supplier_id', $supplierId)
                 ->paginate(15);
@@ -105,7 +108,7 @@ class ProductController extends Controller
         $categoryId = $request->input('categories_id'); // Lấy ID của danh mục từ request
 
         if (!empty($categoryId)) {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+            $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                 ->withSum('variants', 'quantity')
                 ->where('categories_id', $categoryId)
                 ->paginate(15);
@@ -125,7 +128,7 @@ class ProductController extends Controller
         $status = $request->input('status'); // Lấy trạng thái từ request
 
         if ($status !== null) {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+            $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                 ->withSum('variants', 'quantity')
                 ->where('status', $status)
                 ->paginate(15);
@@ -142,7 +145,7 @@ class ProductController extends Controller
 
     public function getProductById(string $id)
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
             ->withSum('variants', 'quantity')
             ->where('products.id', $id)
             ->get();
@@ -157,8 +160,12 @@ class ProductController extends Controller
             return response()->json(['error' => 'Không tìm thấy hình ảnh!'], 404);
         }
 
-        Storage::delete($image->path);
-        $image->delete();
+        if (! $this->productMedia->delete($image)) {
+            return response()->json([
+                'error' => 'Ảnh này đang được một mẫu sản phẩm sử dụng. Hãy đổi ảnh của mẫu trước khi xóa.',
+            ], 422);
+        }
+
         return response()->json(['success' => 'Ảnh sản phẩm đã được xóa thành công!']);
     }
 
@@ -166,7 +173,7 @@ class ProductController extends Controller
 
     public function getProductStatus()
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+        $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
             ->withSum('variants', 'quantity')->whereIn('products.status', [1, 2])->get();
         return response()->json($products);
     }
@@ -181,14 +188,14 @@ class ProductController extends Controller
             $key = "search_invoice_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Product::with(['supplier', 'category', 'productImage', 'location'])
+                return Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                     ->withSum('variants', 'quantity')
                     ->where('products.product_name', 'ilike', "%{$keyword}%") // Đảm bảo rằng bạn đang tìm kiếm trong cột đúng
                     ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                     ->get();
             });
         } else {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+            $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                 ->withSum('variants', 'quantity')
                 ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                 ->get();
@@ -203,7 +210,7 @@ class ProductController extends Controller
             $key = "search_supplier_{$keyword}"; // Tạo một khóa cache duy nhất dựa trên từ khóa
             Cache::forget($key); // Thay 'key_name' bằng khóa cache cụ thể bạn muốn xóa
             $products = Cache::remember($key, 60 * 60, function () use ($keyword) {
-                return Product::with(['supplier', 'category', 'productImage', 'location'])
+                return Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                     ->withSum('variants', 'quantity')
                     ->whereHas('supplier', function ($query) use ($keyword) {
                         $query->where('supplier_name', 'ilike', "%{$keyword}%");
@@ -212,7 +219,7 @@ class ProductController extends Controller
                     ->get();
             });
         } else {
-            $products = Product::with(['supplier', 'category', 'productImage', 'location'])
+            $products = Product::with(['supplier', 'category', 'productImage', 'location', 'styles.image', 'variants.style'])
                 ->withSum('variants', 'quantity')
                 ->whereIn('products.status', [1, 2]) // Lọc sản phẩm có trạng thái là 1 hoặc 2
                 ->get();
@@ -280,22 +287,21 @@ class ProductController extends Controller
         $params['total_quantity'] = 0;
         $product = Product::create($params);
 
-        $images = [];
         if ($request->hasFile('images')) {
+            $sortOrder = (int) ImageModel::where('product_id', $product->id)->max('sort_order');
+            $hasPinned = false;
+
             foreach ($request->file('images') as $image) {
-                $path = $image->store('public/images');
-                if ($request->pin_image == $image->getClientOriginalName()) {
-                    $isPined = true;
-                } else {
-                    $isPined = false;
-                }
-                $images[] = new ImageModel([
-                    'path' => $path,
-                    'name' => $image->getClientOriginalName(),
-                    'is_pined' => $isPined
+                $isPinned = ! $hasPinned
+                    && $request->pin_image === $image->getClientOriginalName();
+
+                $media = $this->productMedia->store($product, $image, [
+                    'sort_order' => ++$sortOrder,
+                    'is_pined' => $isPinned,
                 ]);
+
+                $hasPinned = $hasPinned || $media->is_pined || $isPinned;
             }
-            $product->imageModel()->saveMany($images);
         }
 
         if ($request->zone && $request->shelf && $request->level) {
@@ -389,14 +395,17 @@ class ProductController extends Controller
         $params = $request->except(['_token', 'images']);
         $product->update($params);
 
-        // Xử lý ảnh ghim mà không cần tải ảnh mới
-        if ($request->filled('pin_image') || $request->pin_image != null || $request->pin_image != '') {
+        $pinName = trim((string) $request->input('pin_image'));
+
+        // Xử lý ảnh ghim mà không cần tải ảnh mới.
+        if ($pinName !== '') {
             // Xóa đánh dấu ghim trên tất cả các ảnh hiện tại
             ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
 
             // Đánh dấu ảnh mới là ghim
             $pinImage = ImageModel::where('product_id', $product->id)
-                ->where('name', $request->pin_image)
+                ->where('name', $pinName)
+                ->where('media_type', ImageModel::TYPE_IMAGE)
                 ->first();
             if ($pinImage) {
                 $pinImage->is_pined = true;
@@ -405,22 +414,13 @@ class ProductController extends Controller
         }
 
         if ($request->hasFile('images')) {
-            // Xóa đánh dấu ghim trên tất cả các ảnh hiện tại
-            ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
-
-            // Thêm hình ảnh mới
-            $images = [];
+            $sortOrder = (int) ImageModel::where('product_id', $product->id)->max('sort_order');
             foreach ($request->file('images') as $image) {
-                $path = $image->store('public/images');
-                $isPined = ($request->pin_image == $image->getClientOriginalName());
-                $images[] = new ImageModel([
-                    'product_id' => $product->id,
-                    'path' => $path,
-                    'name' => $image->getClientOriginalName(),
-                    'is_pined' => $isPined
+                $this->productMedia->store($product, $image, [
+                    'sort_order' => ++$sortOrder,
+                    'is_pined' => $pinName !== '' && $pinName === $image->getClientOriginalName(),
                 ]);
             }
-            $product->imageModel()->saveMany($images);
         }
 
 

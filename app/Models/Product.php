@@ -79,6 +79,12 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class, 'product_id', 'id')->orderBy('sort_order');
     }
 
+    /** Các mẫu hình/kiểu; mỗi mẫu giữ một ảnh dùng chung cho mọi màu và size. */
+    public function styles()
+    {
+        return $this->hasMany(ProductStyle::class, 'product_id', 'id')->orderBy('sort_order');
+    }
+
     /**
      * Ảnh đại diện: ảnh được ghim, nếu không có thì lấy ảnh đầu tiên.
      */

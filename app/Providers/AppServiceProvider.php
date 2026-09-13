@@ -6,6 +6,7 @@ use App\Models\Categories;
 use App\Models\Invoice;
 use App\Models\ImageModel;
 use App\Models\Product;
+use App\Models\ProductStyle;
 use App\Models\ProductVariant;
 use App\Observers\CatalogueObserver;
 use App\Observers\OrderStatusObserver;
@@ -37,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
         // URL::forceScheme('https');
 
         // Đổi bất cứ thứ gì web bán hàng đang hiển thị thì báo nó làm mới.
-        foreach ([Product::class, ProductVariant::class, ImageModel::class, Categories::class] as $model) {
+        foreach ([Product::class, ProductStyle::class, ProductVariant::class, ImageModel::class, Categories::class] as $model) {
             $model::observe(CatalogueObserver::class);
         }
 

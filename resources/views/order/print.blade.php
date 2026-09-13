@@ -156,7 +156,7 @@
             <thead>
                 <tr>
                     <th>Sản phẩm</th>
-                    <th>Size / Màu</th>
+                    <th>Mẫu / Màu / Size</th>
                     <th class="center">SL</th>
                     <th class="right">Đơn giá</th>
                     <th class="right">Thành tiền</th>

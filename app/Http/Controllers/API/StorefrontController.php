@@ -28,7 +28,8 @@ class StorefrontController extends Controller
     {
         $products = Product::with([
             'category',
-            'variants',
+            'variants.style',
+            'styles.image',
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
@@ -51,7 +52,8 @@ class StorefrontController extends Controller
     {
         $product = Product::with([
             'category',
-            'variants',
+            'variants.style',
+            'styles.image',
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
@@ -212,9 +214,19 @@ class StorefrontController extends Controller
             'total_stock' => (int) $product->variants->sum('quantity'),
             'images' => $gallery->all(),
             'videos' => $videos->map(fn($v) => $this->url($v->path))->values()->all(),
+            // Ảnh nằm một lần ở cấp mẫu; các biến thể chỉ trả style_id để tránh
+            // lặp cùng URL hàng chục lần cho mọi tổ hợp màu/size.
+            'styles' => $product->styles->map(fn($style) => [
+                'id' => $style->id,
+                'name' => $style->name,
+                'image' => $style->image?->path
+                    ? $this->url($style->image->path)
+                    : ($pinned?->path ? $this->url($pinned->path) : null),
+            ])->values()->all(),
             'variants' => $product->variants->map(fn($v) => [
                 // Web bán hàng gửi id này lại khi đặt hàng, đừng đổi định dạng.
                 'id' => $v->id,
+                'style_id' => $v->product_style_id,
                 'size' => $v->size,
                 'color' => $v->color,
                 'sku' => $v->sku,
