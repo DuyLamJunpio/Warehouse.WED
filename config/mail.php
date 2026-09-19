@@ -36,14 +36,13 @@ return [
     'mailers' => [
         'smtp' => [
             'transport' => 'smtp',
-            // 'url' => 'smtp.gmail.com',
-            'host' => 'smtp.gmail.com',
-            'port' => 587,
-            'encryption' => 'tls',
-            'username' => 'warehousesuport@gmail.com',
-            'password' => 'hckc tkjk ucea kapu',
-            'timeout' => null,
-            // 'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            'host' => env('MAIL_HOST', 'smtp.gmail.com'),
+            'port' => (int) env('MAIL_PORT', 587),
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
+            'timeout' => env('MAIL_TIMEOUT'),
+            'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 
         'ses' => [
@@ -108,8 +107,8 @@ return [
     */
 
     'from' => [
-        'address' => 'warehousesuport@gmail.com',
-        'name' => 'Warehouse Support',
+        'address' => env('MAIL_FROM_ADDRESS', env('MAIL_USERNAME', 'hello@example.com')),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'RUNGU')),
     ],
 
     /*

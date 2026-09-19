@@ -12,9 +12,7 @@
 
 const jq = window.jQuery;
 
-if (!jq) {
-    console.error('admin.js: jQuery phải được nạp trước bundle Vite (xem layouts/app.blade.php).');
-} else {
+if (jq) {
     setupAdminHelpers(jq);
 }
 

@@ -36,15 +36,16 @@ class SecurityHeaders
         // Suy từ cấu hình disk thay vì gõ cứng tên miền: đổi bucket hay đổi nhà
         // cung cấp kho ảnh là chỉ sửa .env, CSP tự khớp theo.
         $mediaHost = $this->mediaOrigin();
+        $viteDevHosts = app()->environment('local') ? "http://localhost:5173 http://127.0.0.1:5173 http://0.0.0.0:5173 ws://localhost:5173 ws://127.0.0.1:5173 ws://0.0.0.0:5173" : '';
 
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.jsdelivr.net",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            trim("script-src 'self' 'unsafe-inline' {$viteDevHosts} https://code.jquery.com https://cdn.jsdelivr.net"),
+            trim("style-src 'self' 'unsafe-inline' {$viteDevHosts} https://fonts.googleapis.com"),
             "img-src 'self' data: blob: https:",
             trim("media-src 'self' data: blob: {$mediaHost}"),
             "font-src 'self' data: https://fonts.gstatic.com",
-            "connect-src 'self'",
+            trim("connect-src 'self' {$viteDevHosts}"),
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",

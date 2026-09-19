@@ -99,7 +99,7 @@
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Tên danh mục <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" name="name" required placeholder="Ví dụ: Áo sơ mi nam"
+                    <input type="text" name="name" required placeholder="Ví dụ: Trầm hương tự nhiên"
                         class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
 

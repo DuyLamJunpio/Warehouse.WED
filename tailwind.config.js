@@ -17,25 +17,39 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Be Vietnam Pro', 'Figtree', ...defaultTheme.fontFamily.sans],
+                display: ['Cormorant Garamond', 'serif'],
             },
 
             colors: {
-                /**
-                 * Màu chủ đạo của giao diện quản trị (Indigo Brand).
-                 */
+                /** Màu đất–rừng cho giao diện quản trị RUNGU. */
                 primary: {
-                    50: '#eef2ff',
-                    100: '#e0e7ff',
-                    200: '#c7d2fe',
-                    300: '#a5b4fc',
-                    400: '#818cf8',
-                    500: '#6366f1',
-                    600: '#4f46e5',
-                    700: '#4338ca',
-                    800: '#3730a3',
-                    900: '#312e81',
-                    950: '#1e1b4b',
+                    50: '#f3f6ef',
+                    100: '#e3ebdb',
+                    200: '#c8d8ba',
+                    300: '#a7c28f',
+                    400: '#83a365',
+                    500: '#628449',
+                    600: '#496a35',
+                    700: '#39552b',
+                    800: '#2e4424',
+                    900: '#26391f',
+                    950: '#142010',
+                },
+                // Giữ các class indigo cũ để không phải đổi hàng trăm view,
+                // nhưng toàn bộ giao diện nay dùng cùng bảng màu RUNGU.
+                indigo: {
+                    50: '#f3f6ef',
+                    100: '#e3ebdb',
+                    200: '#c8d8ba',
+                    300: '#a7c28f',
+                    400: '#83a365',
+                    500: '#628449',
+                    600: '#496a35',
+                    700: '#39552b',
+                    800: '#2e4424',
+                    900: '#26391f',
+                    950: '#142010',
                 },
             },
         },

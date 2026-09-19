@@ -53,13 +53,13 @@ return [
             'driver' => 's3',
             'key' => env('SUPABASE_S3_KEY'),
             'secret' => env('SUPABASE_S3_SECRET'),
-            'region' => env('SUPABASE_S3_REGION', 'ap-south-1'),
+            'region' => env('SUPABASE_S3_REGION', 'ap-northeast-2'),
             'bucket' => env('SUPABASE_BUCKET', 'warehouse'),
             'endpoint' => env('SUPABASE_S3_ENDPOINT'),
             'url' => env('SUPABASE_PUBLIC_URL'),
             'use_path_style_endpoint' => true,
             'visibility' => 'public',
-            'throw' => false,
+            'throw' => true,
         ],
 
         's3' => [

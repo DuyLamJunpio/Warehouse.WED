@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Observers\CatalogueObserver;
 use App\Observers\OrderStatusObserver;
 use App\Services\OrderStatusMailer;
+use App\Services\CustomerMailer;
 use App\Services\StorefrontNotifier;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         // Cũng singleton: một đơn đổi trạng thái hai lần trong cùng một request
         // thì vẫn chỉ nhận một lá thư, và việc gom đó nằm trong chính đối tượng.
         $this->app->singleton(OrderStatusMailer::class);
+        $this->app->singleton(CustomerMailer::class);
     }
 
     /**

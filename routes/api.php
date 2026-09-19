@@ -153,8 +153,10 @@ Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
      * chủ. Studio tự tính giá bằng TypeScript cho mượt tay, nhưng con số tính
      * tiền thật luôn dựng lại ở đây.
      */
-    Route::get('/print/catalogue', [PrintStorefrontController::class, 'catalogue']);
-    Route::post('/print/quote', [PrintStorefrontController::class, 'quote']);
+    Route::middleware('feature:print_studio')->group(function () {
+        Route::get('/print/catalogue', [PrintStorefrontController::class, 'catalogue']);
+        Route::post('/print/quote', [PrintStorefrontController::class, 'quote']);
+    });
 });
 
 /*
@@ -164,7 +166,7 @@ Route::middleware('throttle:120,1')->prefix('storefront')->group(function () {
  * duyệt - để ngỏ là ai cũng đổ rác vào kho ảnh được. Web bán hàng gọi từ route
  * handler của Next, không phải từ trình duyệt.
  */
-Route::middleware(['throttle:60,1', 'storefront.secret'])
+Route::middleware(['throttle:60,1', 'storefront.secret', 'feature:print_studio'])
     ->prefix('storefront/print')
     ->group(function () {
         Route::post('/assets', [PrintStorefrontController::class, 'storeAsset']);

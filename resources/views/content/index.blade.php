@@ -18,7 +18,7 @@
                     Quản lý nội dung & Banner
                 </h1>
                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Cấu hình Slide banner, dòng thông báo chạy, bộ sưu tập nổi bật và tiêu đề các khối trên website bán lẻ.
+                    Cấu hình hình ảnh, thông điệp và bộ sưu tập cho website RUNGU.
                 </p>
             </div>
         </div>
@@ -46,7 +46,7 @@
                 <p class="font-bold text-indigo-950 dark:text-indigo-300 mb-1">💡 Khuyến nghị kích thước & chất lượng banner</p>
                 <ul class="space-y-0.5 list-disc list-inside text-[11px] text-slate-600 dark:text-slate-400">
                     <li><strong>Ảnh:</strong> khuyến nghị từ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, xuất 2400×1600 (3:2) hoặc 2560×1440 (16:9), dung lượng dưới {{ $limits['anh_mb'] }}MB.</li>
-                    <li><strong>Bố cục:</strong> Giữ chủ thể người mẫu nằm ở 70–80% trung tâm khung hình để không bị che khi hiển thị trên mobile (4:5) và desktop (16:7).</li>
+                    <li><strong>Bố cục:</strong> Giữ sản phẩm hoặc không gian nghi thức nằm trong vùng trung tâm để không bị che khi hiển thị trên mobile (4:5) và desktop (16:7).</li>
                     <li><strong>Video:</strong> khuyến nghị 1920×1080 (16:9), MP4 dưới {{ $limits['video_mb'] }}MB, lặp 5–10s kèm ảnh bìa tĩnh.</li>
                     <li class="font-semibold text-amber-700 dark:text-amber-300">Không đạt các mức trên vẫn được phép tải lên; hệ thống chỉ cảnh báo để tham khảo.</li>
                 </ul>
@@ -244,6 +244,37 @@
                 </button>
             </div>
         </div>
+
+        {{-- ══ 5. Email khuyến mại ════════════════════════════════════ --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-amber-200/80 dark:border-amber-900/60 shadow-xs p-5">
+            <div class="mb-4">
+                <h2 class="text-base font-bold text-slate-900 dark:text-white">Gửi email chương trình khuyến mại</h2>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Email sẽ được gửi riêng từng khách có email trong hồ sơ. Hãy chỉ gửi nội dung tới khách đã đồng ý nhận thông tin từ RUNGU.
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block mb-1 text-xs font-semibold text-slate-700 dark:text-slate-300">Tiêu đề email</label>
+                    <input type="text" id="promotion-subject" maxlength="180" required
+                        placeholder="Ví dụ: Ưu đãi cuối tuần dành riêng cho bạn"
+                        class="block w-full text-sm rounded-xl bg-slate-50 border-slate-300 px-3.5 py-2.5 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
+                <div>
+                    <label class="block mb-1 text-xs font-semibold text-slate-700 dark:text-slate-300">Nội dung</label>
+                    <textarea id="promotion-message" rows="7" maxlength="10000" required
+                        placeholder="Viết nội dung chương trình, thời gian áp dụng và cách nhận ưu đãi..."
+                        class="block w-full text-sm rounded-xl bg-slate-50 border-slate-300 px-3.5 py-2.5 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="btn-gui-khuyen-mai"
+                        class="px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 rounded-xl shadow-sm transition-all">
+                        Gửi email khuyến mại
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- ========================================================================= --}}
@@ -307,15 +338,9 @@
                             <option value="">Không gắn liên kết</option>
                             <optgroup label="Trang chính">
                                 <option value="/">Trang chủ</option>
-                                <option value="/shop">Tất cả sản phẩm</option>
-                                <option value="/shop?new=1">Hàng mới về</option>
-                                <option value="/shop?sale=1">Sản phẩm đang giảm giá</option>
-                                <option value="/shop?audience=Nam">Thời trang nam</option>
-                                <option value="/shop?audience=N%E1%BB%AF">Thời trang nữ</option>
-                                <option value="/shop?audience=Tr%E1%BA%BB%20em">Thời trang trẻ em</option>
-                                <option value="/cart">Giỏ hàng</option>
-                                <option value="/checkout">Thanh toán</option>
-                                <option value="/in-ao">In áo theo yêu cầu</option>
+                                <option value="/">Trang chủ RUNGU</option>
+                                <option value="/#collections">Bộ sưu tập sản phẩm</option>
+                                <option value="/#about">Câu chuyện RUNGU</option>
                             </optgroup>
                             <optgroup label="Khu vực trên trang chủ">
                                 <option value="/#new-arrivals">Khối hàng mới</option>
@@ -355,7 +380,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mô tả ảnh (Alt SEO)</label>
-                    <input type="text" name="alt" maxlength="255" placeholder="Người mẫu mặc áo khoác dáng dài"
+                    <input type="text" name="alt" maxlength="255" placeholder="Nhang trầm thủ công trong không gian gỗ mộc"
                         class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                 </div>
 
@@ -654,6 +679,31 @@
                         window.showToast(r.success);
                     },
                     error: window.showAjaxError
+                });
+            });
+
+            $('#btn-gui-khuyen-mai').click(function() {
+                const subject = $('#promotion-subject').val().trim();
+                const message = $('#promotion-message').val().trim();
+                if (!subject || !message) {
+                    window.showToast('Vui lòng nhập đủ tiêu đề và nội dung email.', 'danger');
+                    return;
+                }
+                if (!confirm('Gửi email này tới toàn bộ khách có email hợp lệ?')) return;
+
+                const button = $(this).prop('disabled', true);
+                $.ajax({
+                    url: '{{ route('content.promotion-email') }}',
+                    type: 'POST',
+                    headers: csrf(),
+                    contentType: 'application/json; charset=UTF-8',
+                    data: JSON.stringify({ subject, message }),
+                    success: function(r) {
+                        window.showToast(r.success);
+                        $('#promotion-subject, #promotion-message').val('');
+                    },
+                    error: window.showAjaxError,
+                    complete: () => button.prop('disabled', false)
                 });
             });
 

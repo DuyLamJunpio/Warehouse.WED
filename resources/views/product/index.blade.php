@@ -1,22 +1,22 @@
 <x-app-layout>
     @php
-        $variantQuickSizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Freesize'];
-        $variantQuickColors = ['Trắng', 'Kem', 'Đỏ Tươi', 'Đỏ Đô', 'Hồng Pastel', 'Đen', 'Nâu', 'Xanh Lá Đậm'];
+        $variantQuickSizes = ['10g', '20g', '50g', '100g', '200g', 'Set mini', 'Set quà tặng'];
+        $variantQuickColors = ['Trầm hương', 'Quế', 'Tuyết tùng', 'Sả chanh', 'Oải hương', 'Không mùi'];
         $variantCombinationPresets = [
             [
-                'label' => 'Áo nhiều màu S-4XL',
-                'count' => '56 biến thể',
-                'value' => 'S,M,L,XL,2XL,3XL,4XL | Trắng/Kem/Đỏ Tươi/Đỏ Đô/Hồng Pastel/Đen/Nâu/Xanh Lá Đậm',
+                'label' => 'Trầm theo quy cách',
+                'count' => '4 quy cách',
+                'value' => '10g,20g,50g,100g | Trầm hương',
             ],
             [
-                'label' => 'Áo basic S-XL',
-                'count' => '12 biến thể',
-                'value' => 'S,M,L,XL | Trắng/Kem/Đen',
+                'label' => 'Nến theo mùi hương',
+                'count' => '3 mùi hương',
+                'value' => '180g | Trầm hương/Quế/Tuyết tùng',
             ],
             [
-                'label' => 'Freesize nhiều màu',
-                'count' => '8 biến thể',
-                'value' => 'Freesize | Trắng/Kem/Đỏ Tươi/Đỏ Đô/Hồng Pastel/Đen/Nâu/Xanh Lá Đậm',
+                'label' => 'Gỗ thánh theo set',
+                'count' => '3 quy cách',
+                'value' => '1 thanh,3 thanh,5 thanh | Palo Santo',
             ],
         ];
     @endphp
@@ -167,7 +167,7 @@
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                 Tên sản phẩm <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" name="product_name" required placeholder="VD: Áo Sơ Mi Lụa Cổ V Dài Tay"
+                            <input type="text" name="product_name" required placeholder="VD: Nhang trầm hương không tăm — hộp 50 nén"
                                 class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
@@ -196,25 +196,25 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Chất liệu</label>
-                            <input type="text" name="material" placeholder="VD: Lụa satin, Cotton, Kaki..."
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Thành phần / nguyên liệu</label>
+                            <input type="text" name="material" placeholder="VD: Bột trầm tự nhiên, keo bời lời..."
                                 class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Đối tượng</label>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phù hợp cho</label>
                             <select name="audience"
                                 class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                                <option value="Nữ">Nữ</option>
-                                <option value="Unisex">Unisex</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Trẻ em">Trẻ em</option>
+                                <option value="Mọi không gian">Mọi không gian</option>
+                                <option value="Thiền & thư giãn">Thiền & thư giãn</option>
+                                <option value="Nghi lễ & thờ cúng">Nghi lễ & thờ cúng</option>
+                                <option value="Quà tặng">Quà tặng</option>
                             </select>
                         </div>
 
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mô tả sản phẩm</label>
-                            <textarea name="description" rows="2.5" placeholder="Mô tả dáng áo, form chuẩn, lưu ý giặt ủi..."
+                            <textarea name="description" rows="2.5" placeholder="Mô tả nguồn nguyên liệu, mùi hương, thời gian sử dụng và cách bảo quản..."
                                 class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
                         </div>
                     </div>
@@ -288,11 +288,11 @@
                     </div>
                 </div>
 
-                {{-- SECTION 4: MA TRẬN BIẾN THỂ (SIZE / MÀU) --}}
+                {{-- SECTION 4: QUY CÁCH / MÙI HƯƠNG --}}
                 <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                     <div class="flex items-center justify-between">
                         <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Biến thể Size & Màu (Tồn kho)
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Phân loại quy cách & mùi hương
                         </div>
                         <button type="button" data-target="#variants-add"
                             class="addVariantRow inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
@@ -303,7 +303,7 @@
                     {{-- Quick Suggestion Chips --}}
                     <div class="space-y-3 text-xs">
                         <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="text-slate-400 font-medium mr-1">Size gợi ý:</span>
+                            <span class="text-slate-400 font-medium mr-1">Quy cách:</span>
                             @foreach ($variantQuickSizes as $sz)
                                 <button type="button" class="btn-chip-size px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-add" data-val="{{ $sz }}">
                                     + {{ $sz }}
@@ -311,7 +311,7 @@
                             @endforeach
                         </div>
                         <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="text-slate-400 font-medium mr-1">Màu gợi ý:</span>
+                            <span class="text-slate-400 font-medium mr-1">Mùi / phiên bản:</span>
                             @foreach ($variantQuickColors as $cl)
                                 <button type="button" class="btn-chip-color px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-add" data-val="{{ $cl }}">
                                     + {{ $cl }}
@@ -341,7 +341,7 @@
                     <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="variant-generator-add"
                             class="block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                            placeholder="VD: S,M,L,XL,2XL,3XL,4XL | Trắng/Kem/Đỏ Tươi/Đỏ Đô">
+                            placeholder="VD: 10g,20g,50g | Trầm hương/Quế/Tuyết tùng">
                         <button type="button" class="btn-generate-variants inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all"
                             data-input="#variant-generator-add" data-target="#variants-add">
                             Tạo nhanh
@@ -435,19 +435,19 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Chất liệu</label>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Thành phần / nguyên liệu</label>
                             <input type="text" name="material" id="material_edit"
                                 class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Đối tượng</label>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phù hợp cho</label>
                             <select name="audience" id="audience_edit"
                                 class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                                <option value="Nữ">Nữ</option>
-                                <option value="Unisex">Unisex</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Trẻ em">Trẻ em</option>
+                                <option value="Mọi không gian">Mọi không gian</option>
+                                <option value="Thiền & thư giãn">Thiền & thư giãn</option>
+                                <option value="Nghi lễ & thờ cúng">Nghi lễ & thờ cúng</option>
+                                <option value="Quà tặng">Quà tặng</option>
                             </select>
                         </div>
 
@@ -536,7 +536,7 @@
                 <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                     <div class="flex items-center justify-between">
                         <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Biến thể Size & Màu (Tồn kho)
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Phân loại quy cách & mùi hương
                         </div>
                         <button type="button" data-target="#variants-edit"
                             class="addVariantRow inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
@@ -547,7 +547,7 @@
                     {{-- Quick Suggestion Chips --}}
                     <div class="space-y-3 text-xs">
                         <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="text-slate-400 font-medium mr-1">Size gợi ý:</span>
+                            <span class="text-slate-400 font-medium mr-1">Quy cách:</span>
                             @foreach ($variantQuickSizes as $sz)
                                 <button type="button" class="btn-chip-size px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-edit" data-val="{{ $sz }}">
                                     + {{ $sz }}
@@ -555,7 +555,7 @@
                             @endforeach
                         </div>
                         <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="text-slate-400 font-medium mr-1">Màu gợi ý:</span>
+                            <span class="text-slate-400 font-medium mr-1">Mùi / phiên bản:</span>
                             @foreach ($variantQuickColors as $cl)
                                 <button type="button" class="btn-chip-color px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-400 text-slate-700 dark:text-slate-300" data-target="#variants-edit" data-val="{{ $cl }}">
                                     + {{ $cl }}
@@ -585,7 +585,7 @@
                     <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="variant-generator-edit"
                             class="block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                            placeholder="VD: S,M,L,XL,2XL,3XL,4XL | Trắng/Kem/Đỏ Tươi/Đỏ Đô">
+                            placeholder="VD: 10g,20g,50g | Trầm hương/Quế/Tuyết tùng">
                         <button type="button" class="btn-generate-variants inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all"
                             data-input="#variant-generator-edit" data-target="#variants-edit">
                             Tạo nhanh
@@ -630,9 +630,9 @@
                 const price = data.price_override ? window.nhomNghin(data.price_override) : '';
                 return $(`
                     <div class="variant-row flex items-center gap-2 p-2.5 bg-white dark:bg-slate-700/60 rounded-xl border border-slate-200 dark:border-slate-600">
-                        <input type="text" name="variants[${i}][size]" value="${data.size || ''}" maxlength="50" placeholder="Size (S, M...)"
+                        <input type="text" name="variants[${i}][size]" value="${data.size || ''}" maxlength="50" placeholder="Quy cách (10g, 50g...)"
                             class="w-24 text-xs font-semibold rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white">
-                        <input type="text" name="variants[${i}][color]" value="${data.color || ''}" maxlength="50" placeholder="Màu (Đen, Be...)"
+                        <input type="text" name="variants[${i}][color]" value="${data.color || ''}" maxlength="50" placeholder="Mùi / phiên bản"
                             class="w-28 text-xs rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white">
                         <input type="number" min="0" name="variants[${i}][quantity]" value="${qty}" placeholder="SL tồn"
                             class="w-20 text-xs rounded-lg bg-slate-50 border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center font-medium">
@@ -858,7 +858,7 @@
                         $('#discount_price_edit').val(window.nhomNghin(item.discount_price ?? ''));
                         $('#material_edit').val(item.material);
                         $('#brand_edit').val(item.brand);
-                        $('#audience_edit').val(item.audience || 'Nữ');
+                        $('#audience_edit').val(item.audience || 'Mọi không gian');
                         $('#description_edit').val(item.description);
                         $('#is_featured_edit').prop('checked', !!item.is_featured);
                         $('#manage_stock_edit').prop('checked', !!item.manage_stock);

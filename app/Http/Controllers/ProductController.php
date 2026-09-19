@@ -604,21 +604,15 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
-        // Xác định sản phẩm cần xóa
         $product = Product::find($id);
 
         if (!$product) {
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        // Xóa tất cả các ảnh có product_id bằng với id của sản phẩm
-        $images = ImageModel::where('product_id', $id)->get();
-        foreach ($images as $image) {
-            Storage::delete($image->path); // Xóa tệp tin từ storage
-            $image->delete(); // Xóa bản ghi từ database
-        }
-
-        // Xóa sản phẩm
+        // Product dùng SoftDeletes. Giữ nguyên ảnh và bản ghi media để có thể
+        // khôi phục đầy đủ sản phẩm; xóa file ở đây khiến thao tác "xóa mềm"
+        // trở thành không thể phục hồi.
         $product->delete();
 
         return response()->json(['success' => 'Sản phẩm đã được xóa thành công.']);

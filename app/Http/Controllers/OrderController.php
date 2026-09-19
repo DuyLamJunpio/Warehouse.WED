@@ -248,6 +248,7 @@ class OrderController extends Controller
             // Khách vãng lai thì bỏ trống hết, đơn ghi là "Khách lẻ".
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
+            'customer_email' => 'nullable|email|max:255',
 
             'payment_method' => ['required', Rule::in(array_keys(self::PAYMENT_METHODS))],
             'discount' => 'nullable|integer|min:0',
@@ -306,6 +307,7 @@ class OrderController extends Controller
                 $customer = Customer::mergeByPhone([
                     'customer_name' => $data['customer_name'] ?: 'Khách lẻ',
                     'customer_phone' => $customerPhone,
+                    'customer_email' => $data['customer_email'] ?? null,
                 ]);
             }
 

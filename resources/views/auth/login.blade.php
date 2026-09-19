@@ -17,7 +17,7 @@
                     </svg>
                 </div>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
-                    placeholder="admin@phuongle.vn"
+                    placeholder="admin@rungu.com.vn"
                     class="block w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
             </div>
             <x-input-error :messages="$errors->get('email')" class="mt-1.5" />

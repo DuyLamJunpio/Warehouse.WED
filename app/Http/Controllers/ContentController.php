@@ -8,6 +8,7 @@ use App\Models\Collection;
 use App\Models\Product;
 use App\Models\SiteText;
 use App\Services\StorefrontNotifier;
+use App\Services\CustomerMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -29,7 +30,10 @@ class ContentController extends Controller
     public const ANH_MB_TOI_DA = 2;
     public const VIDEO_MB_TOI_DA = 6;
 
-    public function __construct(private StorefrontNotifier $notifier)
+    public function __construct(
+        private StorefrontNotifier $notifier,
+        private CustomerMailer $customerMailer,
+    )
     {
     }
 
@@ -231,6 +235,30 @@ class ContentController extends Controller
         $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã lưu ' . count($data['items']) . ' thông báo trên cùng.']);
+    }
+
+    /** Gửi chương trình khuyến mại tới các khách đã lưu email. */
+    public function sendPromotionEmail(Request $request)
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:180'],
+            'message' => ['required', 'string', 'max:10000'],
+        ], [
+            'subject.required' => 'Vui lòng nhập tiêu đề email.',
+            'message.required' => 'Vui lòng nhập nội dung email.',
+        ]);
+
+        $count = $this->customerMailer->queuePromotion(
+            trim($data['subject']),
+            trim($data['message']),
+        );
+
+        return response()->json([
+            'success' => $count
+                ? "Đã lên lịch gửi email khuyến mại cho {$count} khách."
+                : 'Chưa có khách hàng nào có email hợp lệ để gửi.',
+            'recipients' => $count,
+        ]);
     }
 
     // ── Tiêu đề các khối ─────────────────────────────────────────────

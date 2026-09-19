@@ -104,7 +104,7 @@
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th scope="col" class="p-4">Sản phẩm &amp; Danh mục</th>
-                        <th scope="col" class="p-4">Biến thể (Size/Màu)</th>
+                        <th scope="col" class="p-4">Phân loại (Quy cách/Mùi)</th>
                         <th scope="col" class="p-4">Mã SKU</th>
                         <th scope="col" class="p-4">Số lượng tồn</th>
                         <th scope="col" class="p-4">Tình trạng</th>

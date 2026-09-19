@@ -266,7 +266,7 @@
             </label>
             <textarea id="profile-note" rows="2"
                 class="block w-full text-xs rounded-xl bg-white border-slate-300 p-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                placeholder="Ghi chú sở thích, size quần áo, lịch sử tư vấn..."></textarea>
+                placeholder="Ghi chú sở thích mùi hương, nhu cầu sử dụng, lịch sử tư vấn..."></textarea>
             <button type="button" id="btn-save-note"
                 class="w-full mt-2.5 px-4 py-2 text-xs font-semibold text-white rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-sm transition-all">
                 Lưu ghi chú CRM
@@ -443,4 +443,3 @@
         });
     </script>
 </x-app-layout>
-

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Invoice;
+use App\Services\CustomerMailer;
 use App\Services\OrderStatusMailer;
 
 /**
@@ -28,7 +29,20 @@ class OrderStatusObserver
      */
     private const SILENT_STATUSES = [Invoice::STATUS_PACKING];
 
-    public function __construct(private OrderStatusMailer $mailer) {}
+    public function __construct(
+        private OrderStatusMailer $mailer,
+        private CustomerMailer $customerMailer,
+    ) {}
+
+    /** Gửi xác nhận ngay cả với đơn POS đã hoàn thành ngay lúc tạo. */
+    public function created(Invoice $invoice): void
+    {
+        if ((int) $invoice->invoice_type !== Invoice::TYPE_ORDER) {
+            return;
+        }
+
+        $this->customerMailer->queueOrderReceived($invoice);
+    }
 
     public function updated(Invoice $invoice): void
     {

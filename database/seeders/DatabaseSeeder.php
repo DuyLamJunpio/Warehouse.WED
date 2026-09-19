@@ -132,7 +132,7 @@ class DatabaseSeeder extends Seeder
                 'barcode' => Str::uuid()->toString(),
                 'description' => $name . ' - hàng thiết kế, chất liệu ' . strtolower($material) . '.',
                 'material' => $material,
-                'brand' => 'Phương Lê',
+                'brand' => 'RUNGU',
                 'unit' => 'cái',
                 'import_price' => $importPrice,
                 'sell_price' => $sellPrice,

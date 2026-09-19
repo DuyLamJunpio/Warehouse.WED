@@ -11,4 +11,17 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        host: 'localhost',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+            protocol: 'ws',
+        },
+    },
+    preview: {
+        host: 'localhost',
+        port: 4173,
+    },
 });

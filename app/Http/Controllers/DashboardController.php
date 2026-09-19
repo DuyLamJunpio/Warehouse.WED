@@ -76,6 +76,7 @@ class DashboardController extends Controller
             'orders_open' => Invoice::orders()->whereIn('order_status', self::OPEN_STATUSES)->count(),
             'orders_pending' => Invoice::orders()->where('order_status', Invoice::STATUS_PENDING)->count(),
             'orders_month' => Invoice::orders()
+                ->where('order_status', Invoice::STATUS_COMPLETED)
                 ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
                 ->count(),
 
@@ -89,7 +90,7 @@ class DashboardController extends Controller
             'customers' => Customer::count(),
             'customers_month' => Customer::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
 
-            // Chỉ đếm hàng có theo dõi tồn kho: hàng đặt may luôn ở mức 0 nên
+            // Chỉ đếm hàng có theo dõi tồn kho: hàng đặt riêng luôn ở mức 0 nên
             // gộp vào thì cảnh báo lúc nào cũng đỏ và không còn ai để ý nữa.
             'low_stock' => ProductVariant::whereHas('product', fn($q) => $q->where('manage_stock', true))
                 ->where('quantity', '>', 0)
@@ -173,7 +174,7 @@ class DashboardController extends Controller
     private function lowStock(int $limit = 6): array
     {
         return ProductVariant::with('product')
-            ->whereHas('product')
+            ->whereHas('product', fn($q) => $q->where('manage_stock', true))
             ->where('quantity', '<=', InventoryController::LOW_STOCK_THRESHOLD)
             ->orderBy('quantity')
             ->limit($limit)

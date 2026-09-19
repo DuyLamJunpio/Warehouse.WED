@@ -91,6 +91,14 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Email nhận hóa đơn / ưu đãi
+                    </label>
+                    <input type="email" id="co-email" placeholder="khach@example.com"
+                        class="block w-full text-xs rounded-lg bg-slate-50 border-slate-200 px-3 py-2 focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Hình thức thanh toán
                     </label>
                     <select id="co-payment"
@@ -342,7 +350,7 @@
 
         $('#co-clear').click(function() {
             cart.clear();
-            $('#co-phone, #co-name, #co-note, #co-cash-tendered').val('');
+            $('#co-phone, #co-name, #co-email, #co-note, #co-cash-tendered').val('');
             $('#co-discount').val(0);
             $('#co-results').addClass('hidden').empty();
             $('#co-search').val('');
@@ -368,6 +376,7 @@
                     })),
                     customer_phone: $('#co-phone').val(),
                     customer_name: $('#co-name').val(),
+                    customer_email: $('#co-email').val(),
                     payment_method: $('#co-payment').val(),
                     discount: rawDiscount,
                     note: $('#co-note').val()

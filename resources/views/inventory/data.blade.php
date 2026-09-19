@@ -16,7 +16,7 @@
             </div>
         </td>
 
-        {{-- Variant (Size / Color) --}}
+        {{-- Phân loại (quy cách / mùi hương) --}}
         <td class="p-4 whitespace-nowrap">
             <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                 {{ $v->label }}

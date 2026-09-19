@@ -207,17 +207,13 @@ class CheckoutController extends Controller
                 'ward' => $data['ward'],
             ]);
 
-            $invoice = Invoice::create([
+            $invoiceData = [
                 'invoice_type' => Invoice::TYPE_ORDER,
                 'order_code' => $this->generateOrderCode(),
                 'order_status' => Invoice::STATUS_PENDING,
                 'customer_id' => $customer->id,
                 'user_id' => $this->systemUserId(),
                 'total_amount' => $subtotal + $printFee + $shippingFee,
-                // Tách riêng tiền in khỏi tiền hàng: lúc tính lãi phải biết
-                // khoản nào là phôi và khoản nào là công in. Đầu mối tới từng
-                // mẫu đi chiều ngược lại, gắn ngay sau khi có id hoá đơn.
-                'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
                 // Khoản shop tự gánh: không cộng vào tiền khách trả, nhưng vẫn phải
                 // lưu lại, nếu không thì lúc tính lãi khoản này biến mất.
@@ -236,7 +232,18 @@ class CheckoutController extends Controller
                 'pay_status' => 0,
                 'note' => $data['note'] ?? null,
                 'signature_name' => $data['customer_name'],
-            ]);
+            ];
+
+            // Các cột này thuộc migration của studio in. Khi studio bị tắt, core
+            // checkout phải chạy độc lập và tuyệt đối không đòi schema của module đó.
+            if (config('features.print_studio')) {
+                $invoiceData['print_fee'] = $printFee;
+                $invoiceData['refund_bank_name'] = $data['refund_bank_name'] ?? null;
+                $invoiceData['refund_account_number'] = $data['refund_account_number'] ?? null;
+                $invoiceData['refund_account_name'] = $data['refund_account_name'] ?? null;
+            }
+
+            $invoice = Invoice::create($invoiceData);
 
             foreach ($lines as $line) {
                 DB::table('product_invoices')->insert([
@@ -316,7 +323,9 @@ class CheckoutController extends Controller
                 'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
                 'total_amount' => $subtotal + $printFee + $shippingFee,
-                'message' => 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
+                'message' => $paymentMethod === 'cod'
+                    ? 'Đã nhận đơn hàng COD. Cửa hàng sẽ liên hệ xác nhận trước khi giao.'
+                    : 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
             ], 201);
         } catch (\RuntimeException $e) {
             DB::rollBack();

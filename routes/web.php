@@ -77,7 +77,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * — xem App\Services\PrintPricing. Kỹ thuật đã có thiết kế khách thì chỉ
      * bật/tắt; bản ghi chưa được dùng vẫn có thể sửa hoặc xoá hẳn.
      */
-    Route::prefix('print')->name('print.')->group(function () {
+    Route::prefix('print')->name('print.')->middleware('feature:print_studio')->group(function () {
         Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
         Route::post('/pricing/draft', [PrintPricingController::class, 'saveDraft'])->name('pricing.draft');
         Route::post('/pricing/publish', [PrintPricingController::class, 'publish'])->name('pricing.publish');
@@ -139,6 +139,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/content/banner/{id}', [ContentController::class, 'destroyBanner'])->name('content.banner.destroy');
     Route::post('/content/banner/{id}/reorder', [ContentController::class, 'reorderBanner'])->name('content.banner.reorder');
     Route::post('/content/announcement', [ContentController::class, 'saveAnnouncement'])->name('content.announcement');
+    Route::post('/content/promotion-email', [ContentController::class, 'sendPromotionEmail'])->name('content.promotion-email');
     Route::post('/content/headings', [ContentController::class, 'saveHeadings'])->name('content.headings');
     Route::post('/content/collection/{id?}', [ContentController::class, 'saveCollection'])->name('content.collection');
     Route::delete('/content/collection/{id}', [ContentController::class, 'destroyCollection'])->name('content.collection.destroy');
