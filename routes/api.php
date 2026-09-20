@@ -129,11 +129,11 @@ Route::post('/login', [AuthController::class, 'login']);
  * Giới hạn số lần gọi để tránh bị spam đơn rác; mọi số tiền do server tự tính.
  */
 Route::middleware('throttle:20,1')->group(function () {
-    // Invoice chỉ được tạo từ luồng PayOS đã xác nhận. Webstore gọi controller này
+    // Invoice chỉ được tạo từ luồng SePay đã xác nhận. Webstore gọi controller này
     // qua StorefrontOrderController::fulfill bằng request nội bộ, còn HTTP trực tiếp phải có bí mật.
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('storefront.secret');
     Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
-    // Chi web ban hang duoc goi: no da xac thuc chu ky PayOS truoc do.
+    // Chỉ web bán hàng được gọi: nó đã xác thực webhook SePay trước đó.
     Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid'])
         ->middleware('storefront.secret');
 });
@@ -177,7 +177,7 @@ Route::middleware(['throttle:60,1', 'storefront.secret'])
 
 /*
  * Cho web bán hàng lưu đơn của trang thanh toán: mã trên URL, mã QR, hạn chuyển
- * khoản, trạng thái PayOS. Bên đó không có cơ sở dữ liệu nào, và thư mục tạm của
+ * khoản, trạng thái SePay. Bên đó không có cơ sở dữ liệu nào, và thư mục tạm của
  * máy chủ Vercel bị xoá sau vài phút - đơn mất là khách đang trả tiền thì trang
  * đơn hàng thành 404.
  *
@@ -189,16 +189,19 @@ Route::middleware(['throttle:600,1', 'storefront.secret'])
     ->prefix('storefront/orders')
     ->group(function () {
         Route::post('/', [StorefrontOrderController::class, 'store']);
-        // Đặt trước {ref} để mã PayOS không bị bắt làm mã trên URL.
+        // Đặt trước {ref} để mã thanh toán SePay không bị bắt làm mã trên URL.
         Route::get('/by-code/{orderCode}', [StorefrontOrderController::class, 'showByCode'])
             ->whereNumber('orderCode');
 
         Route::prefix('{ref}')->whereAlphaNumeric('ref')->group(function () {
             Route::get('/', [StorefrontOrderController::class, 'show']);
             Route::patch('/', [StorefrontOrderController::class, 'update']);
-            // Chỉ gọi sau khi PayOS đã xác nhận. Endpoint tạo hoá đơn thật trong
+            // Chỉ gọi sau khi SePay đã xác nhận. Endpoint tạo hoá đơn thật trong
             // transaction, nên webhook và trang khách kiểm tra song song không sinh đơn trùng.
             Route::post('/fulfill', [StorefrontOrderController::class, 'fulfill']);
+            // Webstore đã xác thực API key SePay. Kho ghi giao dịch trong cùng
+            // transaction với đơn để retry webhook không thể cộng tiền hai lần.
+            Route::post('/sepay-payment', [StorefrontOrderController::class, 'recordSepayPayment']);
             Route::post('/email-claim', [StorefrontOrderController::class, 'claimEmail']);
             Route::delete('/email-claim', [StorefrontOrderController::class, 'releaseEmail']);
         });

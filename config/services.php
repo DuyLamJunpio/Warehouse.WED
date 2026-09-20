@@ -32,8 +32,8 @@ return [
     ],
 
     /*
-     * Bí mật dùng chung với web bán hàng (Next.js). Web bán hàng kiểm tra chữ ký
-     * PayOS xong mới gọi sang đây, nên chặng này chỉ cần xác thực máy-với-máy.
+     * Bí mật dùng chung với web bán hàng (Next.js). Web bán hàng kiểm tra webhook
+     * SePay xong mới gọi sang đây, nên chặng này chỉ cần xác thực máy-với-máy.
      */
     'storefront' => [
         'secret' => env('STOREFRONT_WEBHOOK_SECRET'),
@@ -45,8 +45,8 @@ return [
         // Phải khớp PAYMENT_WINDOW_MINUTES bên webstore (lib/checkout.ts).
         'payment_window_minutes' => (int) env('STOREFRONT_PAYMENT_WINDOW_MINUTES', 15),
 
-        // Ân hạn trước khi tự huỷ: webstore đẩy đơn sang TRƯỚC khi tạo link PayOS,
-        // và webhook báo đã trả tiền có thể tới muộn hơn hạn một chút.
+        // Ân hạn trước khi tự huỷ: webhook SePay có thể tới muộn hơn
+        // hạn thanh toán một chút.
         'expiry_grace_minutes' => (int) env('STOREFRONT_EXPIRY_GRACE_MINUTES', 5),
     ],
 
