@@ -307,6 +307,7 @@
         "use strict";
 
         const csrf = document.querySelector('meta[name="csrf-token"]').content;
+        const SPIN = '<svg class="inline-block h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 0 8-8v4a4 4 0 0 1-4 4H4z"></path></svg>';
 
         document.querySelectorAll('[data-decision]').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -320,7 +321,10 @@
                     return;
                 }
 
+                const original = btn.innerHTML;
                 btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-wait');
+                btn.innerHTML = '<span class="inline-flex items-center gap-2">' + SPIN + '<span>Đang xử lý...</span></span>';
                 try {
                     const res = await fetch('{{ route('print.designs.review', $design) }}', {
                         method: 'POST',
@@ -335,6 +339,8 @@
                 } catch (err) {
                     window.showToast(err.message, 'error');
                     btn.disabled = false;
+                    btn.classList.remove('opacity-60', 'cursor-wait');
+                    btn.innerHTML = original;
                 }
             });
         });

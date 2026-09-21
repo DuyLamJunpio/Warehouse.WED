@@ -5,7 +5,12 @@
     </label>
     <label class="block text-sm text-slate-700 dark:text-slate-200">
         Giá in (đồng / vị trí / áo)
-        <input name="price" type="number" required min="0" max="1000000000" step="1" value="{{ $technique?->price }}" placeholder="30000" class="mt-1 w-full rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-900">
+        <input name="price" type="number" required min="0" max="1000000000" step="1" value="{{ $technique?->price }}" placeholder="30000"
+            @disabled($displayCombinedPrice ?? false)
+            class="mt-1 w-full rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:disabled:bg-slate-700/60">
+        @if ($displayCombinedPrice ?? false)
+            <span class="mt-1 block text-[11px] text-amber-600 dark:text-amber-300">Đang bật gộp giá — tắt toggle để sửa mức giá chung.</span>
+        @endif
     </label>
     @if ($technique)
         <div class="flex flex-wrap items-center justify-between gap-3 text-sm">

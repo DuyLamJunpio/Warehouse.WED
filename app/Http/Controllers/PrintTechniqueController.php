@@ -55,6 +55,9 @@ class PrintTechniqueController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        if ($error = $this->combinedPriceError((int) $data['price'])) {
+            return response()->json(['error' => $error], 422);
+        }
 
         $data['slug'] = Str::slug($data['name']) ?: 'ky-thuat-' . Str::random(6);
         if (PrintTechnique::where('slug', $data['slug'])->exists()) {
@@ -79,6 +82,9 @@ class PrintTechniqueController extends Controller
     public function update(Request $request, PrintTechnique $technique)
     {
         $data = $this->validated($request);
+        if ($error = $this->combinedPriceError((int) $data['price'])) {
+            return response()->json(['error' => $error], 422);
+        }
         DB::transaction(function () use ($technique, $data, $request) {
             $technique->update($data);
             PrintPricing::publish('Lưu kỹ thuật in', $request->user()?->id);
@@ -144,6 +150,22 @@ class PrintTechniqueController extends Controller
             'description' => 'nullable|string|max:500',
             'price' => 'required|integer|min:0|max:1000000000',
         ]);
+    }
+
+    /** Khi gộp giá bật, không cho làm lệch mức giá chung bằng API trực tiếp. */
+    private function combinedPriceError(int $price): ?string
+    {
+        $pricing = PrintPricing::current();
+        if (!(bool) ($pricing['display_combined_price'] ?? false)) {
+            return null;
+        }
+
+        $common = PrintPricing::commonTechniquePrice($pricing);
+        if ($common !== null && $price === $common) {
+            return null;
+        }
+
+        return 'Đang bật gộp giá. Hãy tắt gộp giá trước khi sửa giá kỹ thuật.';
     }
 
     /**

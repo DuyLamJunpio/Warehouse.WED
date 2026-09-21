@@ -56,23 +56,38 @@
             if (!response.ok) throw new Error(Object.values(result.errors || {}).flat().join(' ') || result.error || result.message || 'Không lưu được. Vui lòng thử lại.');
             return result;
         };
+        const SPIN = '<svg class="inline-block h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path></svg>';
+        const setButtonBusy = (button, label) => {
+            const original = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-60', 'cursor-wait');
+            button.innerHTML = '<span class="inline-flex items-center gap-2">' + SPIN + '<span>' + label + '</span></span>';
+            return () => {
+                button.disabled = false;
+                button.classList.remove('opacity-60', 'cursor-wait');
+                button.innerHTML = original;
+            };
+        };
         const combinedToggle = document.querySelector('[data-combined-price-toggle]');
         combinedToggle?.addEventListener('change', async () => {
             combinedToggle.disabled = true;
+            combinedToggle.classList.add('animate-pulse');
             try {
                 const result = await post(combinedToggle.dataset.url, { enabled: combinedToggle.checked });
                 window.showToast(result.success, 'success');
             } catch (error) {
                 combinedToggle.checked = !combinedToggle.checked;
                 window.showToast(error.message, 'error');
+            } finally {
                 combinedToggle.disabled = false;
+                combinedToggle.classList.remove('animate-pulse');
             }
         });
         document.querySelectorAll('[data-technique-form]').forEach(form => {
             form.addEventListener('submit', async event => {
                 event.preventDefault();
                 const button = form.querySelector('[type="submit"]');
-                button.disabled = true;
+                const restoreButton = setButtonBusy(button, 'Đang lưu...');
                 try {
                     const result = await post(form.action, {
                         name: form.elements.name.value.trim(),
@@ -82,29 +97,33 @@
                     if (!form.dataset.techniqueForm) { location.reload(); return; }
                     form.querySelector('[data-price-status]').textContent = Number(form.elements.price.value).toLocaleString('vi-VN') + 'đ / vị trí / áo';
                 } catch (error) { window.showToast(error.message, 'error'); }
-                finally { button.disabled = false; }
+                finally { restoreButton(); }
             });
             const remove = form.querySelector('[data-delete]');
             remove?.addEventListener('click', async () => {
                 if (!window.confirm('Xóa kỹ thuật "' + form.elements.name.value + '"? Chỉ xóa được khi chưa có thiết kế khách sử dụng.')) return;
-                remove.disabled = true;
+                const restoreButton = setButtonBusy(remove, 'Đang xóa...');
                 try {
                     const result = await post(remove.dataset.url, {}, 'DELETE');
                     window.showToast(result.success, 'success');
                     form.remove();
                 } catch (error) { window.showToast(error.message, 'error'); }
-                finally { remove.disabled = false; }
+                finally { restoreButton(); }
             });
             const toggle = form.querySelector('[data-toggle]');
             toggle?.addEventListener('change', async () => {
                 toggle.disabled = true;
+                toggle.classList.add('animate-pulse');
                 try {
                     const result = await post(toggle.dataset.url, { is_active: toggle.checked });
                     window.showToast(result.success, 'success');
                 } catch (error) {
                     toggle.checked = !toggle.checked;
                     window.showToast(error.message, 'error');
-                } finally { toggle.disabled = false; }
+                } finally {
+                    toggle.disabled = false;
+                    toggle.classList.remove('animate-pulse');
+                }
             });
         });
     })();
