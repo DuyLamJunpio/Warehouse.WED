@@ -15,7 +15,16 @@
                 </p>
             </div>
 
-            <div class="flex items-center gap-2.5">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <label class="inline-flex max-w-[280px] cursor-pointer items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2.5 text-xs font-semibold text-indigo-800 dark:border-indigo-900/70 dark:bg-indigo-950/30 dark:text-indigo-200">
+                    <input type="checkbox" id="displayCombinedPrice"
+                        @checked((bool) data_get($draft, 'display_combined_price', false))
+                        class="h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 dark:border-indigo-700 dark:bg-slate-900">
+                    <span>
+                        <span class="block">Gộp giá hiển thị trên webstore</span>
+                        <span class="mt-0.5 block text-[10px] font-normal text-indigo-700/80 dark:text-indigo-300/80">Phôi + kỹ thuật rẻ nhất</span>
+                    </span>
+                </label>
                 <button type="button" id="btnSaveDraft"
                     class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:border-indigo-400 active:scale-[.98] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
                     Lưu nháp
@@ -40,7 +49,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
                             <h2 class="text-sm font-bold text-slate-900 dark:text-white">Bảng giá theo phôi</h2>
-                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Mỗi ô là phí in thêm trên một áo. Giá áo lấy từ phần thông tin phôi.</p>
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Mỗi ô là phí in thêm trên một áo. Giá áo lấy từ phần thông tin phôi. Bật gộp ở trên để webstore bày tổng phôi + kỹ thuật.</p>
                         </div>
                         <span class="rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">Không tính theo khổ</span>
                     </div>
@@ -241,6 +250,10 @@
             return prices;
         }
 
+        function displayCombinedPrice() {
+            return document.getElementById('displayCombinedPrice')?.checked ?? false;
+        }
+
         document.getElementById('btnSaveDraft')?.addEventListener('click', async event => {
             const button = event.currentTarget;
             button.disabled = true;
@@ -248,6 +261,7 @@
                 const result = await post('{{ route('print.pricing.draft') }}', {
                     mode: 'simple',
                     blank_technique_prices: collectPrices(),
+                    display_combined_price: displayCombinedPrice(),
                 });
                 toast(result.success);
             } catch (error) {
@@ -267,6 +281,7 @@
                 await post('{{ route('print.pricing.draft') }}', {
                     mode: 'simple',
                     blank_technique_prices: collectPrices(),
+                    display_combined_price: displayCombinedPrice(),
                 });
                 const result = await post('{{ route('print.pricing.publish') }}', { note });
                 toast(result.success);
