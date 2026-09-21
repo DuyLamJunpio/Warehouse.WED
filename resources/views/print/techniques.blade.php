@@ -75,6 +75,8 @@
             try {
                 const result = await post(combinedToggle.dataset.url, { enabled: combinedToggle.checked });
                 window.showToast(result.success, 'success');
+                // Trạng thái khóa/mở ô giá phụ thuộc vào bản giá vừa xuất bản.
+                setTimeout(() => location.reload(), 350);
             } catch (error) {
                 combinedToggle.checked = !combinedToggle.checked;
                 window.showToast(error.message, 'error');

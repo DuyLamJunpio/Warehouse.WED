@@ -23,8 +23,9 @@ class PrintTechniqueController extends Controller
         $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get();
         $pricing = PrintPricing::current();
         $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
-        $displayCombinedPrice = (bool) ($pricing['display_combined_price'] ?? false)
-            && $commonTechniquePrice !== null;
+        // Giữ đúng trạng thái đã lưu kể cả khi giá kỹ thuật sau đó bị lệch.
+        // Nhờ vậy người dùng vẫn mở được toggle để tắt chế độ gộp và sửa lại giá.
+        $displayCombinedPrice = (bool) ($pricing['display_combined_price'] ?? false);
 
         return view('print.techniques', compact('techniques', 'commonTechniquePrice', 'displayCombinedPrice'));
     }
