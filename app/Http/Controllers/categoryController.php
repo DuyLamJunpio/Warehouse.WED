@@ -31,6 +31,7 @@ class categoryController extends Controller
      */
     private function listData(?string $keyword = null): array
     {
+        Categories::syncVisibilityStatuses();
         $query = Categories::roots()
             ->with(['children' => fn($q) => $q->withCount('products')])
             ->withCount('products')

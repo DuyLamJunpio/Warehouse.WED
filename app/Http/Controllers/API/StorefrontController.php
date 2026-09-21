@@ -152,6 +152,7 @@ class StorefrontController extends Controller
 
     private function categories(): array
     {
+        Categories::syncVisibilityStatuses();
         return Categories::where('status', 1)
             ->withCount(['products' => fn($q) => $q->where('status', '!=', 0)])
             ->orderBy('sort_order')
