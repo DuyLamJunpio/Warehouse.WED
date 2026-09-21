@@ -163,6 +163,7 @@ class StorefrontController extends Controller
                 'parent_id' => $c->parent_id,
                 'image' => $c->image ? $this->url($c->image) : null,
                 'count' => $c->products_count,
+                'link_url' => $c->link_url,
             ])
             ->values()
             ->all();

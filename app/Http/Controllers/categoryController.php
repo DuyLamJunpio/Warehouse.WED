@@ -47,6 +47,7 @@ class categoryController extends Controller
         return [
             'categories' => $query->paginate(self::PER_PAGE),
             'parentOptions' => Categories::roots()->orderBy('sort_order')->get(['id', 'name']),
+            'linkOptions' => $this->linkOptions(),
         ];
     }
 
@@ -57,6 +58,11 @@ class categoryController extends Controller
         }
 
         $data = $this->validated($request);
+
+        // Danh mục mới ẩn mặc định, chủ shop chủ động bật trong phần chỉnh sửa.
+        $data['status'] = array_key_exists('status', $data) && $data['status'] !== null
+            ? (int) $data['status']
+            : 0;
 
         $data['slug'] = $this->uniqueSlug($data['name']);
         $data['sort_order'] = $this->nextSortOrder($data['parent_id'] ?? null);
@@ -192,6 +198,18 @@ class categoryController extends Controller
                 },
             ],
             'description' => ['nullable', 'string', 'max:2000'],
+            'link_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && $value !== ''
+                        && !str_starts_with((string) $value, '/')
+                        && !filter_var($value, FILTER_VALIDATE_URL)) {
+                        $fail('Liên kết phải là đường dẫn nội bộ bắt đầu bằng / hoặc URL đầy đủ (https://...).');
+                    }
+                },
+            ],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['nullable', Rule::in([0, 1])],
         ]);
@@ -218,5 +236,28 @@ class categoryController extends Controller
     private function nextSortOrder(?int $parentId): int
     {
         return (int) Categories::where('parent_id', $parentId)->max('sort_order') + 1;
+    }
+
+    private function linkOptions(): array
+    {
+        $options = [
+            ['label' => 'Trang chủ', 'url' => '/'],
+            ['label' => 'Tất cả sản phẩm', 'url' => '/shop'],
+            ['label' => 'Sản phẩm mới', 'url' => '/shop?new=1'],
+            ['label' => 'Đang khuyến mãi', 'url' => '/shop?sale=1'],
+            ['label' => 'In áo theo yêu cầu', 'url' => '/in-ao'],
+            ['label' => 'Khối danh mục trên trang chủ', 'url' => '/#categories'],
+        ];
+
+        $categoryLinks = Categories::where('status', 1)
+            ->orderBy('sort_order')
+            ->get(['name'])
+            ->map(fn (Categories $category) => [
+                'label' => 'Danh mục: ' . $category->name,
+                'url' => '/shop?category=' . rawurlencode($category->name),
+            ])
+            ->all();
+
+        return array_merge($options, $categoryLinks);
     }
 }

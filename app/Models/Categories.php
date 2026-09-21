@@ -17,6 +17,7 @@ class Categories extends Model
         'slug',
         'image',
         'description',
+        'link_url',
         'sort_order',
         'status',
     ];

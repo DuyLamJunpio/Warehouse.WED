@@ -130,9 +130,22 @@
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Trạng thái</label>
                     <select name="status"
                         class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                        <option value="1">Đang sử dụng</option>
-                        <option value="0">Ngưng sử dụng</option>
+                        <option value="0" selected>Ẩn (mặc định)</option>
+                        <option value="1">Đang hiện trên web</option>
                     </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Liên kết khi bấm danh mục</label>
+                    <select id="link_preset_add" class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <option value="">Tự nhập liên kết ngoài...</option>
+                        @foreach ($linkOptions as $link)
+                            <option value="{{ $link['url'] }}">{{ $link['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <input type="text" name="link_url" id="link_url_add" placeholder="/shop hoặc https://example.com"
+                        class="mt-2 block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    <p class="mt-1 text-[11px] text-slate-400">Chọn liên kết có sẵn hoặc nhập URL bên ngoài.</p>
                 </div>
             </div>
 
@@ -204,6 +217,19 @@
                         <option value="0">Ngưng sử dụng</option>
                     </select>
                 </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Liên kết khi bấm danh mục</label>
+                    <select id="link_preset_edit" class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <option value="">Tự nhập liên kết ngoài...</option>
+                        @foreach ($linkOptions as $link)
+                            <option value="{{ $link['url'] }}">{{ $link['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <input type="text" name="link_url" id="link_url_edit" placeholder="/shop hoặc https://example.com"
+                        class="mt-2 block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    <p class="mt-1 text-[11px] text-slate-400">Chọn liên kết có sẵn hoặc nhập URL bên ngoài.</p>
+                </div>
             </div>
 
             <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-3 sticky bottom-0">
@@ -252,7 +278,14 @@
             // Create Category
             $('#btn-open-create-category').click(function() {
                 $('#formAddCategory')[0].reset();
+                $('#link_preset_add').val('');
+                $('#link_url_add').val('');
                 openDrawer('drawer-create-category');
+            });
+
+            $('#link_preset_add, #link_preset_edit').on('change', function() {
+                const target = this.id.endsWith('_add') ? '#link_url_add' : '#link_url_edit';
+                if ($(this).val()) $(target).val($(this).val());
             });
 
             $('#formAddCategory').submit(function(e) {
@@ -271,6 +304,12 @@
                 $('#description_edit').val($(this).data('description-categories') || '');
                 $('#parent_id_edit').val($(this).data('parent-categories') || '');
                 $('#status_edit').val($(this).data('status-categories') == 1 ? '1' : '0');
+                const linkUrl = $(this).data('link-url-categories') || '';
+                $('#link_url_edit').val(linkUrl);
+                const matchingPreset = $('#link_preset_edit option').filter(function() {
+                    return $(this).val() === linkUrl;
+                }).first().val() || '';
+                $('#link_preset_edit').val(matchingPreset);
 
                 $('#parent_id_edit option').prop('disabled', false);
                 $('#parent_id_edit option[value="' + editCategoryId + '"]').prop('disabled', true);

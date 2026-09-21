@@ -78,6 +78,7 @@
                 data-status-categories="{{ $item->status }}"
                 data-parent-categories="{{ $item->parent_id }}"
                 data-description-categories="{{ $item->description }}"
+                data-link-url-categories="{{ $item->link_url }}"
                 class="editCategoriesButton p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700 rounded-lg transition-colors"
                 title="Chỉnh sửa danh mục">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
