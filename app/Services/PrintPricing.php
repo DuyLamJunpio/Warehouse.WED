@@ -78,7 +78,7 @@ class PrintPricing
             'rounding' => 1000,
             'min_charge' => 0,
             // Khi bật, thẻ phôi trên webstore hiển thị giá phôi cộng
-            // kỹ thuật in rẻ nhất đang áp dụng cho phôi đó.
+            // một mức kỹ thuật in chung (chỉ hợp lệ khi mọi kỹ thuật đồng giá).
             'display_combined_price' => false,
         ];
     }
@@ -237,6 +237,27 @@ class PrintPricing
         $version = PrintPricingVersion::latestPublished();
 
         return ($version?->data['mode'] ?? null) === 'flat' ? $version->id : null;
+    }
+
+    /**
+     * Trả về giá kỹ thuật in chung khi tất cả kỹ thuật đang bật đồng giá.
+     * Nếu có kỹ thuật thiếu giá hoặc khác giá thì trả null để không thể bật
+     * chế độ hiển thị gộp một cách mơ hồ.
+     */
+    public static function commonTechniquePrice(?array $pricing = null): ?int
+    {
+        $techniques = array_key_exists('techniques', (array) $pricing)
+            ? collect((array) $pricing['techniques'])
+            : PrintTechnique::query()->where('is_active', true)->get()->map(fn (PrintTechnique $t) => $t->toPricingArray());
+
+        $active = $techniques->filter(fn ($technique) => (bool) ($technique['is_active'] ?? false));
+        if ($active->isEmpty() || $active->contains(fn ($technique) => ($technique['price'] ?? null) === null)) {
+            return null;
+        }
+
+        $prices = $active->map(fn ($technique) => (int) $technique['price'])->unique()->values();
+
+        return $prices->count() === 1 ? (int) $prices->first() : null;
     }
 
     // ── Hình học ─────────────────────────────────────────────────────

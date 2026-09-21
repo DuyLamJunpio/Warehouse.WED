@@ -31,6 +31,7 @@ class PrintStorefrontController extends Controller
     public function catalogue()
     {
         $pricing = PrintPricing::current();
+        $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
 
         $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants', 'category'])
             ->where('is_active', true)
@@ -48,7 +49,8 @@ class PrintStorefrontController extends Controller
              * studio cho khách kéo một khổ mà máy chủ từ chối ngay sau đó.
              */
             'pricing_mode' => $pricing['mode'] ?? 'legacy',
-            'display_combined_price' => (bool) ($pricing['display_combined_price'] ?? false),
+            'display_combined_price' => (bool) ($pricing['display_combined_price'] ?? false) && $commonTechniquePrice !== null,
+            'common_technique_price' => $commonTechniquePrice,
             'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
             'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->filter(fn ($t) => ($t['price'] ?? null) !== null)->values(),
@@ -77,34 +79,9 @@ class PrintStorefrontController extends Controller
         $sizeMap = $blank->sizeMap();
         $displayPrice = null;
 
-        if ((bool) ($pricing['display_combined_price'] ?? false)) {
-            $techniquePrices = $blank->techniques
-                ->filter(fn (PrintTechnique $technique) => $technique->is_active)
-                ->map(function (PrintTechnique $technique) use ($pricing, $blank) {
-                    $pricingTechnique = collect($pricing['techniques'] ?? [])->firstWhere('id', $technique->id);
-                    if (!$pricingTechnique || !($pricingTechnique['is_active'] ?? false)) {
-                        return null;
-                    }
-
-                    // Ưu tiên giá đã chốt riêng cho cặp phôi/kỹ thuật; các
-                    // snapshot cũ vẫn rơi về giá kỹ thuật đồng giá. Ô null
-                    // được giữ đúng nghĩa là phôi này không nhận kỹ thuật đó.
-                    $savedRow = (array) (($pricing['blank_technique_prices'] ?? [])[(string) $blank->id]
-                        ?? ($pricing['blank_technique_prices'] ?? [])[$blank->id]
-                        ?? []);
-                    $techniqueKey = (string) $technique->id;
-                    if (array_key_exists($techniqueKey, $savedRow) || array_key_exists($technique->id, $savedRow)) {
-                        return PrintPricing::simplePriceFor($pricing, (int) $blank->id, (int) $technique->id);
-                    }
-
-                    return ($pricingTechnique['price'] ?? null) === null ? null : (int) $pricingTechnique['price'];
-                })
-                ->filter(fn ($price) => $price !== null)
-                ->values();
-
-            if ($techniquePrices->isNotEmpty()) {
-                $displayPrice = (int) $blank->effectiveBasePrice() + (int) $techniquePrices->min();
-            }
+        $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
+        if ((bool) ($pricing['display_combined_price'] ?? false) && $commonTechniquePrice !== null) {
+            $displayPrice = (int) $blank->effectiveBasePrice() + $commonTechniquePrice;
         }
 
         return [

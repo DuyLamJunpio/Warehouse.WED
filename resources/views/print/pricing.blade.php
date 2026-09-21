@@ -19,10 +19,17 @@
                 <label class="inline-flex max-w-[280px] cursor-pointer items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2.5 text-xs font-semibold text-indigo-800 dark:border-indigo-900/70 dark:bg-indigo-950/30 dark:text-indigo-200">
                     <input type="checkbox" id="displayCombinedPrice"
                         @checked((bool) data_get($draft, 'display_combined_price', false))
+                        @disabled($commonTechniquePrice === null && !(bool) data_get($draft, 'display_combined_price', false))
                         class="h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 dark:border-indigo-700 dark:bg-slate-900">
                     <span>
                         <span class="block">Gộp giá hiển thị trên webstore</span>
-                        <span class="mt-0.5 block text-[10px] font-normal text-indigo-700/80 dark:text-indigo-300/80">Phôi + kỹ thuật rẻ nhất</span>
+                        <span class="mt-0.5 block text-[10px] font-normal text-indigo-700/80 dark:text-indigo-300/80">
+                            @if ($commonTechniquePrice === null)
+                                Cần đặt tất cả kỹ thuật cùng một giá
+                            @else
+                                Phôi + {{ number_format($commonTechniquePrice, 0, ',', '.') }}đ phí in chung
+                            @endif
+                        </span>
                     </span>
                 </label>
                 <button type="button" id="btnSaveDraft"

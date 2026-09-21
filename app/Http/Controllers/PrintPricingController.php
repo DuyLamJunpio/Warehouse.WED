@@ -36,6 +36,7 @@ class PrintPricingController extends Controller
             'versions' => PrintPricingVersion::with('publisher')->orderByDesc('id')->limit(10)->get(),
             'currentVersion' => PrintPricingVersion::latestPublished(),
             'perLabels' => PrintPricing::PER_LABELS,
+            'commonTechniquePrice' => PrintPricing::commonTechniquePrice(PrintPricing::draft()),
         ]);
     }
 
@@ -86,11 +87,18 @@ class PrintPricingController extends Controller
         }
 
         $draft = PrintPricing::draft();
+        $displayCombined = $request->boolean('display_combined_price');
+        if ($displayCombined && PrintPricing::commonTechniquePrice() === null) {
+            return response()->json([
+                'error' => 'Chỉ được bật gộp giá khi tất cả kỹ thuật in đang hoạt động có cùng một mức giá.',
+            ], 422);
+        }
+
         PrintPricing::putDraft([
             ...$draft,
             'mode' => PrintPricing::MODE_SIMPLE,
             'blank_technique_prices' => $simplePrices,
-            'display_combined_price' => $request->boolean('display_combined_price'),
+            'display_combined_price' => $displayCombined,
         ]);
 
         return response()->json([
@@ -102,6 +110,13 @@ class PrintPricingController extends Controller
     public function publish(Request $request)
     {
         $data = $request->validate(['note' => 'nullable|string|max:255']);
+
+        $draft = PrintPricing::draft();
+        if (($draft['display_combined_price'] ?? false) && PrintPricing::commonTechniquePrice() === null) {
+            return response()->json([
+                'error' => 'Không thể xuất bản gộp giá vì các kỹ thuật in chưa đồng giá.',
+            ], 422);
+        }
 
         $version = PrintPricing::publish($data['note'] ?? null, $request->user()?->id);
         $this->notifier->markDirty();
