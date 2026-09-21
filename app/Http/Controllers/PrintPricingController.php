@@ -53,6 +53,7 @@ class PrintPricingController extends Controller
             'blank_technique_prices' => 'present|array',
             'blank_technique_prices.*' => 'array',
             'blank_technique_prices.*.*' => 'nullable|integer|min:0|max:100000000',
+            'display_combined_price' => 'sometimes|boolean',
             // Các trường cũ vẫn nhận được để một tab bảng giá cũ không làm
             // hỏng lần lưu sau khi cập nhật giao diện.
             'cells' => 'sometimes|array',
@@ -89,6 +90,7 @@ class PrintPricingController extends Controller
             ...$draft,
             'mode' => PrintPricing::MODE_SIMPLE,
             'blank_technique_prices' => $simplePrices,
+            'display_combined_price' => $request->boolean('display_combined_price'),
         ]);
 
         return response()->json([

@@ -36,7 +36,7 @@ class PrintStorefrontController extends Controller
             ->where('is_active', true)
             ->orderBy('sort_order')->orderBy('id')
             ->get()
-            ->map(fn (PrintBlank $blank) => $this->blankPayload($blank));
+            ->map(fn (PrintBlank $blank) => $this->blankPayload($blank, $pricing));
 
         return response()->json([
             'pricing_version_id' => PrintPricing::currentVersionId(),
@@ -48,6 +48,7 @@ class PrintStorefrontController extends Controller
              * studio cho khách kéo một khổ mà máy chủ từ chối ngay sau đó.
              */
             'pricing_mode' => $pricing['mode'] ?? 'legacy',
+            'display_combined_price' => (bool) ($pricing['display_combined_price'] ?? false),
             'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
             'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->filter(fn ($t) => ($t['price'] ?? null) !== null)->values(),
@@ -71,9 +72,40 @@ class PrintStorefrontController extends Controller
         ]);
     }
 
-    private function blankPayload(PrintBlank $blank): array
+    private function blankPayload(PrintBlank $blank, array $pricing = []): array
     {
         $sizeMap = $blank->sizeMap();
+        $displayPrice = null;
+
+        if ((bool) ($pricing['display_combined_price'] ?? false)) {
+            $techniquePrices = $blank->techniques
+                ->filter(fn (PrintTechnique $technique) => $technique->is_active)
+                ->map(function (PrintTechnique $technique) use ($pricing, $blank) {
+                    $pricingTechnique = collect($pricing['techniques'] ?? [])->firstWhere('id', $technique->id);
+                    if (!$pricingTechnique || !($pricingTechnique['is_active'] ?? false)) {
+                        return null;
+                    }
+
+                    // Ưu tiên giá đã chốt riêng cho cặp phôi/kỹ thuật; các
+                    // snapshot cũ vẫn rơi về giá kỹ thuật đồng giá. Ô null
+                    // được giữ đúng nghĩa là phôi này không nhận kỹ thuật đó.
+                    $savedRow = (array) (($pricing['blank_technique_prices'] ?? [])[(string) $blank->id]
+                        ?? ($pricing['blank_technique_prices'] ?? [])[$blank->id]
+                        ?? []);
+                    $techniqueKey = (string) $technique->id;
+                    if (array_key_exists($techniqueKey, $savedRow) || array_key_exists($technique->id, $savedRow)) {
+                        return PrintPricing::simplePriceFor($pricing, (int) $blank->id, (int) $technique->id);
+                    }
+
+                    return ($pricingTechnique['price'] ?? null) === null ? null : (int) $pricingTechnique['price'];
+                })
+                ->filter(fn ($price) => $price !== null)
+                ->values();
+
+            if ($techniquePrices->isNotEmpty()) {
+                $displayPrice = (int) $blank->effectiveBasePrice() + (int) $techniquePrices->min();
+            }
+        }
 
         return [
             'id' => $blank->id,
@@ -81,6 +113,7 @@ class PrintStorefrontController extends Controller
             'name' => $blank->name,
             'description' => $blank->description,
             'base_price' => $blank->effectiveBasePrice(),
+            'display_price' => $displayPrice,
             'product_id' => $blank->product_id,
             /*
              * Danh mục để web bán hàng dựng hàng nút lọc trên trang In áo.
@@ -167,7 +200,9 @@ class PrintStorefrontController extends Controller
             'placements.*.kind' => 'required|in:image,text',
             'placements.*.asset_id' => 'required_if:placements.*.kind,image|nullable|exists:print_assets,id',
             'placements.*.text_content' => 'required_if:placements.*.kind,text|nullable|string|max:80',
-            'placements.*.text_font_id' => 'required_if:placements.*.kind,text|nullable|exists:print_fonts,id',
+            // Có thể dùng phông hệ thống mặc định khi shop chưa khai báo phông
+            // riêng. Nếu có id thì vẫn phải trỏ tới phông thật trong kho.
+            'placements.*.text_font_id' => 'nullable|exists:print_fonts,id',
             'placements.*.text_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'placements.*.x_mm' => 'required|numeric',
             'placements.*.y_mm' => 'required|numeric',

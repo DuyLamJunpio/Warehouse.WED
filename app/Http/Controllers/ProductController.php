@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Encoding\Encoding;
@@ -25,6 +26,8 @@ use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
+    private ?bool $variantPauseColumnAvailable = null;
+
     public function __construct(private readonly ProductMediaService $productMedia)
     {
     }
@@ -259,8 +262,8 @@ class ProductController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Thêm sản phẩm thất bại: ' . $e->getMessage());
-            return response()->json(['error' => 'Không thêm được sản phẩm: ' . $e->getMessage()], 500);
+            Log::error('Thêm sản phẩm thất bại.', ['exception' => $e]);
+            return response()->json(['error' => 'Không thêm được sản phẩm. Vui lòng thử lại.'], 500);
         }
     }
 
@@ -352,8 +355,8 @@ class ProductController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Sửa sản phẩm thất bại: ' . $e->getMessage());
-            return response()->json(['error' => 'Không sửa được sản phẩm: ' . $e->getMessage()], 500);
+            Log::error('Sửa sản phẩm thất bại.', ['exception' => $e]);
+            return response()->json(['error' => 'Không sửa được sản phẩm. Vui lòng thử lại.'], 500);
         }
     }
 
@@ -417,6 +420,14 @@ class ProductController extends Controller
     {
         $data = $request->validate($this->productRules($product));
         $input = $request->all();
+
+        // Các ô tiền trong form có thể để trống. Chuẩn hóa rõ ràng về NULL
+        // trước khi ghi PostgreSQL (tránh gửi chuỗi rỗng vào cột số).
+        foreach (['import_price', 'discount_price'] as $field) {
+            if (array_key_exists($field, $data) && blank($data[$field])) {
+                $data[$field] = null;
+            }
+        }
 
         // Keep accepting discount_price from older clients while the admin form
         // sends discount_type + discount_value.
@@ -628,8 +639,11 @@ class ProductController extends Controller
 
                     if ((int) $variant->quantity !== 0) {
                         $variant->quantity = 0;
-                        $variant->save();
                     }
+                    if ($this->supportsVariantPauseColumn()) {
+                        $variant->is_paused = true;
+                    }
+                    $variant->save();
                     continue;
                 }
 
@@ -662,7 +676,7 @@ class ProductController extends Controller
                     ->first() ?? new ProductVariant();
 
                 $rawPrice = $row['price_override'] ?? null;
-                $variant->fill([
+                $variantData = [
                     'product_id' => $product->id,
                     'product_style_id' => $style->id,
                     'size' => $size,
@@ -670,7 +684,11 @@ class ProductController extends Controller
                     'quantity' => max(0, (int) ($row['quantity'] ?? 0)),
                     'price_override' => ($rawPrice === null || $rawPrice === '') ? null : (int) $rawPrice,
                     'sort_order' => $variantSort++,
-                ]);
+                ];
+                if ($this->supportsVariantPauseColumn()) {
+                    $variantData['is_paused'] = false;
+                }
+                $variant->fill($variantData);
                 if (!$variant->exists) {
                     $variant->sku = $product->barcode . '-' . strtoupper(Str::random(5));
                 }
@@ -679,6 +697,11 @@ class ProductController extends Controller
         }
 
         return (int) ProductVariant::where('product_id', $product->id)->sum('quantity');
+    }
+
+    private function supportsVariantPauseColumn(): bool
+    {
+        return $this->variantPauseColumnAvailable ??= Schema::hasColumn('product_variants', 'is_paused');
     }
 
     /**

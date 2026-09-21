@@ -77,6 +77,9 @@ class PrintPricing
             'qty_tiers' => [],
             'rounding' => 1000,
             'min_charge' => 0,
+            // Khi bật, thẻ phôi trên webstore hiển thị giá phôi cộng
+            // kỹ thuật in rẻ nhất đang áp dụng cho phôi đó.
+            'display_combined_price' => false,
         ];
     }
 
@@ -98,8 +101,10 @@ class PrintPricing
     /** Tự lưu ảnh chụp giá để đơn đã chốt giữ nguyên giá cũ. */
     public static function publish(?string $note = null, ?int $userId = null): PrintPricingVersion
     {
+        $draft = self::draft();
+
         return PrintPricingVersion::create([
-            'data' => self::snapshot(),
+            'data' => self::snapshot($draft),
             'note' => $note,
             'published_by' => $userId,
             'published_at' => now(),
@@ -107,7 +112,7 @@ class PrintPricing
     }
 
     /** Giá cố định đang cấu hình, kèm dữ liệu tương thích studio cũ. */
-    public static function snapshot(): array
+    public static function snapshot(?array $source = null): array
     {
         $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get()
             ->map(fn (PrintTechnique $t) => $t->toPricingArray())->all();
@@ -125,6 +130,12 @@ class PrintPricing
             'tiers' => [['id' => 1, 'name' => 'Đồng giá', 'width_mm' => 2000, 'height_mm' => 2000]],
             'cells' => $cells,
             'rules' => [], 'qty_tiers' => [], 'rounding' => 0, 'min_charge' => 0,
+            // Chỉ bản snapshot lúc xuất bản mới mang dữ liệu bản nháp theo;
+            // snapshot mặc định vẫn giữ tương thích với các bản cũ.
+            'blank_technique_prices' => $source === null
+                ? []
+                : self::resolvedBlankTechniquePrices($source),
+            'display_combined_price' => (bool) ($source['display_combined_price'] ?? false),
         ];
     }
 

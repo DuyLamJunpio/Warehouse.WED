@@ -272,6 +272,7 @@ class ProductController extends Controller
             'product_name' => 'required|max:255',
             'sell_price' => 'required|integer|min:0',
             'import_price' => 'nullable|integer|min:0',
+            'discount_price' => 'nullable|integer|min:0|lte:sell_price',
             'unit' => 'required|max:30',
             'supplier_id' => 'required',
             'categories_id' => 'required',
@@ -282,6 +283,11 @@ class ProductController extends Controller
         }
 
         $params = $request->except('_token');
+        foreach (['import_price', 'discount_price'] as $field) {
+            if (array_key_exists($field, $params) && blank($params[$field])) {
+                $params[$field] = null;
+            }
+        }
         $params['barcode'] = Str::uuid()->toString();
         $params['status'] = 2;
         $params['total_quantity'] = 0;
@@ -390,63 +396,74 @@ class ProductController extends Controller
             'unit' => 'required|max:30',
             'supplier_id' => 'required',
             'categories_id' => 'required',
+            'discount_price' => 'nullable|integer|min:0|lte:sell_price',
         ]);
-
-        $params = $request->except(['_token', 'images']);
-        $product->update($params);
 
         $pinName = trim((string) $request->input('pin_image'));
 
-        // Xử lý ảnh ghim mà không cần tải ảnh mới.
-        if ($pinName !== '') {
-            // Xóa đánh dấu ghim trên tất cả các ảnh hiện tại
-            ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
-
-            // Đánh dấu ảnh mới là ghim
-            $pinImage = ImageModel::where('product_id', $product->id)
-                ->where('name', $pinName)
-                ->where('media_type', ImageModel::TYPE_IMAGE)
-                ->first();
-            if ($pinImage) {
-                $pinImage->is_pined = true;
-                $pinImage->save();
+        // Chuẩn hóa giá trống thành NULL, không để chuỗi rỗng đi vào cột số.
+        $params = $request->except(['_token', 'images', 'pin_image', 'zone', 'shelf', 'level']);
+        foreach (['import_price', 'discount_price'] as $field) {
+            if (array_key_exists($field, $params) && blank($params[$field])) {
+                $params[$field] = null;
             }
         }
 
-        if ($request->hasFile('images')) {
-            $sortOrder = (int) ImageModel::where('product_id', $product->id)->max('sort_order');
-            foreach ($request->file('images') as $image) {
-                $this->productMedia->store($product, $image, [
-                    'sort_order' => ++$sortOrder,
-                    'is_pined' => $pinName !== '' && $pinName === $image->getClientOriginalName(),
-                ]);
-            }
-        }
-
-
-        if ($request->zone != -1 && $request->shelf != "" && $request->level != -1) {
-            // Tìm vị trí hiện tại của sản phẩm
-            $old_location = ProductLocation::where('product_id', $product->id)->first();
-            if ($old_location) {
-                $old_location->product_id = null;
-                $old_location->save();
-            }
-
-            // Tìm vị trí mới dựa trên zone, shelf, và level
-            $new_location = ProductLocation::where('zone', $request->zone)
-                ->where('shelf', $request->shelf)
-                ->where('level', $request->level)
+        // Kiểm tra vị trí mới trước khi bỏ liên kết vị trí cũ. Bản cũ detach
+        // trước rồi mới phát hiện vị trí đích đã bị chiếm, khiến sản phẩm mất vị trí.
+        $hasLocation = $request->filled('zone')
+            && $request->filled('shelf')
+            && $request->filled('level')
+            && (string) $request->input('zone') !== '-1'
+            && (string) $request->input('level') !== '-1';
+        $newLocation = null;
+        if ($hasLocation) {
+            $newLocation = ProductLocation::where('zone', $request->input('zone'))
+                ->where('shelf', $request->input('shelf'))
+                ->where('level', $request->input('level'))
                 ->first();
 
-            if ($new_location && $new_location->product_id === null) {
-                $new_location->product_id = $product->id;
-                $new_location->save();
-            } else {
+            if (!$newLocation || ($newLocation->product_id !== null && (int) $newLocation->product_id !== (int) $product->id)) {
                 return response()->json(['error' => 'Vị trí mới không hợp lệ hoặc đã được sử dụng.'], 422);
             }
         }
 
-        return response()->json(['success', 'Sản phẩm đã được cập nhật thành công!']);
+        DB::transaction(function () use ($product, $params, $request, $pinName, $newLocation, $hasLocation): void {
+            $product->update($params);
+
+            // Xử lý ảnh ghim mà không cần tải ảnh mới.
+            if ($pinName !== '') {
+                ImageModel::where('product_id', $product->id)->update(['is_pined' => false]);
+                $pinImage = ImageModel::where('product_id', $product->id)
+                    ->where('name', $pinName)
+                    ->where('media_type', ImageModel::TYPE_IMAGE)
+                    ->first();
+                if ($pinImage) {
+                    $pinImage->is_pined = true;
+                    $pinImage->save();
+                }
+            }
+
+            if ($request->hasFile('images')) {
+                $sortOrder = (int) ImageModel::where('product_id', $product->id)->max('sort_order');
+                foreach ($request->file('images') as $image) {
+                    $this->productMedia->store($product, $image, [
+                        'sort_order' => ++$sortOrder,
+                        'is_pined' => $pinName !== '' && $pinName === $image->getClientOriginalName(),
+                    ]);
+                }
+            }
+
+            if ($hasLocation && $newLocation) {
+                ProductLocation::where('product_id', $product->id)
+                    ->where('id', '!=', $newLocation->id)
+                    ->update(['product_id' => null]);
+                $newLocation->product_id = $product->id;
+                $newLocation->save();
+            }
+        });
+
+        return response()->json(['success' => 'Sản phẩm đã được cập nhật thành công!']);
     }
 
     public function getProductVariants($id)

@@ -753,7 +753,7 @@
                 data = data || {};
                 const i = variantRowIndex++;
                 const prefix = `styles[${styleIndex}][variants][${i}]`;
-                const isPaused = !!data.paused || (!!data.id && Number(data.quantity) === 0
+                const isPaused = !!data.paused || !!data.is_paused || (!!data.id && Number(data.quantity) === 0
                     && (!String(data.color || '').trim() || !String(data.size || '').trim()));
                 const row = $(`
                     <div class="style-variant-row grid grid-cols-12 items-center gap-2 p-2.5 bg-slate-50/80 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-600">

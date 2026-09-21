@@ -24,12 +24,14 @@ class ProductVariant extends Model
         'quantity',
         'price_override',
         'sort_order',
+        'is_paused',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'price_override' => 'integer',
         'sort_order' => 'integer',
+        'is_paused' => 'boolean',
     ];
 
     protected $appends = ['label'];
