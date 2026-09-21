@@ -81,9 +81,12 @@
         const combinedTrack = document.querySelector('[data-combined-price-track]');
         const combinedThumb = document.querySelector('[data-combined-price-thumb]');
         const syncCombinedVisual = () => {
-            combinedTrack?.classList.toggle('bg-indigo-600', !!combinedToggle?.checked);
-            combinedTrack?.classList.toggle('dark:bg-indigo-500', !!combinedToggle?.checked);
-            combinedThumb?.classList.toggle('translate-x-5', !!combinedToggle?.checked);
+            const enabled = !!combinedToggle?.checked;
+            combinedTrack?.classList.toggle('bg-indigo-600', enabled);
+            combinedTrack?.classList.toggle('bg-slate-300', !enabled);
+            combinedTrack?.classList.toggle('dark:bg-indigo-500', enabled);
+            combinedTrack?.classList.toggle('dark:bg-slate-600', !enabled);
+            combinedThumb?.classList.toggle('translate-x-5', enabled);
         };
         syncCombinedVisual();
         combinedToggle?.addEventListener('change', async () => {
