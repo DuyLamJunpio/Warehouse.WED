@@ -10,6 +10,7 @@
     $pendingDesigns = \App\Models\PrintDesign::where('review_status', \App\Models\PrintDesign::STATUS_PENDING)->count();
 
     $printTabs = [
+        ['route' => 'print.pricing', 'label' => 'Giá in áo', 'match' => 'print.pricing'],
         ['route' => 'print.techniques', 'label' => 'Kỹ thuật in', 'match' => 'print.techniques*'],
         ['route' => 'print.blanks', 'label' => 'Phôi in', 'match' => 'print.blanks*'],
         ['route' => 'print.library', 'label' => 'Thư viện sticker', 'match' => 'print.library*'],
