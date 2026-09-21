@@ -16,13 +16,20 @@
                 @endif
             </p>
         </div>
-        <label class="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
+        <label data-combined-price-shell class="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
             <input type="checkbox" data-combined-price-toggle
                 data-url="{{ route('print.techniques.combined-price') }}"
                 @checked($displayCombinedPrice)
                 @disabled($commonTechniquePrice === null && !$displayCombinedPrice)
-                class="h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 dark:border-indigo-700 dark:bg-slate-900">
-            Bật gộp giá
+                class="peer sr-only">
+            <span data-combined-price-track aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-300 transition-colors dark:bg-slate-600">
+                <span data-combined-price-thumb class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform"></span>
+            </span>
+            <span>Bật gộp giá</span>
+            <span data-combined-price-spinner class="hidden items-center gap-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path></svg>
+                Đang lưu...
+            </span>
         </label>
     </section>
     @if ($techniques->contains(fn ($technique) => $technique->price === null))
@@ -69,9 +76,22 @@
             };
         };
         const combinedToggle = document.querySelector('[data-combined-price-toggle]');
+        const combinedShell = document.querySelector('[data-combined-price-shell]');
+        const combinedSpinner = document.querySelector('[data-combined-price-spinner]');
+        const combinedTrack = document.querySelector('[data-combined-price-track]');
+        const combinedThumb = document.querySelector('[data-combined-price-thumb]');
+        const syncCombinedVisual = () => {
+            combinedTrack?.classList.toggle('bg-indigo-600', !!combinedToggle?.checked);
+            combinedTrack?.classList.toggle('dark:bg-indigo-500', !!combinedToggle?.checked);
+            combinedThumb?.classList.toggle('translate-x-5', !!combinedToggle?.checked);
+        };
+        syncCombinedVisual();
         combinedToggle?.addEventListener('change', async () => {
+            syncCombinedVisual();
             combinedToggle.disabled = true;
-            combinedToggle.classList.add('animate-pulse');
+            combinedShell?.classList.add('cursor-wait', 'opacity-80');
+            combinedSpinner?.classList.remove('hidden');
+            combinedSpinner?.classList.add('inline-flex');
             try {
                 const result = await post(combinedToggle.dataset.url, { enabled: combinedToggle.checked });
                 window.showToast(result.success, 'success');
@@ -79,10 +99,13 @@
                 setTimeout(() => location.reload(), 350);
             } catch (error) {
                 combinedToggle.checked = !combinedToggle.checked;
+                syncCombinedVisual();
                 window.showToast(error.message, 'error');
             } finally {
                 combinedToggle.disabled = false;
-                combinedToggle.classList.remove('animate-pulse');
+                combinedShell?.classList.remove('cursor-wait', 'opacity-80');
+                combinedSpinner?.classList.add('hidden');
+                combinedSpinner?.classList.remove('inline-flex');
             }
         });
         document.querySelectorAll('[data-technique-form]').forEach(form => {
