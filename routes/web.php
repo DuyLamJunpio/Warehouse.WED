@@ -11,7 +11,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PrintAssetController;
 use App\Http\Controllers\PrintBlankController;
 use App\Http\Controllers\PrintDesignController;
-use App\Http\Controllers\PrintPricingController;
 use App\Http\Controllers\PrintTechniqueController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -77,12 +76,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Giá nằm trực tiếp trên phôi và kỹ thuật; lưu kỹ thuật tự ghi phiên bản giá.
      */
     Route::prefix('print')->name('print.')->group(function () {
-        Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
-        Route::post('/pricing/draft', [PrintPricingController::class, 'saveDraft'])->name('pricing.draft');
-        Route::post('/pricing/publish', [PrintPricingController::class, 'publish'])->name('pricing.publish');
-        Route::post('/pricing/simulate', [PrintPricingController::class, 'simulate'])->name('pricing.simulate');
-
         Route::get('/techniques', [PrintTechniqueController::class, 'index'])->name('techniques');
+        Route::post('/techniques/combined-price', [PrintTechniqueController::class, 'toggleCombinedPrice'])->name('techniques.combined-price');
         Route::post('/techniques', [PrintTechniqueController::class, 'store'])->name('techniques.store');
         Route::post('/techniques/{technique}', [PrintTechniqueController::class, 'update'])->name('techniques.update');
         Route::delete('/techniques/{technique}', [PrintTechniqueController::class, 'destroy'])->name('techniques.destroy');

@@ -21,7 +21,35 @@ class PrintTechniqueController extends Controller
     public function index()
     {
         $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get();
-        return view('print.techniques', compact('techniques'));
+        $pricing = PrintPricing::current();
+        $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
+        $displayCombinedPrice = (bool) ($pricing['display_combined_price'] ?? false)
+            && $commonTechniquePrice !== null;
+
+        return view('print.techniques', compact('techniques', 'commonTechniquePrice', 'displayCombinedPrice'));
+    }
+
+    /** Bật/tắt giá phôi + phí kỹ thuật chung trên webstore. */
+    public function toggleCombinedPrice(Request $request)
+    {
+        $enabled = $request->boolean('enabled');
+        if ($enabled && PrintPricing::commonTechniquePrice() === null) {
+            return response()->json([
+                'error' => 'Chỉ được bật khi tất cả kỹ thuật in đang hoạt động có cùng một mức giá.',
+            ], 422);
+        }
+
+        $draft = PrintPricing::draft();
+        PrintPricing::putDraft([
+            ...$draft,
+            'display_combined_price' => $enabled,
+        ]);
+        PrintPricing::publish('Bật/tắt gộp giá phôi và kỹ thuật', $request->user()?->id);
+        $this->notifier->markDirty();
+
+        return response()->json([
+            'success' => $enabled ? 'Đã bật gộp giá trên webstore.' : 'Đã tắt gộp giá trên webstore.',
+        ]);
     }
 
     public function store(Request $request)

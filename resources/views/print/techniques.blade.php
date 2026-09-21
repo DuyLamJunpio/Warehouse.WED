@@ -4,6 +4,27 @@
         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Nhập tên và giá in cho mỗi vị trí trên một áo. Lưu là áp dụng ngay.</p>
     </div>
     @include('print.partials.tabs')
+    <section class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3 dark:border-indigo-900/70 dark:bg-indigo-950/30">
+        <div>
+            <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Giá hiển thị trên webstore</p>
+            <p class="mt-0.5 text-xs text-indigo-700/80 dark:text-indigo-300/80">
+                Gộp giá phôi với phí kỹ thuật chung.
+                @if ($commonTechniquePrice === null)
+                    Cần đặt tất cả kỹ thuật đang bật cùng một giá để bật.
+                @else
+                    Mức kỹ thuật hiện tại: {{ number_format($commonTechniquePrice, 0, ',', '.') }}đ.
+                @endif
+            </p>
+        </div>
+        <label class="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
+            <input type="checkbox" data-combined-price-toggle
+                data-url="{{ route('print.techniques.combined-price') }}"
+                @checked($displayCombinedPrice)
+                @disabled($commonTechniquePrice === null && !$displayCombinedPrice)
+                class="h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 dark:border-indigo-700 dark:bg-slate-900">
+            Bật gộp giá
+        </label>
+    </section>
     @if ($techniques->contains(fn ($technique) => $technique->price === null))
         <p class="mb-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
             Nhập giá cố định cho các kỹ thuật đang báo “Chưa có giá” để khách có thể chọn in.
@@ -35,6 +56,18 @@
             if (!response.ok) throw new Error(Object.values(result.errors || {}).flat().join(' ') || result.error || result.message || 'Không lưu được. Vui lòng thử lại.');
             return result;
         };
+        const combinedToggle = document.querySelector('[data-combined-price-toggle]');
+        combinedToggle?.addEventListener('change', async () => {
+            combinedToggle.disabled = true;
+            try {
+                const result = await post(combinedToggle.dataset.url, { enabled: combinedToggle.checked });
+                window.showToast(result.success, 'success');
+            } catch (error) {
+                combinedToggle.checked = !combinedToggle.checked;
+                window.showToast(error.message, 'error');
+                combinedToggle.disabled = false;
+            }
+        });
         document.querySelectorAll('[data-technique-form]').forEach(form => {
             form.addEventListener('submit', async event => {
                 event.preventDefault();
