@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\categoryController;
 use App\Http\Controllers\API\StorefrontController;
 use App\Models\Categories;
+use App\Models\PrintBlank;
 use App\Models\Product;
 use App\Services\StorefrontNotifier;
 use Illuminate\Database\Schema\Blueprint;
@@ -44,6 +45,16 @@ class CategoryVisibilityTest extends TestCase
             $table->integer('status')->default(1);
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('print_blanks', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->unsignedBigInteger('categories_id')->nullable();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
         });
 
         $this->mock(StorefrontNotifier::class)->shouldReceive('markDirty')->andReturnNull();
@@ -195,6 +206,37 @@ class CategoryVisibilityTest extends TestCase
         $visibleIds = Product::storefrontVisible()->orderBy('id')->pluck('id')->all();
 
         $this->assertSame([1, 4, 5], $visibleIds);
+    }
+
+    public function test_active_print_blanks_are_not_hidden_by_their_category_status(): void
+    {
+        $this->insertCategory(1, 'Danh mục đang dùng', null, 1, null);
+        $this->insertCategory(2, 'Danh mục dùng để nhóm phôi', null, 0, true);
+
+        DB::table('print_blanks')->insert([
+            [
+                'id' => 1,
+                'categories_id' => 2,
+                'name' => 'Phôi thuộc danh mục đã tắt',
+                'slug' => 'phoi-danh-muc-tat',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'categories_id' => 1,
+                'name' => 'Phôi đang tắt riêng',
+                'slug' => 'phoi-tat-rieng',
+                'is_active' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $visibleIds = PrintBlank::storefrontVisible()->orderBy('id')->pluck('id')->all();
+
+        $this->assertSame([1], $visibleIds);
     }
 
     private function insertCategory(int $id, string $name, ?int $parentId, int $status, ?bool $override): void

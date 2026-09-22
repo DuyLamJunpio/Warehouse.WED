@@ -53,26 +53,17 @@ class PrintBlank extends Model
         return $this->belongsTo(Categories::class, 'categories_id')->withTrashed();
     }
 
-    /** Phôi được phép hiện trong studio in áo của web bán hàng. */
+    /**
+     * Phôi được phép hiện trong studio in áo của web bán hàng.
+     *
+     * `categories_id` ở phôi chỉ dùng để nhóm chip lọc trong studio, không phải
+     * công tắc bán hàng. Nếu dùng trạng thái danh mục ở đây, tắt một danh mục
+     * hàng bán sẵn có thể vô tình làm biến mất toàn bộ phôi in. Phôi có công
+     * tắc riêng `is_active` và đó là nguồn quyết định duy nhất tại storefront.
+     */
     public function scopeStorefrontVisible(Builder $query): Builder
     {
-        return $query
-            ->where('print_blanks.is_active', true)
-            // Phôi có danh mục thì danh mục đó phải đang dùng. Phôi không xếp
-            // danh mục vẫn hợp lệ vì đây là trường tuỳ chọn.
-            ->where(function (Builder $blanks): void {
-                $blanks->whereNull('print_blanks.categories_id')
-                    ->orWhereHas('category', function (Builder $category): void {
-                        $category->where('categories.status', 1)
-                            ->whereNull('categories.deleted_at');
-                    });
-            })
-            // Nếu phôi nối với một sản phẩm kho, nó cũng kế thừa trạng thái
-            // hiển thị của sản phẩm và danh mục sản phẩm đó.
-            ->where(function (Builder $blanks): void {
-                $blanks->whereNull('print_blanks.product_id')
-                    ->orWhereHas('product', fn (Builder $product) => $product->storefrontVisible());
-            });
+        return $query->where('print_blanks.is_active', true);
     }
 
     public function colors(): HasMany
