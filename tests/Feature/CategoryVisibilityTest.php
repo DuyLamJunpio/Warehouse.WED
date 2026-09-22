@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\categoryController;
+use App\Http\Controllers\API\StorefrontController;
 use App\Models\Categories;
 use App\Services\StorefrontNotifier;
 use Illuminate\Database\Schema\Blueprint;
@@ -160,6 +161,19 @@ class CategoryVisibilityTest extends TestCase
         $child = Categories::findOrFail(2);
         $this->assertSame(1, $child->status);
         $this->assertNull($child->visibility_override);
+    }
+
+    public function test_storefront_returns_only_categories_marked_as_in_use(): void
+    {
+        // `status` là nguồn quyết định hiển thị ở trang cửa hàng. Danh mục
+        // đang dùng vẫn phải được trả về, kể cả khi chưa có sản phẩm.
+        $this->insertCategory(1, 'Danh mục đang dùng', null, 1, null);
+        $this->insertCategory(2, 'Danh mục ngưng dùng', null, 0, true);
+
+        $response = app(StorefrontController::class)->categoriesIndex();
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame([1], collect($response->getData(true)['categories'])->pluck('id')->all());
     }
 
     private function insertCategory(int $id, string $name, ?int $parentId, int $status, ?bool $override): void

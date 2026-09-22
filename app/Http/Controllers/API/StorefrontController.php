@@ -152,7 +152,9 @@ class StorefrontController extends Controller
 
     private function categories(): array
     {
-        Categories::syncVisibilityStatuses();
+        // Trang cửa hàng chỉ dựa vào trạng thái do quản trị viên thiết lập.
+        // Không đồng bộ theo số sản phẩm ở đây vì thao tác đó có thể tự chuyển
+        // một danh mục "Đang dùng" thành ẩn ngay trước khi trả dữ liệu cho web.
         return Categories::where('status', 1)
             ->withCount(['products' => fn($q) => $q->where('status', '!=', 0)])
             ->orderBy('sort_order')
