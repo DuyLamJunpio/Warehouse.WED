@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Services\StorefrontNotifier;
 
 class categoryController extends Controller
 {
@@ -15,6 +16,10 @@ class categoryController extends Controller
     private const MAX_DEPTH = 2;
 
     private const PER_PAGE = 10;
+
+    public function __construct(private StorefrontNotifier $notifier)
+    {
+    }
 
     public function index()
     {
@@ -82,6 +87,8 @@ class categoryController extends Controller
         if (!$category->id) {
             return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
         }
+
+        $this->notifier->markDirty();
 
         return response()->json([
             'success' => 'Danh mục đã được thêm thành công!',
@@ -158,9 +165,15 @@ class categoryController extends Controller
             return true;
         });
 
-        return $updated
-            ? response()->json(['success' => 'Danh mục đã được sửa thành công!'])
-            : response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+        if (! $updated) {
+            return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+        }
+
+        // Đổi trạng thái danh mục phải xoá cache catalogue ngay: nếu không web
+        // bán hàng có thể còn hiện cả nhánh sản phẩm cũ tới hết chu kỳ cache.
+        $this->notifier->markDirty();
+
+        return response()->json(['success' => 'Danh mục đã được sửa thành công!']);
     }
 
     public function search(Request $request)
@@ -188,6 +201,7 @@ class categoryController extends Controller
         }
 
         $category->delete();
+        $this->notifier->markDirty();
 
         return response()->json(['success' => 'Danh mục đã được xóa thành công!']);
     }
@@ -214,6 +228,7 @@ class categoryController extends Controller
         [$category->sort_order, $neighbour->sort_order] = [$neighbour->sort_order, $category->sort_order];
         $category->save();
         $neighbour->save();
+        $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã cập nhật thứ tự.']);
     }

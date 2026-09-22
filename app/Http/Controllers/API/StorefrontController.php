@@ -33,7 +33,7 @@ class StorefrontController extends Controller
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
-            ->where('status', '!=', 0) // 0 = ngưng kinh doanh
+            ->storefrontVisible()
             ->orderByDesc('is_featured')
             ->orderBy('product_name')
             ->get();
@@ -58,7 +58,7 @@ class StorefrontController extends Controller
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
             ->where('slug', $slug)
-            ->where('status', '!=', 0)
+            ->storefrontVisible()
             ->first();
 
         if (!$product) {
@@ -99,7 +99,7 @@ class StorefrontController extends Controller
 
         // Mỗi bộ sưu tập đang hiện được dựng thành một khối riêng trên trang chủ.
         $collections = Collection::live()
-            ->with(['products' => fn($q) => $q->where('status', '!=', 0)])
+            ->with(['products' => fn($q) => $q->storefrontVisible()])
             ->get()
             ->map(fn($collection) => [
                 'id' => $collection->id,
@@ -156,7 +156,7 @@ class StorefrontController extends Controller
         // Không đồng bộ theo số sản phẩm ở đây vì thao tác đó có thể tự chuyển
         // một danh mục "Đang dùng" thành ẩn ngay trước khi trả dữ liệu cho web.
         return Categories::where('status', 1)
-            ->withCount(['products' => fn($q) => $q->where('status', '!=', 0)])
+            ->withCount(['products' => fn($q) => $q->storefrontVisible()])
             ->orderBy('sort_order')
             ->get()
             ->map(fn($c) => [

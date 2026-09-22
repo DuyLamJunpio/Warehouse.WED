@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\PrintPositions;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -50,6 +51,28 @@ class PrintBlank extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Categories::class, 'categories_id')->withTrashed();
+    }
+
+    /** Phôi được phép hiện trong studio in áo của web bán hàng. */
+    public function scopeStorefrontVisible(Builder $query): Builder
+    {
+        return $query
+            ->where('print_blanks.is_active', true)
+            // Phôi có danh mục thì danh mục đó phải đang dùng. Phôi không xếp
+            // danh mục vẫn hợp lệ vì đây là trường tuỳ chọn.
+            ->where(function (Builder $blanks): void {
+                $blanks->whereNull('print_blanks.categories_id')
+                    ->orWhereHas('category', function (Builder $category): void {
+                        $category->where('categories.status', 1)
+                            ->whereNull('categories.deleted_at');
+                    });
+            })
+            // Nếu phôi nối với một sản phẩm kho, nó cũng kế thừa trạng thái
+            // hiển thị của sản phẩm và danh mục sản phẩm đó.
+            ->where(function (Builder $blanks): void {
+                $blanks->whereNull('print_blanks.product_id')
+                    ->orWhereHas('product', fn (Builder $product) => $product->storefrontVisible());
+            });
     }
 
     public function colors(): HasMany

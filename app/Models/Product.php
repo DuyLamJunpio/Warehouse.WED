@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\ProductPricing;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -58,6 +59,30 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Categories::class, 'categories_id')->withTrashed();
+    }
+
+    /**
+     * Sản phẩm được phép xuất hiện ở web bán hàng.
+     *
+     * Trạng thái danh mục là công tắc hiển thị của cả nhóm sản phẩm: khi một
+     * danh mục chuyển sang "ngưng sử dụng", sản phẩm trong đó không được lọt
+     * vào catalogue, trang chi tiết hay các khối trên trang chủ. Sản phẩm cũ
+     * chưa xếp danh mục vẫn được giữ khả năng hiển thị để không tự làm biến mất
+     * dữ liệu legacy chỉ vì thiếu liên kết danh mục.
+     */
+    public function scopeStorefrontVisible(Builder $query): Builder
+    {
+        return $query
+            ->where('products.status', '!=', 0)
+            ->where(function (Builder $products): void {
+                $products->whereNull('products.categories_id')
+                    ->orWhereHas('category', function (Builder $category): void {
+                        // `category()` dùng withTrashed cho màn quản trị, nên
+                        // web bán hàng phải chủ động loại cả danh mục đã xoá mềm.
+                        $category->where('categories.status', 1)
+                            ->whereNull('categories.deleted_at');
+                    });
+            });
     }
 
     public function productInvoices()

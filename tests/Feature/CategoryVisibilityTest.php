@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\categoryController;
 use App\Http\Controllers\API\StorefrontController;
 use App\Models\Categories;
+use App\Models\Product;
 use App\Services\StorefrontNotifier;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
@@ -174,6 +175,26 @@ class CategoryVisibilityTest extends TestCase
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame([1], collect($response->getData(true)['categories'])->pluck('id')->all());
+    }
+
+    public function test_storefront_visibility_hides_products_in_an_inactive_category(): void
+    {
+        $this->insertCategory(1, 'Danh mục đang dùng', null, 1, null);
+        $this->insertCategory(2, 'Danh mục ngưng dùng', null, 0, true);
+
+        DB::table('products')->insert([
+            ['id' => 1, 'categories_id' => 1, 'status' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'categories_id' => 2, 'status' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'categories_id' => 1, 'status' => 0, 'created_at' => now(), 'updated_at' => now()],
+            // Hàng hết kho (status = 2) vẫn hiện để khách thấy và đăng ký chờ.
+            ['id' => 4, 'categories_id' => 1, 'status' => 2, 'created_at' => now(), 'updated_at' => now()],
+            // Sản phẩm legacy chưa xếp danh mục không bị biến mất ngoài ý muốn.
+            ['id' => 5, 'categories_id' => null, 'status' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $visibleIds = Product::storefrontVisible()->orderBy('id')->pluck('id')->all();
+
+        $this->assertSame([1, 4, 5], $visibleIds);
     }
 
     private function insertCategory(int $id, string $name, ?int $parentId, int $status, ?bool $override): void

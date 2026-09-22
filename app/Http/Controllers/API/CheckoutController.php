@@ -161,7 +161,9 @@ class CheckoutController extends Controller
         DB::beginTransaction();
         try {
             // Khoá các dòng biến thể để hai khách đặt cùng lúc không bán quá tồn.
-            $variants = ProductVariant::with('product')
+            $variants = ProductVariant::with([
+                'product' => fn ($query) => $query->storefrontVisible(),
+            ])
                 ->whereIn('id', array_keys($wanted))
                 ->lockForUpdate()
                 ->get()
@@ -456,7 +458,9 @@ class CheckoutController extends Controller
         // toán không chặn được khách đang thật sự muốn mua.
         Invoice::cancelExpiredHolds();
 
-        $variants = ProductVariant::with('product')
+        $variants = ProductVariant::with([
+            'product' => fn ($query) => $query->storefrontVisible(),
+        ])
             ->whereIn('id', array_column($data['items'], 'variant_id'))
             ->get()
             ->keyBy('id');
@@ -464,7 +468,9 @@ class CheckoutController extends Controller
         $result = [];
         foreach ($data['items'] as $item) {
             $variant = $variants->get((int) $item['variant_id']);
-            $available = $variant->quantity ?? 0;
+            // Sản phẩm thuộc danh mục đã tắt cũng được coi là không còn bán,
+            // kể cả khi khách giữ một giỏ cũ hoặc tự gọi API kiểm tra kho.
+            $available = $variant?->product ? $variant->quantity : 0;
             // Hàng không theo dõi tồn kho luôn đủ: số tồn của nó chỉ để tham khảo.
             $unlimited = (bool) $variant && ! $variant->product?->manage_stock;
 
@@ -473,8 +479,8 @@ class CheckoutController extends Controller
                 'available' => $available,
                 'manage_stock' => ! $unlimited,
                 'enough' => $unlimited || $available >= (int) $item['quantity'],
-                'product' => $variant->product->product_name ?? null,
-                'label' => $variant->label ?? null,
+                'product' => $variant?->product?->product_name,
+                'label' => $variant?->label,
             ];
         }
 

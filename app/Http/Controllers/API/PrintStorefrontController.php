@@ -34,7 +34,7 @@ class PrintStorefrontController extends Controller
         $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
 
         $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants', 'category'])
-            ->where('is_active', true)
+            ->storefrontVisible()
             ->orderBy('sort_order')->orderBy('id')
             ->get()
             ->map(fn (PrintBlank $blank) => $this->blankPayload($blank, $pricing));
@@ -151,7 +151,9 @@ class PrintStorefrontController extends Controller
     public function quote(Request $request)
     {
         $data = $this->validatedDesign($request);
-        $blank = PrintBlank::with(['colors', 'product.variants'])->findOrFail($data['blank_id']);
+        $blank = PrintBlank::storefrontVisible()
+            ->with(['colors', 'product.variants'])
+            ->findOrFail($data['blank_id']);
 
         return response()->json($this->quoteFor($blank, $data));
     }
@@ -313,7 +315,9 @@ class PrintStorefrontController extends Controller
     public function storeDesign(Request $request)
     {
         $data = $this->validatedDesign($request);
-        $blank = PrintBlank::with(['colors', 'product.variants'])->findOrFail($data['blank_id']);
+        $blank = PrintBlank::storefrontVisible()
+            ->with(['colors', 'product.variants'])
+            ->findOrFail($data['blank_id']);
         $quote = $this->quoteFor($blank, $data);
 
         // Thiết kế có lỗi thì KHÔNG lưu: một bản ghi giá 0 đồng nằm chờ duyệt
