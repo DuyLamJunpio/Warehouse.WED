@@ -6,8 +6,10 @@ use App\Models\PrintAsset;
 use App\Models\PrintFont;
 use App\Models\PrintTechnique;
 use App\Services\StorefrontNotifier;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Thư viện sticker và logo shop cung cấp sẵn cho khách.
@@ -175,21 +177,40 @@ class PrintAssetController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:120',
-            'file' => 'nullable|file|mimes:woff2,woff,ttf,otf|max:4096',
+            /*
+             * Không dùng `mimes` ở đây. Trên Render, PHP có thể nhận OTF hợp
+             * lệ thành application/octet-stream và Laravel từ chối nhầm dù
+             * tệp thực tế đúng là .otf. Đuôi + chữ ký nhị phân bên dưới vừa
+             * ổn định giữa các máy chủ, vừa không mở cửa cho tệp bất kỳ.
+             */
+            'file' => [
+                'nullable',
+                'file',
+                'extensions:woff2,woff,ttf,otf',
+                'max:4096',
+                function (string $attribute, mixed $file, \Closure $fail): void {
+                    if ($file instanceof UploadedFile && ! $this->isSupportedFontFile($file)) {
+                        $fail('Tệp phông phải là WOFF2, WOFF, TTF hoặc OTF hợp lệ.');
+                    }
+                },
+            ],
             'family' => 'nullable|string|max:255',
         ]);
 
         $font = PrintFont::create([
             'name' => $data['name'],
             // Tạm thời; sửa lại ngay sau khi có id để tên CSS là duy nhất.
-            'family' => $data['family'] ?: 'sans-serif',
+            'family' => $data['family'] ?? 'sans-serif',
             'sort_order' => (int) PrintFont::max('sort_order') + 1,
             'is_active' => true,
         ]);
 
         if ($request->hasFile('file')) {
             $font->update([
-                'file_path' => $request->file('file')->store('public/fonts'),
+                // `store()` đoán phần mở rộng theo MIME. Với OTF bị PHP nhận
+                // là octet-stream, nó có thể biến URL thành .bin; giữ phần mở
+                // rộng người dùng đã chọn sau khi đã xác thực chữ ký font.
+                'file_path' => $this->storeFontFile($request->file('file')),
                 'family' => sprintf('"print-font-%d", sans-serif', $font->id),
             ]);
         }
@@ -233,5 +254,40 @@ class PrintAssetController extends Controller
                 ? 'Đã bật phông "' . $font->name . '".'
                 : 'Đã tắt phông "' . $font->name . '" — ẩn khỏi studio, thiết kế cũ giữ nguyên.',
         ]);
+    }
+
+    /** Kiểm tra bốn byte đầu theo định dạng font, không tin MIME của máy chủ. */
+    private function isSupportedFontFile(UploadedFile $file): bool
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $signatures = match ($extension) {
+            'woff2' => ["wOF2"],
+            'woff' => ["wOFF"],
+            // Font OpenType dùng TrueType outlines vẫn có thể mang đuôi .otf.
+            'ttf', 'otf' => ["OTTO", "\x00\x01\x00\x00", 'true', 'typ1'],
+            default => [],
+        };
+
+        if ($signatures === []) {
+            return false;
+        }
+
+        $handle = @fopen($file->getRealPath(), 'rb');
+        if (! $handle) {
+            return false;
+        }
+
+        $header = fread($handle, 4);
+        fclose($handle);
+
+        return in_array($header, $signatures, true);
+    }
+
+    /** Lưu đúng phần mở rộng đã được kiểm tra để trình duyệt nhận diện font. */
+    private function storeFontFile(UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        return $file->storeAs('public/fonts', Str::uuid() . '.' . $extension);
     }
 }
