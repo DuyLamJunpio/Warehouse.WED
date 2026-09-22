@@ -60,7 +60,10 @@ class StorefrontNotifier
 
         try {
             $response = Http::withHeaders(['X-Warehouse-Secret' => $secret])
-                ->timeout(3)
+                // Lần đo thực tế Vercel phản hồi có lúc gần 3 giây, nên
+                // timeout cũ quá sát và dễ làm mất webhook chỉ vì dao động mạng.
+                ->connectTimeout(2)
+                ->timeout(8)
                 ->post($url.'/api/revalidate');
 
             if ($response->failed()) {
