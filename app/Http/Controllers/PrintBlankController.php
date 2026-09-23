@@ -202,6 +202,11 @@ class PrintBlankController extends Controller
             'colors.*.name' => 'required|string|max:80',
             'colors.*.hex' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'colors.*.tone' => 'nullable|in:light,dark',
+            // Để trống thì màu này dùng mọi size của sản phẩm nối kho.
+            'colors.*.sizes' => 'nullable|array|max:30',
+            // Không dùng `distinct` ở wildcard này: size S được phép có ở cả
+            // màu Trắng lẫn Đen. Trùng trong cùng một màu sẽ được chuẩn hoá.
+            'colors.*.sizes.*' => 'required|string|max:40',
         ], [
             'positions.required' => 'Phôi phải bán được ít nhất một vị trí in.',
             'positions.min' => 'Phôi phải bán được ít nhất một vị trí in.',
@@ -253,6 +258,7 @@ class PrintBlankController extends Controller
                 // Tông để trống thì suy từ độ sáng; đây chỉ là gợi ý, người dùng
                 // sửa đè được vì xám mélange nằm đúng giữa.
                 'tone' => $color['tone'] ?? PrintBlankColor::suggestTone($color['hex']),
+                'sizes' => $this->normaliseSizes($color['sizes'] ?? []),
                 'sort_order' => $i,
                 'is_active' => true,
             ];
@@ -266,6 +272,19 @@ class PrintBlankController extends Controller
         }
 
         $blank->colors()->whereNotIn('name', $seen ?: ['__none__'])->update(['is_active' => false]);
+    }
+
+    /** @return string[]|null */
+    private function normaliseSizes(array $sizes): ?array
+    {
+        $sizes = collect($sizes)
+            ->map(fn ($size) => trim((string) $size))
+            ->filter()
+            ->unique(fn ($size) => mb_strtolower($size))
+            ->values()
+            ->all();
+
+        return $sizes ?: null;
     }
 
     // ── Ảnh mockup ───────────────────────────────────────────────────

@@ -282,6 +282,10 @@
                     hex: row.querySelector('[data-color-hex]').value,
                     // Để trống thì máy chủ suy tông từ độ sáng; đó chỉ là gợi ý.
                     tone: row.querySelector('[data-color-tone]').value || null,
+                    sizes: row.querySelector('[data-color-sizes]').value
+                        .split(/[,;\n]/)
+                        .map(size => size.trim())
+                        .filter((size, index, all) => size !== '' && all.indexOf(size) === index),
                 }))
                 .filter(c => c.name !== '');
 
@@ -322,6 +326,7 @@
             template.querySelector('[data-color-name]').value = '';
             template.querySelector('[data-color-hex]').value = '#cccccc';
             template.querySelector('[data-color-tone]').value = '';
+            template.querySelector('[data-color-sizes]').value = '';
 
             form.querySelector('[data-color-add]')?.addEventListener('click', () => {
                 list.appendChild(template.cloneNode(true));
@@ -329,7 +334,7 @@
 
             /*
              * Xoá màu. Uỷ quyền sự kiện cho cả danh sách vì dòng thêm bằng nút
-             * "+ Thêm màu" sinh ra sau khi trang đã gắn xong các trình xử lý.
+             * "+ Thêm biến thể" sinh ra sau khi trang đã gắn xong các trình xử lý.
              */
             list.addEventListener('click', (e) => {
                 const btn = e.target.closest('[data-color-del]');

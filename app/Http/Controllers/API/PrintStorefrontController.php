@@ -77,6 +77,12 @@ class PrintStorefrontController extends Controller
     private function blankPayload(PrintBlank $blank, array $pricing = []): array
     {
         $sizeMap = $blank->sizeMap();
+        $colors = $blank->colors->where('is_active', true)->values();
+        $sizes = $colors
+            ->flatMap(fn ($color) => $blank->sizesForColor($color))
+            ->unique()
+            ->values()
+            ->all();
         $displayPrice = null;
 
         $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
@@ -116,17 +122,18 @@ class PrintStorefrontController extends Controller
             'lead_days' => $blank->lead_days,
             'template_url' => $blank->template_path ? Storage::url($blank->template_path) : null,
             'technique_ids' => $blank->techniques->pluck('id')->all(),
-            // Nối kho thì size lấy từ biến thể thật; không nối thì phôi chỉ có
-            // một cỡ duy nhất, và nói thẳng ra thay vì để danh sách rỗng.
-            'sizes' => $sizeMap ? array_keys($sizeMap) : ['Một cỡ'],
+            // Danh sách gộp giúp web cũ vẫn dựng được ô chọn; `colors[].sizes`
+            // mới là nguồn chính xác để lọc size sau khi khách đổi màu.
+            'sizes' => $sizes ?: ($sizeMap ? array_keys($sizeMap) : ['Một cỡ']),
             // Size vẫn gửi sang để khách chọn áo, nhưng không còn làm thay đổi giá.
             'size_surcharge' => array_fill_keys(array_keys($sizeMap), 0),
             'size_pricing' => 'flat',
-            'colors' => $blank->colors->where('is_active', true)->values()->map(fn ($c) => [
+            'colors' => $colors->map(fn ($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
                 'hex' => $c->hex,
                 'tone' => $c->tone,
+                'sizes' => $blank->sizesForColor($c),
             ]),
             'position_keys' => $blank->positionKeys(),
             'mockups' => $blank->mockups->map(fn ($m) => [
@@ -211,6 +218,15 @@ class PrintStorefrontController extends Controller
         }
 
         $color = $blank->colors->firstWhere('name', $data['color_name']);
+        if (!$color || !in_array($data['size'], $blank->sizesForColor($color), true)) {
+            return [
+                'lines' => [],
+                'unit_price' => 0,
+                'total' => 0,
+                'errors' => ['Màu và size áo đã chọn không còn bán cùng nhau.'],
+                'warnings' => [],
+            ];
+        }
         $assets = PrintAsset::whereIn('id', collect($data['placements'])->pluck('asset_id')->filter())
             ->get()->keyBy('id');
 

@@ -135,4 +135,20 @@ class PrintBlank extends Model
 
         return $sizes;
     }
+
+    /**
+     * Size thực sự đặt được cho một màu. Màu chưa khai size riêng kế thừa toàn
+     * bộ size sản phẩm nối kho; phôi độc lập thì luôn có "Một cỡ".
+     *
+     * @return string[]
+     */
+    public function sizesForColor(PrintBlankColor $color): array
+    {
+        $sizes = array_values(array_filter(
+            $color->sizes ?? [],
+            fn ($size) => is_string($size) && trim($size) !== '',
+        ));
+
+        return $sizes ?: (array_keys($this->sizeMap()) ?: ['Một cỡ']);
+    }
 }

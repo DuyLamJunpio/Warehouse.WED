@@ -75,7 +75,7 @@
     </div>
 
     <div>
-        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Màu áo</label>
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Biến thể</label>
         <div class="space-y-1.5" data-color-list>
             @foreach ($colors->isEmpty() ? [null] : $colors as $color)
                 {{--
@@ -87,6 +87,9 @@
                     <input type="color" data-color-hex value="{{ $color->hex ?? '#cccccc' }}"
                         class="w-9 h-9 shrink-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent cursor-pointer p-0.5">
                     <input type="text" data-color-name value="{{ $color->name ?? '' }}" placeholder="Tên màu"
+                        class="w-40 shrink-0 min-w-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
+                    <input type="text" data-color-sizes value="{{ implode(', ', $color?->sizes ?? []) }}" placeholder="Size: S, M, L, XL"
+                        aria-label="Size áp dụng cho màu này, cách nhau bằng dấu phẩy"
                         class="flex-1 min-w-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
                     <select data-color-tone class="shrink-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
                         <option value="">tự suy</option>
@@ -103,9 +106,9 @@
             @endforeach
         </div>
         <button type="button" data-color-add
-            class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">+ Thêm màu</button>
+            class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">+ Thêm biến thể</button>
         <p class="mt-1 text-[11px] text-slate-400">
-            Thêm các màu áo đang bán. Xóa màu sẽ xóa cả ảnh áo gắn với màu đó.
+            Mỗi biến thể gồm màu và các size bán được (ví dụ: S, M, L, XL). Để trống size thì dùng mọi size của sản phẩm nối kho; phôi không nối kho mặc định là Một cỡ. Xóa màu sẽ xóa cả ảnh áo gắn với màu đó.
         </p>
     </div>
 
