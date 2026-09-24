@@ -140,7 +140,11 @@ class TelegramNotifier
 
         try {
             $response = Http::asJson()
-                ->timeout(8)
+                // Thông báo vận hành không được phép giữ request checkout quá lâu.
+                // Nếu Telegram chậm hoặc tạm thời không truy cập được, đơn hàng
+                // và mã QR vẫn phải được trả về cho khách.
+                ->connectTimeout(1)
+                ->timeout(2)
                 ->post('https://api.telegram.org/bot' . $token . '/sendMessage', $payload);
 
             if ($response->failed() || $response->json('ok') !== true) {
