@@ -135,6 +135,8 @@ Route::middleware('throttle:20,1')->group(function () {
     // Web bán hàng tạo đơn có khóa bí mật; tổng tiền luôn được dựng lại tại server.
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('storefront.secret');
     Route::post('/checkout/quote', [CheckoutController::class, 'quote']);
+    Route::get('/checkout/status/{checkoutRef}/qr', [CheckoutController::class, 'paymentQr'])
+        ->middleware('storefront.secret');
     Route::get('/checkout/status/{checkoutRef}', [CheckoutController::class, 'status'])
         ->middleware('storefront.secret');
     Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);

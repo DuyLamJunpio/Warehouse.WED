@@ -11,6 +11,9 @@ use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Voucher;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +28,25 @@ use Illuminate\Validation\Rule;
  */
 class CheckoutController extends Controller
 {
+    /** Mã BIN NAPAS của các mã ngân hàng thường được dùng trong cài đặt. */
+    private const VIETQR_BANK_BINS = [
+        'MB' => '970422', 'MBBANK' => '970422',
+        'VCB' => '970436', 'VIETCOMBANK' => '970436',
+        'BIDV' => '970418',
+        'CTG' => '970415', 'VIETINBANK' => '970415',
+        'TCB' => '970407', 'TECHCOMBANK' => '970407',
+        'VPB' => '970432', 'VPBANK' => '970432',
+        'ACB' => '970416',
+        'TPB' => '970423', 'TPBANK' => '970423',
+        'STB' => '970403', 'SACOMBANK' => '970403',
+        'AGR' => '970405', 'AGRIBANK' => '970405',
+        'HDB' => '970437', 'HDBANK' => '970437',
+        'VIB' => '970441',
+        'SHB' => '970443',
+        'MSB' => '970426',
+        'OCB' => '970448',
+    ];
+
     /**
      * Khớp mã hình thức thanh toán mà web bán hàng gửi lên với khoá trong cài đặt.
      * Mọi mã lạ đều coi là chuyển khoản, đúng như mặc định của trường payment_method.
@@ -601,6 +623,99 @@ class CheckoutController extends Controller
             'order_status' => $order->order_status,
             'pay_status' => (int) $order->pay_status,
         ]);
+    }
+
+    /**
+     * Dựng ảnh VietQR trên chính máy chủ QLBH từ tổng tiền và mã đơn đã tạo.
+     * Không gọi dịch vụ QR bên thứ ba, nên số tài khoản và nội dung đơn không
+     * rời khỏi hệ thống trước khi ảnh được trả về landing qua route có bí mật.
+     */
+    public function paymentQr(string $checkoutRef)
+    {
+        if (! Str::isUuid($checkoutRef)) {
+            return response()->json(['error' => 'Mã yêu cầu không hợp lệ.'], 422);
+        }
+
+        $invoice = Invoice::orders()->where('checkout_ref', $checkoutRef)->first();
+        if (! $invoice) {
+            return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+        }
+
+        $bank = (array) data_get(Setting::sales(), 'bank_transfer.bank', []);
+        $bankBin = $this->vietQrBankBin((string) ($bank['code'] ?? ''));
+        $accountNumber = preg_replace('/\D+/', '', (string) ($bank['account_number'] ?? ''));
+
+        if ($bankBin === null || $accountNumber === '' || strlen($accountNumber) > 19) {
+            return response()->json([
+                'error' => 'Chưa cấu hình đủ tài khoản nhận chuyển khoản để tạo mã VietQR.',
+            ], 422);
+        }
+
+        $payload = $this->vietQrPayload(
+            $bankBin,
+            $accountNumber,
+            max(0, (int) $invoice->total_amount),
+            (string) $invoice->order_code,
+        );
+
+        $qrCode = new QrCode($payload);
+        $qrCode->setEncoding(new Encoding('UTF-8'));
+        $qrCode->setSize(560);
+        $qrCode->setMargin(12);
+
+        $image = (new PngWriter())->write($qrCode)->getString();
+
+        return response($image, 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'private, no-store, max-age=0',
+        ]);
+    }
+
+    private function vietQrBankBin(string $code): ?string
+    {
+        $normalized = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
+
+        if (preg_match('/^\d{6}$/', $normalized)) {
+            return $normalized;
+        }
+
+        return self::VIETQR_BANK_BINS[$normalized] ?? null;
+    }
+
+    /** Tạo payload QRIBFTTA theo chuẩn VietQR/EMVCo, với CRC-16/CCITT-FALSE. */
+    private function vietQrPayload(string $bankBin, string $accountNumber, int $amount, string $reference): string
+    {
+        $tlv = static fn (string $id, string $value): string => $id . str_pad((string) strlen($value), 2, '0', STR_PAD_LEFT) . $value;
+        $beneficiary = $tlv('00', $bankBin) . $tlv('01', $accountNumber);
+        $merchant = $tlv('00', 'A000000727') . $tlv('01', $beneficiary) . $tlv('02', 'QRIBFTTA');
+        // VietinBank qua SePay chỉ gửi biến động có nội dung bắt đầu bằng SEVQR.
+        // Mã đơn vẫn nằm sau tiền tố để webhook đối soát đúng Invoice.
+        $purpose = substr("SEVQR {$reference}", 0, 25);
+
+        $payload = $tlv('00', '01')
+            . $tlv('01', '12')
+            . $tlv('38', $merchant)
+            . $tlv('53', '704')
+            . $tlv('54', (string) $amount)
+            . $tlv('58', 'VN')
+            . $tlv('62', $tlv('08', $purpose))
+            . '6304';
+
+        return $payload . $this->crc16Ccitt($payload);
+    }
+
+    private function crc16Ccitt(string $value): string
+    {
+        $crc = 0xFFFF;
+        for ($index = 0, $length = strlen($value); $index < $length; $index++) {
+            $crc ^= ord($value[$index]) << 8;
+            for ($bit = 0; $bit < 8; $bit++) {
+                $crc = ($crc & 0x8000) !== 0 ? (($crc << 1) ^ 0x1021) : ($crc << 1);
+                $crc &= 0xFFFF;
+            }
+        }
+
+        return strtoupper(str_pad(dechex($crc), 4, '0', STR_PAD_LEFT));
     }
 
     /**
