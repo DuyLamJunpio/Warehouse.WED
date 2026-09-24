@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Invoice;
 use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -83,5 +84,36 @@ class SepayWebhookTest extends TestCase
         $payload['accountNumber'] = '0000000000';
         $this->postJson('/api/webhooks/sepay', $payload, $headers)->assertOk();
         $this->assertSame(0, (int) $order->fresh()->pay_status);
+    }
+
+    public function test_voucher_is_counted_only_after_payment_is_confirmed_once(): void
+    {
+        $voucher = Voucher::create([
+            'code' => 'PAYMENT10',
+            'name' => 'Giảm giá khi thanh toán',
+            'type' => Voucher::TYPE_FIXED_AMOUNT,
+            'value' => 10000,
+            'min_order_amount' => 0,
+            'used_count' => 0,
+            'status' => true,
+        ]);
+        $order = $this->order('DH260924VC10', 250000);
+        $order->note = 'Voucher: PAYMENT10';
+        $order->save();
+        $headers = ['Authorization' => 'Apikey test-sepay-key'];
+        $payload = [
+            'id' => 92707,
+            'accountNumber' => '0868238690',
+            'transferType' => 'in',
+            'transferAmount' => 250000,
+            'code' => 'DH260924VC10',
+        ];
+
+        $this->assertSame(0, (int) $voucher->fresh()->used_count);
+        $this->postJson('/api/webhooks/sepay', $payload, $headers)->assertOk();
+        $this->assertSame(1, (int) $voucher->fresh()->used_count);
+
+        $this->postJson('/api/webhooks/sepay', $payload, $headers)->assertOk();
+        $this->assertSame(1, (int) $voucher->fresh()->used_count);
     }
 }

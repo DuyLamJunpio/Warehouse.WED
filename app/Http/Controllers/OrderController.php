@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\VoucherRedemption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -175,6 +176,7 @@ class OrderController extends Controller
                 $order->pay_status = 1;
                 $order->payment_expires_at = null;
                 $order->save();
+                app(VoucherRedemption::class)->recordPaidOrder($order);
 
                 Log::info('Nhân viên xác nhận chuyển khoản cho đơn web.', [
                     'invoice_id' => $order->id,

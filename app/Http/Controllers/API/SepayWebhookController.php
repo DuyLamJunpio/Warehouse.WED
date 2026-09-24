@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\Setting;
 use App\Services\TelegramNotifier;
+use App\Services\VoucherRedemption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -85,6 +86,9 @@ class SepayWebhookController extends Controller
                         $result = 'paid';
                     }
                     $order->save();
+                    if ($result === 'paid') {
+                        app(VoucherRedemption::class)->recordPaidOrder($order);
+                    }
                 }
 
                 DB::table('sepay_transactions')->insert([

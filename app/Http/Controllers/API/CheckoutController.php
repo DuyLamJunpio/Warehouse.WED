@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\VoucherRedemption;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
@@ -401,7 +402,6 @@ class CheckoutController extends Controller
                 if ($shippingFee < $shippingBeforeVoucher) {
                     $shopShippingFee += $shippingBeforeVoucher - $shippingFee;
                 }
-                $voucher->increment('used_count');
             }
 
             $totalAmount = $subtotal + $printFee + $shippingFee - $discount;
@@ -778,6 +778,7 @@ class CheckoutController extends Controller
             // Đã trả tiền thì hạn thanh toán hết ý nghĩa; xoá để lệnh quét bỏ qua đơn này.
             $order->payment_expires_at = null;
             $order->save();
+            app(VoucherRedemption::class)->recordPaidOrder($order);
 
             DB::commit();
 
