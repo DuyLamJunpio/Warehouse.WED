@@ -11,13 +11,13 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PrintAssetController;
 use App\Http\Controllers\PrintBlankController;
 use App\Http\Controllers\PrintDesignController;
-use App\Http\Controllers\PrintPricingController;
 use App\Http\Controllers\PrintTechniqueController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatisticalController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\VoucherController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -74,26 +74,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /*
      * Module in áo theo yêu cầu.
      *
-     * Bảng giá sửa vào bản nháp, chỉ có hiệu lực với khách sau khi bấm Xuất bản
-     * — xem App\Services\PrintPricing. Kỹ thuật đã có thiết kế khách thì chỉ
-     * bật/tắt; bản ghi chưa được dùng vẫn có thể sửa hoặc xoá hẳn.
+     * Giá nằm trực tiếp trên phôi và kỹ thuật; lưu kỹ thuật tự ghi phiên bản giá.
      */
     Route::prefix('print')->name('print.')->middleware('feature:print_studio')->group(function () {
-        Route::get('/pricing', [PrintPricingController::class, 'index'])->name('pricing');
-        Route::post('/pricing/draft', [PrintPricingController::class, 'saveDraft'])->name('pricing.draft');
-        Route::post('/pricing/publish', [PrintPricingController::class, 'publish'])->name('pricing.publish');
-        Route::post('/pricing/simulate', [PrintPricingController::class, 'simulate'])->name('pricing.simulate');
-
         Route::get('/techniques', [PrintTechniqueController::class, 'index'])->name('techniques');
+        Route::post('/techniques/combined-price', [PrintTechniqueController::class, 'toggleCombinedPrice'])->name('techniques.combined-price');
         Route::post('/techniques', [PrintTechniqueController::class, 'store'])->name('techniques.store');
         Route::post('/techniques/{technique}', [PrintTechniqueController::class, 'update'])->name('techniques.update');
         Route::delete('/techniques/{technique}', [PrintTechniqueController::class, 'destroy'])->name('techniques.destroy');
         Route::post('/techniques/{technique}/toggle', [PrintTechniqueController::class, 'toggle'])->name('techniques.toggle');
 
-        Route::post('/tiers', [PrintTechniqueController::class, 'storeTier'])->name('tiers.store');
-        Route::post('/tiers/{tier}', [PrintTechniqueController::class, 'updateTier'])->name('tiers.update');
-        Route::delete('/tiers/{tier}', [PrintTechniqueController::class, 'destroyTier'])->name('tiers.destroy');
-        Route::post('/tiers/{tier}/toggle', [PrintTechniqueController::class, 'toggleTier'])->name('tiers.toggle');
 
         Route::get('/blanks', [PrintBlankController::class, 'index'])->name('blanks');
         Route::post('/blanks', [PrintBlankController::class, 'store'])->name('blanks.store');
@@ -119,19 +109,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/fonts/{font}', [PrintAssetController::class, 'updateFont'])->name('fonts.update');
         Route::post('/fonts/{font}/toggle', [PrintAssetController::class, 'toggleFont'])->name('fonts.toggle');
 
-        // Hàng đợi duyệt thiết kế — chốt chặn trước khi đưa vào xưởng.
-        Route::get('/designs', [PrintDesignController::class, 'index'])->name('designs');
-        Route::get('/designs/{design}', [PrintDesignController::class, 'show'])->name('designs.show');
-        Route::post('/designs/{design}/review', [PrintDesignController::class, 'review'])->name('designs.review');
-
-        Route::get('/library', [PrintAssetController::class, 'index'])->name('library');
-        Route::post('/library', [PrintAssetController::class, 'store'])->name('library.store');
-        Route::post('/library/{asset}', [PrintAssetController::class, 'update'])->name('library.update');
-        Route::post('/library/{asset}/toggle', [PrintAssetController::class, 'toggle'])->name('library.toggle');
-
-        Route::post('/fonts', [PrintAssetController::class, 'storeFont'])->name('fonts.store');
-        Route::post('/fonts/{font}', [PrintAssetController::class, 'updateFont'])->name('fonts.update');
-        Route::post('/fonts/{font}/toggle', [PrintAssetController::class, 'toggleFont'])->name('fonts.toggle');
     });
 
     Route::get('/content', [ContentController::class, 'index'])->name('content');
@@ -139,6 +116,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/content/banner/{id}', [ContentController::class, 'updateBanner'])->name('content.banner.update');
     Route::delete('/content/banner/{id}', [ContentController::class, 'destroyBanner'])->name('content.banner.destroy');
     Route::post('/content/banner/{id}/reorder', [ContentController::class, 'reorderBanner'])->name('content.banner.reorder');
+    Route::post('/content/banners/reorder', [ContentController::class, 'reorderBanners'])->name('content.banners.reorder');
+    Route::post('/content/banner/{id}/toggle', [ContentController::class, 'toggleBanner'])->name('content.banner.toggle');
+    Route::post('/content/banner/{id}/duplicate', [ContentController::class, 'duplicateBanner'])->name('content.banner.duplicate');
     Route::post('/content/announcement', [ContentController::class, 'saveAnnouncement'])->name('content.announcement');
     Route::post('/content/promotion-email', [ContentController::class, 'sendPromotionEmail'])->name('content.promotion-email');
     Route::post('/content/headings', [ContentController::class, 'saveHeadings'])->name('content.headings');
@@ -166,6 +146,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/search-customer', [CustomerController::class, 'search'])->name('customer.search');
     Route::get('/customer/{id}/profile', [CustomerController::class, 'show'])->name('customer.show');
     Route::post('/customer/{id}/note', [CustomerController::class, 'updateNote'])->name('customer.note');
+
+    // Voucher: không có route xoá dữ liệu. Khi ngừng chương trình chỉ tắt mã để
+    // giữ nguyên lịch sử sử dụng và có thể bật lại khi cần.
+    Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
+    Route::post('/vouchers', [VoucherController::class, 'store'])->name('vouchers.store');
+    Route::post('/vouchers/{voucher}', [VoucherController::class, 'update'])->name('vouchers.update');
+    Route::post('/vouchers/{voucher}/toggle', [VoucherController::class, 'toggle'])->name('vouchers.toggle');
+    Route::post('/vouchers/{voucher}/deactivate', [VoucherController::class, 'deactivate'])->name('vouchers.deactivate');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -37,7 +37,6 @@ def google_secret(name: str) -> str:
         print(f"Normalized markdown-escaped underscores in {name}.", file=sys.stderr)
     return normalized
 
-
 def resolve_credentials() -> Credentials:
     service_account_file = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_FILE")
     if service_account_file:

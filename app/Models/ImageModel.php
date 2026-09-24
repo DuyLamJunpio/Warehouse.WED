@@ -18,6 +18,8 @@ class ImageModel extends Model
     protected $fillable = [
         'product_id',
         'path',
+        'sha256',
+        'byte_size',
         'name',
         'media_type',
         'sort_order',
@@ -27,11 +29,17 @@ class ImageModel extends Model
     protected $casts = [
         'is_pined' => 'boolean',
         'sort_order' => 'integer',
+        'byte_size' => 'integer',
     ];
 
     public function product()
     {
         return $this->belongsTo(Product::class)->withTrashed();
+    }
+
+    public function styles()
+    {
+        return $this->hasMany(ProductStyle::class, 'image_model_id');
     }
 
     public function isVideo(): bool

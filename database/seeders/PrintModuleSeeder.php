@@ -3,45 +3,18 @@
 namespace Database\Seeders;
 
 use App\Models\PrintFont;
-use App\Models\PrintSizeTier;
 use App\Models\PrintTechnique;
-use App\Services\PrintPositions;
 use App\Services\PrintPricing;
 use Illuminate\Database\Seeder;
 
-/**
- * Dữ liệu mở màn cho module in áo.
- *
- * Module mở ra trống trơn thì chủ shop không biết bắt đầu từ đâu: một ma trận
- * giá không hàng không cột chẳng gợi ý được gì. Cài sẵn bốn kỹ thuật thông dụng
- * với ràng buộc điền đúng, bốn bậc khổ, và vài quy tắc phụ phí có thật trong
- * nghề — sửa hoặc tắt cái không dùng thì nhanh hơn dựng từ số không nhiều.
- *
- * Chạy lại được nhiều lần: dò theo slug nên không nhân bản dữ liệu.
- *
- *     php artisan db:seed --class=PrintModuleSeeder
- */
+/** Tạo kỹ thuật và phông chữ ban đầu; shop nhập giá cố định trước khi bán. */
 class PrintModuleSeeder extends Seeder
 {
     public function run(): void
     {
-        $techniques = $this->seedTechniques();
-        $tiers = $this->seedTiers();
+        $this->seedTechniques();
         $this->seedFonts();
-
-        PrintPricing::putDraft([
-            'cells' => $this->cells($techniques, $tiers),
-            'rules' => $this->rules($techniques),
-            'qty_tiers' => [
-                ['from' => 10, 'pct' => 5],
-                ['from' => 25, 'pct' => 10],
-                ['from' => 50, 'pct' => 15],
-            ],
-            'rounding' => 1000,
-            'min_charge' => 0,
-        ]);
-
-        PrintPricing::publish('Bảng giá khởi tạo');
+        PrintPricing::publish('Khởi tạo kỹ thuật in — nhập giá để bắt đầu bán');
     }
 
     /** @return array<string,PrintTechnique> theo slug */
@@ -71,7 +44,7 @@ class PrintModuleSeeder extends Seeder
 
         $out = [];
         foreach ($rows as $i => $row) {
-            $out[$row['slug']] = PrintTechnique::updateOrCreate(
+            $out[$row['slug']] = PrintTechnique::firstOrCreate(
                 ['slug' => $row['slug']],
                 $row + ['sort_order' => $i, 'is_active' => true],
             );
@@ -104,92 +77,4 @@ class PrintModuleSeeder extends Seeder
         }
     }
 
-    /** @return array<string,PrintSizeTier> theo tên */
-    private function seedTiers(): array
-    {
-        $rows = [
-            ['name' => 'A6', 'width_mm' => 105, 'height_mm' => 148],
-            ['name' => 'A5', 'width_mm' => 148, 'height_mm' => 210],
-            ['name' => 'A4', 'width_mm' => 210, 'height_mm' => 297],
-            ['name' => 'A3', 'width_mm' => 297, 'height_mm' => 420],
-        ];
-
-        $out = [];
-        foreach ($rows as $i => $row) {
-            $out[$row['name']] = PrintSizeTier::updateOrCreate(
-                ['name' => $row['name']],
-                $row + ['sort_order' => $i, 'is_active' => true],
-            );
-        }
-
-        return $out;
-    }
-
-    /**
-     * Ma trận giá. Ô vắng mặt = kỹ thuật đó không nhận khổ đó, studio tự ẩn lựa
-     * chọn. Thêu bỏ trống A4 và A3 vì khổ thêu lớn vừa lâu vừa dễ nhăn vải.
-     */
-    private function cells(array $tech, array $tiers): array
-    {
-        $table = [
-            'decal' => ['A6' => 20000, 'A5' => 35000, 'A4' => 55000, 'A3' => 90000],
-            'dtg' => ['A6' => 25000, 'A5' => 45000, 'A4' => 75000, 'A3' => 130000],
-            'lua' => ['A6' => 35000, 'A5' => 50000, 'A4' => 70000, 'A3' => 110000],
-            'theu' => ['A6' => 45000, 'A5' => 70000, 'A4' => null, 'A3' => null],
-        ];
-
-        $cells = [];
-        foreach ($table as $slug => $row) {
-            foreach ($row as $tierName => $price) {
-                if ($price === null) {
-                    continue;
-                }
-                $cells[$tech[$slug]->id][$tiers[$tierName]->id] = $price;
-            }
-        }
-
-        return $cells;
-    }
-
-    /** Quy tắc phụ phí có thật trong nghề, để chủ shop thấy ngữ pháp dùng thế nào. */
-    private function rules(array $tech): array
-    {
-        return [
-            [
-                'id' => 'underbase',
-                'label' => 'Lót trắng cho áo màu tối',
-                'enabled' => true,
-                'when' => ['tone' => 'dark', 'technique_ids' => [$tech['decal']->id, $tech['dtg']->id]],
-                'apply' => ['kind' => PrintPricing::KIND_ADD, 'amount' => 15000, 'per' => PrintPricing::PER_POSITION],
-            ],
-            [
-                'id' => 'back-position',
-                'label' => 'Mặt sau khó căn hơn',
-                'enabled' => true,
-                'when' => ['position_keys' => [PrintPositions::BACK]],
-                'apply' => ['kind' => PrintPricing::KIND_MULTIPLY, 'amount' => 1.2, 'per' => PrintPricing::PER_POSITION],
-            ],
-            [
-                'id' => 'screen-extra-ink',
-                'label' => 'In lụa — từ màu mực thứ 2',
-                'enabled' => true,
-                'when' => ['technique_ids' => [$tech['lua']->id], 'ink_colors_from' => 2],
-                'apply' => ['kind' => PrintPricing::KIND_ADD, 'amount' => 20000, 'per' => PrintPricing::PER_INK_COLOR],
-            ],
-            [
-                'id' => 'small-order',
-                'label' => 'Phụ phí đơn lẻ dưới 5 áo',
-                'enabled' => true,
-                'when' => ['qty_to' => 4],
-                'apply' => ['kind' => PrintPricing::KIND_ADD, 'amount' => 30000, 'per' => PrintPricing::PER_ORDER],
-            ],
-            [
-                'id' => 'rush',
-                'label' => 'Hàng gấp (bật tay khi cần)',
-                'enabled' => false,
-                'when' => [],
-                'apply' => ['kind' => PrintPricing::KIND_PERCENT, 'amount' => 20, 'per' => PrintPricing::PER_ORDER],
-            ],
-        ];
-    }
 }

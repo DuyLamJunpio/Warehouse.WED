@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Chỉ cho web bán hàng gọi các endpoint đổi trạng thái tiền bạc.
  *
- * PayOS gửi webhook tới web bán hàng, nơi đó đã kiểm tra chữ ký HMAC của PayOS
+ * SePay gửi webhook tới web bán hàng, nơi đó đã kiểm tra API key của SePay
  * rồi mới báo sang đây. Nhưng bản thân endpoint bên này trước đó không xác thực
  * gì cả: chỉ cần biết mã đơn là đánh dấu được "đã thanh toán" — mà chính khách
  * đặt hàng là người biết mã đơn của mình.

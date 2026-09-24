@@ -8,6 +8,7 @@
 @php($colors = $blank?->colors->where('is_active', true)->values() ?? collect())
 @php($positions = \App\Services\PrintPositions::payload())
 @php($enabled = $blank?->positionKeys() ?? \App\Services\PrintPositions::keys())
+
 {{-- Nhóm cha-con để ô chọn đọc được khi danh mục nhiều lên. --}}
 @php($rootCategories = $categories->whereNull('parent_id'))
 @php($childCategories = $categories->whereNotNull('parent_id')->groupBy('parent_id'))
@@ -17,12 +18,6 @@
         <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Tên phôi</label>
         <input type="text" data-f-name value="{{ $blank?->name }}" placeholder="VD: Áo thun cotton 100%"
             class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
-    </div>
-
-    <div>
-        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Mô tả cho khách</label>
-        <textarea data-f-desc rows="2" placeholder="Chất liệu, form dáng — một hai câu."
-            class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">{{ $blank?->description }}</textarea>
     </div>
 
     <div>
@@ -53,6 +48,79 @@
         </p>
     </div>
 
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Giá phôi (đồng)</label>
+            <input type="number" data-f-price min="0" step="1000" value="{{ $blank?->base_price ?? 0 }}"
+                class="w-full text-right tabular-nums rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Kỹ thuật in được</label>
+        <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+            @forelse ($techniques as $technique)
+                <label class="flex items-center gap-2 text-[13px] text-slate-700 dark:text-slate-300">
+                    <input type="checkbox" data-f-tech value="{{ $technique->id }}"
+                        @checked($blank && $blank->techniques->contains('id', $technique->id))
+                        class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
+                    {{ $technique->name }} · {{ $technique->price === null ? 'chưa có giá' : number_format($technique->price, 0, ',', '.') . 'đ' }}
+                </label>
+            @empty
+                <p class="text-[11.5px] text-amber-600 dark:text-amber-400">
+                    Chưa có kỹ thuật nào đang bật — tạo ở tab "Kỹ thuật in".
+                </p>
+            @endforelse
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Biến thể</label>
+        <div class="space-y-1.5" data-color-list>
+            @foreach ($colors->isEmpty() ? [null] : $colors as $color)
+                {{--
+                    data-color-id rỗng = dòng chưa lưu, xoá là gỡ khỏi màn hình.
+                    Có id thì nút xoá gọi thẳng máy chủ, vì bỏ dòng rồi bấm Lưu chỉ
+                    TẮT màu chứ không xoá — xem syncColors() bên controller.
+                --}}
+                <div class="flex items-center gap-2" data-color-row data-color-id="{{ $color?->id }}">
+                    <input type="color" data-color-hex value="{{ $color->hex ?? '#cccccc' }}"
+                        class="w-9 h-9 shrink-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent cursor-pointer p-0.5">
+                    <input type="text" data-color-name value="{{ $color->name ?? '' }}" placeholder="Tên màu"
+                        class="w-40 shrink-0 min-w-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
+                    <input type="text" data-color-sizes value="{{ implode(', ', $color?->sizes ?? []) }}" placeholder="Size: S, M, L, XL"
+                        aria-label="Size áp dụng cho màu này, cách nhau bằng dấu phẩy"
+                        class="flex-1 min-w-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
+                    <select data-color-tone class="shrink-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
+                        <option value="">tự suy</option>
+                        <option value="light" @selected(($color->tone ?? null) === 'light')>sáng</option>
+                        <option value="dark" @selected(($color->tone ?? null) === 'dark')>tối</option>
+                    </select>
+                    <button type="button" data-color-del title="Xoá màu này"
+                        class="shrink-0 w-8 h-8 grid place-items-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-400 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+                        </svg>
+                    </button>
+                </div>
+            @endforeach
+        </div>
+        <button type="button" data-color-add
+            class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">+ Thêm biến thể</button>
+        <p class="mt-1 text-[11px] text-slate-400">
+            Mỗi biến thể gồm màu và các size bán được (ví dụ: S, M, L, XL). Để trống size thì dùng mọi size của sản phẩm nối kho; phôi không nối kho mặc định là Một cỡ. Xóa màu sẽ xóa cả ảnh áo gắn với màu đó.
+        </p>
+    </div>
+
+    <details class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <summary class="cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-300">Tùy chọn thêm</summary>
+        <div class="mt-3 space-y-3">
+    <div>
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Mô tả cho khách</label>
+        <textarea data-f-desc rows="2" placeholder="Chất liệu, form dáng — một hai câu."
+            class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">{{ $blank?->description }}</textarea>
+    </div>
+
     <div>
         <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Nối vào sản phẩm trong kho</label>
         <select data-f-product class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
@@ -68,15 +136,9 @@
         </p>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Giá phôi (đồng)</label>
-            <input type="number" data-f-price min="0" step="1000" value="{{ $blank?->base_price ?? 0 }}"
-                class="w-full text-right tabular-nums rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
-        </div>
         <div class="grid grid-cols-2 gap-2">
             <div>
-                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">MOQ</label>
+                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Số lượng tối thiểu</label>
                 <input type="number" data-f-moq min="1" value="{{ $blank?->moq ?? 1 }}"
                     class="w-full text-right tabular-nums rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
             </div>
@@ -86,7 +148,6 @@
                     class="w-full text-right tabular-nums rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
             </div>
         </div>
-    </div>
 
     <div class="grid grid-cols-2 gap-3">
         <div>
@@ -124,66 +185,12 @@
             @endforeach
         </div>
         <p class="mt-1 text-[11px] text-slate-400">
-            Bốn chỗ này là hằng số trong mã nguồn, không phải khung in để kéo. Bỏ tick chỗ nào phôi này
-            không in được — áo ba lỗ không có vai, áo khoác không in lưng. Trần milimét là giới hạn của
-            xưởng; bên trong nó khách đặt hình ở đâu và to nhỏ thế nào là tuỳ khách.
+            Bỏ chọn những vị trí phôi này không in được.
         </p>
     </div>
 
-    <div>
-        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Kỹ thuật in được</label>
-        <div class="flex flex-wrap gap-x-4 gap-y-1.5">
-            @forelse ($techniques as $technique)
-                <label class="flex items-center gap-2 text-[13px] text-slate-700 dark:text-slate-300">
-                    <input type="checkbox" data-f-tech value="{{ $technique->id }}"
-                        @checked($blank && $blank->techniques->contains('id', $technique->id))
-                        class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
-                    {{ $technique->name }}
-                </label>
-            @empty
-                <p class="text-[11.5px] text-amber-600 dark:text-amber-400">
-                    Chưa có kỹ thuật nào đang bật — tạo ở tab "Kỹ thuật in".
-                </p>
-            @endforelse
         </div>
-    </div>
-
-    <div>
-        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Màu áo</label>
-        <div class="space-y-1.5" data-color-list>
-            @foreach ($colors->isEmpty() ? [null] : $colors as $color)
-                {{--
-                    data-color-id rỗng = dòng chưa lưu, xoá là gỡ khỏi màn hình.
-                    Có id thì nút xoá gọi thẳng máy chủ, vì bỏ dòng rồi bấm Lưu chỉ
-                    TẮT màu chứ không xoá — xem syncColors() bên controller.
-                --}}
-                <div class="flex items-center gap-2" data-color-row data-color-id="{{ $color?->id }}">
-                    <input type="color" data-color-hex value="{{ $color->hex ?? '#cccccc' }}"
-                        class="w-9 h-9 shrink-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent cursor-pointer p-0.5">
-                    <input type="text" data-color-name value="{{ $color->name ?? '' }}" placeholder="Tên màu"
-                        class="flex-1 min-w-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
-                    <select data-color-tone class="shrink-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm py-1.5">
-                        <option value="">tự suy</option>
-                        <option value="light" @selected(($color->tone ?? null) === 'light')>sáng</option>
-                        <option value="dark" @selected(($color->tone ?? null) === 'dark')>tối</option>
-                    </select>
-                    <button type="button" data-color-del title="Xoá màu này"
-                        class="shrink-0 w-8 h-8 grid place-items-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-400 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
-                        </svg>
-                    </button>
-                </div>
-            @endforeach
-        </div>
-        <button type="button" data-color-add
-            class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">+ Thêm màu</button>
-        <p class="mt-1 text-[11px] text-slate-400">
-            Tông quyết định phụ phí lót trắng. Để "tự suy" thì hệ thống đoán theo độ sáng —
-            xám mélange nằm giữa nên nhớ soi lại. Xoá một màu đã lưu là <b>mất luôn ảnh mockup</b>
-            chụp riêng cho màu đó; hoá đơn cũ không sao vì chúng lưu tên màu thành chữ.
-        </p>
-    </div>
+    </details>
 
     <button type="button" data-blank-save
         class="w-full px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">

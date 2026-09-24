@@ -3,24 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categories;
+use App\Models\ProductStyle;
 use App\Models\ProductVariant;
 use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Services\ProductMediaService;
+use App\Support\ProductPricing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
+    private ?bool $variantPauseColumnAvailable = null;
+
+    public function __construct(private readonly ProductMediaService $productMedia)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -54,7 +65,7 @@ class ProductController extends Controller
         $categoryId = $request->input('category_id') ?: $request->input('categories_id');
         $filter = $request->input('filter'); // all, in_stock, out_of_stock, featured
 
-        $query = Product::with(['supplier', 'category', 'productImage', 'variants'])
+        $query = Product::with(['supplier', 'category', 'productImage', 'variants.style', 'styles.image'])
             ->withSum('variants', 'quantity')
             ->latest('id');
 
@@ -68,7 +79,8 @@ class ProductController extends Controller
                       $vq->where('sku', 'ilike', "%{$keyword}%")
                          ->orWhere('size', 'ilike', "%{$keyword}%")
                          ->orWhere('color', 'ilike', "%{$keyword}%");
-                  });
+                  })
+                  ->orWhereHas('styles', fn($sq) => $sq->where('name', 'ilike', "%{$keyword}%"));
             });
         }
 
@@ -96,7 +108,7 @@ class ProductController extends Controller
 
     public function getProductById(string $id)
     {
-        $products = Product::with(['supplier', 'category', 'productImage', 'variants'])
+        $products = Product::with(['supplier', 'category', 'productImage', 'variants.style', 'styles.image', 'styles.variants'])
             ->withSum('variants', 'quantity')
             ->where('products.id', $id)
             ->get();
@@ -123,8 +135,11 @@ class ProductController extends Controller
             return response()->json(['error' => 'Không tìm thấy hình ảnh!'], 404);
         }
 
-        Storage::delete($image->path);
-        $image->delete();
+        if (!$this->productMedia->delete($image)) {
+            return response()->json([
+                'error' => 'Ảnh này đang được một mẫu sản phẩm sử dụng. Hãy đổi ảnh của mẫu trước khi xóa.',
+            ], 422);
+        }
         return response()->json(['success' => 'Ảnh sản phẩm đã được xóa thành công!']);
     }
 
@@ -222,7 +237,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate($this->productRules());
+        $data = $this->validatedProductData($request);
 
         DB::beginTransaction();
         try {
@@ -236,15 +251,19 @@ class ProductController extends Controller
             $product = Product::create($data);
 
             $this->storeMedia($product, $request);
-            $totalQuantity = $this->syncVariants($product, $request->input('variants', []));
+            $this->syncPinnedMedia($product, $request->input('pin_image'));
+            $totalQuantity = $this->syncStylesAndVariants($product, $request, $request->input('styles', []));
             $this->syncProductStatus($product, $totalQuantity);
 
             DB::commit();
             return response()->json(['success' => 'Sản phẩm đã được thêm thành công!']);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Thêm sản phẩm thất bại: ' . $e->getMessage());
-            return response()->json(['error' => 'Không thêm được sản phẩm: ' . $e->getMessage()], 500);
+            Log::error('Thêm sản phẩm thất bại.', ['exception' => $e]);
+            return response()->json(['error' => 'Không thêm được sản phẩm. Vui lòng thử lại.'], 500);
         }
     }
 
@@ -309,7 +328,7 @@ class ProductController extends Controller
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        $data = $request->validate($this->productRules($product));
+        $data = $this->validatedProductData($request, $product);
 
         DB::beginTransaction();
         try {
@@ -325,16 +344,19 @@ class ProductController extends Controller
             // đổi ghim trước khi lưu thì không tìm thấy tên file nên bị bỏ qua.
             $this->storeMedia($product, $request);
             $this->syncPinnedMedia($product, $request->input('pin_image'));
-            $totalQuantity = $this->syncVariants($product, $request->input('variants', []));
+            $totalQuantity = $this->syncStylesAndVariants($product, $request, $request->input('styles', []));
             $this->syncProductStatus($product, $totalQuantity);
 
             DB::commit();
             // Trả JSON vì form sửa gửi bằng AJAX; bản cũ redirect()->back() khiến JS không đọc được kết quả.
             return response()->json(['success' => 'Sản phẩm đã được cập nhật thành công!']);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Sửa sản phẩm thất bại: ' . $e->getMessage());
-            return response()->json(['error' => 'Không sửa được sản phẩm: ' . $e->getMessage()], 500);
+            Log::error('Sửa sản phẩm thất bại.', ['exception' => $e]);
+            return response()->json(['error' => 'Không sửa được sản phẩm. Vui lòng thử lại.'], 500);
         }
     }
 
@@ -354,7 +376,7 @@ class ProductController extends Controller
             // Khớp đúng 4 giá trị bộ lọc "đối tượng" của web bán hàng.
             'audience' => 'nullable|in:Nam,Nữ,Trẻ em,Unisex',
             'unit' => 'nullable|max:30',
-            'import_price' => 'required|integer|min:0',
+            'import_price' => 'nullable|integer|min:0',
             'sell_price' => 'required|integer|min:0',
             'discount_price' => 'nullable|integer|min:0|lte:sell_price',
             'is_featured' => 'nullable|boolean',
@@ -369,6 +391,21 @@ class ProductController extends Controller
             ],
             'pin_image' => 'nullable|string',
 
+            // Một ảnh nằm ở cấp mẫu và được toàn bộ màu/size bên trong dùng chung.
+            'styles' => 'nullable|array|min:1',
+            'styles.*.id' => 'nullable|integer|exists:product_styles,id',
+            'styles.*.name' => 'required_with:styles|string|max:100',
+            'styles.*.image_id' => 'nullable|integer|exists:image_models,id',
+            'styles.*.image' => 'nullable|file|image|max:5120',
+            'styles.*.variants' => 'required_with:styles|array|min:1',
+            'styles.*.variants.*.id' => 'nullable|integer|exists:product_variants,id',
+            'styles.*.variants.*.paused' => 'nullable|boolean',
+            'styles.*.variants.*.size' => 'nullable|string|max:50',
+            'styles.*.variants.*.color' => 'nullable|string|max:50',
+            'styles.*.variants.*.quantity' => 'nullable|integer|min:0',
+            'styles.*.variants.*.price_override' => 'nullable|integer|min:0',
+
+            // Hợp đồng cũ vẫn được nhận trong giai đoạn web/app quản trị nâng cấp lệch nhau.
             'variants' => 'nullable|array',
             'variants.*.id' => 'nullable|integer|exists:product_variants,id',
             'variants.*.size' => 'nullable|string|max:50',
@@ -376,6 +413,44 @@ class ProductController extends Controller
             'variants.*.quantity' => 'nullable|integer|min:0',
             'variants.*.price_override' => 'nullable|integer|min:0',
         ];
+    }
+
+    /** Validate product fields and translate the selected discount mode to its stored sale price. */
+    private function validatedProductData(Request $request, ?Product $product = null): array
+    {
+        $data = $request->validate($this->productRules($product));
+        $input = $request->all();
+
+        // Các ô tiền trong form có thể để trống. Chuẩn hóa rõ ràng về NULL
+        // trước khi ghi PostgreSQL (tránh gửi chuỗi rỗng vào cột số).
+        foreach (['import_price', 'discount_price'] as $field) {
+            if (array_key_exists($field, $data) && blank($data[$field])) {
+                $data[$field] = null;
+            }
+        }
+
+        // Keep accepting discount_price from older clients while the admin form
+        // sends discount_type + discount_value.
+        if (array_key_exists('discount_type', $input) || array_key_exists('discount_value', $input)) {
+            $discountType = $request->input('discount_type');
+            $discountInput = $request->validate([
+                'discount_type' => 'required|in:amount,percent',
+                'discount_value' => $discountType === 'percent'
+                    ? 'nullable|numeric|min:0|max:100'
+                    : 'nullable|integer|min:0|max:' . (int) $data['sell_price'],
+            ]);
+
+            $value = $discountInput['discount_value'] ?? null;
+            $data['discount_price'] = $value === null || $value === ''
+                ? null
+                : ProductPricing::discountedPrice(
+                    (int) $data['sell_price'],
+                    $discountInput['discount_type'],
+                    $value,
+                );
+        }
+
+        return $data;
     }
 
     /**
@@ -398,32 +473,20 @@ class ProductController extends Controller
 
         $sortOrder = (int) ($stats->max_sort ?? 0);
         $hasPinned = (int) ($stats->pinned_count ?? 0) > 0;
-        $now = now();
-        $rows = [];
 
         foreach ($request->file('media') as $file) {
             $isVideo = str_starts_with((string) $file->getMimeType(), 'video/');
             $name = $file->getClientOriginalName();
             $shouldPin = !$isVideo && !$hasPinned && $request->pin_image === $name;
 
-            $rows[] = [
-                'product_id' => $product->id,
-                'path' => $file->store('public/images'),
-                'name' => $name,
-                'media_type' => $isVideo ? ImageModel::TYPE_VIDEO : ImageModel::TYPE_IMAGE,
+            $media = $this->productMedia->store($product, $file, [
                 'sort_order' => ++$sortOrder,
                 // Video không dùng làm ảnh đại diện được, nên chỉ ảnh mới được ghim.
                 'is_pined' => $shouldPin,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            ]);
 
             // Tránh ghim hai media khi người dùng gửi lên nhiều file trùng tên.
-            $hasPinned = $hasPinned || $shouldPin;
-        }
-
-        if ($rows) {
-            ImageModel::insert($rows);
+            $hasPinned = $hasPinned || $media->is_pined || $shouldPin;
         }
     }
 
@@ -452,100 +515,193 @@ class ProductController extends Controller
     }
 
     /**
-     * Lưu ma trận biến thể size/màu gửi từ form và trả về tổng tồn kho.
-     * Biến thể không còn trong danh sách gửi lên sẽ bị xóa.
-     *
-     * Nạp một lần rồi so khớp trong PHP: bản cũ gọi firstOrNew + save cho từng
-     * dòng (2 round-trip mỗi biến thể), 12 biến thể là đã mất ~8 giây chờ DB.
+     * Đồng bộ các nhóm mẫu và biến thể con. Không xóa dòng bị thiếu khỏi payload:
+     * variant_id đã có thể nằm trong giỏ/đơn cũ; muốn ngừng bán chỉ cần đưa tồn về 0.
      */
-    private function syncVariants(Product $product, array $variants): int
+    private function syncStylesAndVariants(Product $product, Request $request, array $styles): int
     {
-        $existing = ProductVariant::where('product_id', $product->id)
-            ->get()
-            ->keyBy(fn($v) => $this->variantKey($v->size, $v->color));
+        if ($styles === []) {
+            $fallback = $product->styles()->firstOrCreate(
+                ['name_key' => 'mẫu mặc định'],
+                [
+                    'name' => 'Mẫu mặc định',
+                    'image_model_id' => $product->thumbnail?->id,
+                    'sort_order' => 0,
+                ],
+            );
+            $styles = [[
+                'id' => $fallback->id,
+                'name' => $fallback->name,
+                'image_id' => $fallback->image_model_id,
+                'variants' => $request->input('variants', []),
+            ]];
+        }
 
-        $keptIds = [];
-        $inserts = [];
-        $seen = [];
-        $sortOrder = 0;
-        $total = 0;
-        $now = now();
+        $existingStyles = $product->styles()->get()->keyBy('id');
+        $existingVariants = ProductVariant::where('product_id', $product->id)->get()->keyBy('id');
+        $seenStyleNames = [];
+        $seenCombinations = [];
+        $variantSort = 0;
+        $mediaSort = (int) ImageModel::where('product_id', $product->id)->max('sort_order');
 
-        foreach ($variants as $row) {
-            $size = trim((string) ($row['size'] ?? '')) ?: null;
-            $color = trim((string) ($row['color'] ?? '')) ?: null;
+        $styleSort = 0;
 
-            // Dòng trống hoàn toàn thì bỏ qua, tránh tạo biến thể rác.
-            if ($size === null && $color === null) {
-                continue;
+        // Giữ nguyên key do form gửi lên để tìm đúng UploadedFile và trả lỗi
+        // đúng ô. Khi người dùng xóa một thẻ mẫu, các key JS có thể bị hở
+        // (ví dụ styles[0], styles[2]); array_values() sẽ làm lệch file của mẫu.
+        foreach ($styles as $styleIndex => $styleRow) {
+            $styleName = preg_replace('/\s+/u', ' ', trim((string) ($styleRow['name'] ?? '')));
+            $nameKey = mb_strtolower($styleName, 'UTF-8');
+
+            if ($styleName === '') {
+                throw ValidationException::withMessages([
+                    "styles.$styleIndex.name" => 'Mỗi mẫu phải có tên.',
+                ]);
+            }
+            if (isset($seenStyleNames[$nameKey])) {
+                throw ValidationException::withMessages([
+                    "styles.$styleIndex.name" => 'Tên mẫu bị trùng trong cùng sản phẩm.',
+                ]);
+            }
+            $seenStyleNames[$nameKey] = true;
+
+            $styleId = (int) ($styleRow['id'] ?? 0);
+            $style = $styleId ? $existingStyles->get($styleId) : null;
+            if ($styleId && !$style) {
+                throw ValidationException::withMessages([
+                    "styles.$styleIndex.id" => 'Mẫu không thuộc sản phẩm đang sửa.',
+                ]);
+            }
+            $style ??= $product->styles()->where('name_key', $nameKey)->first() ?? new ProductStyle();
+
+            $image = null;
+            $uploaded = $request->file("styles.$styleIndex.image");
+            if ($uploaded) {
+                $image = $this->productMedia->store($product, $uploaded, [
+                    'sort_order' => ++$mediaSort,
+                ]);
+            } elseif (!empty($styleRow['image_id'])) {
+                $image = ImageModel::where('product_id', $product->id)
+                    ->where('media_type', ImageModel::TYPE_IMAGE)
+                    ->find((int) $styleRow['image_id']);
+                if (!$image) {
+                    throw ValidationException::withMessages([
+                        "styles.$styleIndex.image_id" => 'Ảnh mẫu không thuộc sản phẩm đang sửa.',
+                    ]);
+                }
+            } elseif ($style->exists && $style->image_model_id) {
+                $image = $style->image;
             }
 
-            $key = $this->variantKey($size, $color);
-
-            // Form có thể gửi trùng tổ hợp size/màu; giữ dòng đầu tiên để không
-            // vi phạm ràng buộc unique(product_id, size, color).
-            if (isset($seen[$key])) {
-                continue;
+            // Sản phẩm cũ chưa có ảnh vẫn được sửa thông tin. Mẫu mới thì bắt buộc
+            // có ảnh để khách phân biệt đúng mẫu ngoài cửa hàng.
+            if (!$image && !$style->exists && $nameKey !== 'mẫu mặc định') {
+                throw ValidationException::withMessages([
+                    "styles.$styleIndex.image" => 'Vui lòng chọn một ảnh cho mẫu này.',
+                ]);
             }
-            $seen[$key] = true;
 
-            $quantity = max(0, (int) ($row['quantity'] ?? 0));
-            $rawPrice = $row['price_override'] ?? null;
-            $priceOverride = ($rawPrice === null || $rawPrice === '') ? null : (int) $rawPrice;
-            $order = $sortOrder++;
-            $total += $quantity;
+            $style->fill([
+                'product_id' => $product->id,
+                'image_model_id' => $image?->id,
+                'name' => $styleName,
+                'name_key' => $nameKey,
+                'sort_order' => $styleSort++,
+            ]);
+            $style->save();
 
-            $variant = $existing->get($key);
+            // Tương tự, giữ key biến thể để thông báo validation trỏ đúng dòng
+            // ngay cả khi một dòng mới đã bị xóa ở giữa danh sách.
+            foreach (($styleRow['variants'] ?? []) as $variantIndex => $row) {
+                $variantId = (int) ($row['id'] ?? 0);
+                $isPaused = $variantId > 0 && filter_var($row['paused'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-            if (!$variant) {
-                $inserts[] = [
+                if ($isPaused) {
+                    $variant = $existingVariants->get($variantId);
+                    if (!$variant || (int) $variant->product_style_id !== (int) $style->id) {
+                        throw ValidationException::withMessages([
+                            "styles.$styleIndex.variants.$variantIndex.id" => 'Biến thể không thuộc mẫu đang sửa.',
+                        ]);
+                    }
+
+                    // Tạm dừng chỉ đổi tồn kho về 0; giữ màu/size cũ kể cả khi
+                    // dữ liệu legacy của biến thể đó đang thiếu một trong hai.
+                    $combinationKey = $style->id . '||' . mb_strtolower(
+                        trim((string) $variant->color) . '||' . trim((string) $variant->size),
+                        'UTF-8',
+                    );
+                    if (isset($seenCombinations[$combinationKey])) {
+                        throw ValidationException::withMessages([
+                            "styles.$styleIndex.variants.$variantIndex" => 'Biến thể màu/size bị trùng trong cùng mẫu.',
+                        ]);
+                    }
+                    $seenCombinations[$combinationKey] = true;
+
+                    if ((int) $variant->quantity !== 0) {
+                        $variant->quantity = 0;
+                    }
+                    if ($this->supportsVariantPauseColumn()) {
+                        $variant->is_paused = true;
+                    }
+                    $variant->save();
+                    continue;
+                }
+
+                $size = preg_replace('/\s+/u', ' ', trim((string) ($row['size'] ?? '')));
+                $color = preg_replace('/\s+/u', ' ', trim((string) ($row['color'] ?? '')));
+                if ($size === '' || $color === '') {
+                    throw ValidationException::withMessages([
+                        "styles.$styleIndex.variants.$variantIndex" => 'Mỗi biến thể phải có đủ màu và size.',
+                    ]);
+                }
+
+                $combinationKey = $style->id . '||' . mb_strtolower($color . '||' . $size, 'UTF-8');
+                if (isset($seenCombinations[$combinationKey])) {
+                    throw ValidationException::withMessages([
+                        "styles.$styleIndex.variants.$variantIndex" => 'Biến thể màu/size bị trùng trong cùng mẫu.',
+                    ]);
+                }
+                $seenCombinations[$combinationKey] = true;
+
+                $variant = $variantId ? $existingVariants->get($variantId) : null;
+                if ($variantId && (!$variant || (int) $variant->product_style_id !== (int) $style->id)) {
+                    throw ValidationException::withMessages([
+                        "styles.$styleIndex.variants.$variantIndex.id" => 'Biến thể không thuộc mẫu đang sửa.',
+                    ]);
+                }
+
+                $variant ??= ProductVariant::where('product_style_id', $style->id)
+                    ->where('size', $size)
+                    ->where('color', $color)
+                    ->first() ?? new ProductVariant();
+
+                $rawPrice = $row['price_override'] ?? null;
+                $variantData = [
                     'product_id' => $product->id,
+                    'product_style_id' => $style->id,
                     'size' => $size,
                     'color' => $color,
-                    'sku' => $product->barcode . '-' . strtoupper(Str::random(5)),
-                    'quantity' => $quantity,
-                    'price_override' => $priceOverride,
-                    'sort_order' => $order,
-                    'created_at' => $now,
-                    'updated_at' => $now,
+                    'quantity' => max(0, (int) ($row['quantity'] ?? 0)),
+                    'price_override' => ($rawPrice === null || $rawPrice === '') ? null : (int) $rawPrice,
+                    'sort_order' => $variantSort++,
                 ];
-                continue;
-            }
-
-            $keptIds[] = $variant->id;
-
-            // Chỉ ghi khi giá trị thật sự đổi: mỗi UPDATE thừa là một round-trip thừa.
-            if (
-                $variant->quantity !== $quantity
-                || $variant->price_override !== $priceOverride
-                || $variant->sort_order !== $order
-            ) {
-                $variant->quantity = $quantity;
-                $variant->price_override = $priceOverride;
-                $variant->sort_order = $order;
+                if ($this->supportsVariantPauseColumn()) {
+                    $variantData['is_paused'] = false;
+                }
+                $variant->fill($variantData);
+                if (!$variant->exists) {
+                    $variant->sku = $product->barcode . '-' . strtoupper(Str::random(5));
+                }
                 $variant->save();
             }
         }
 
-        // Xóa trước rồi mới chèn: biến thể mới chưa có id nên không nằm trong
-        // $keptIds, nếu xóa sau sẽ quét mất chính những dòng vừa thêm.
-        ProductVariant::where('product_id', $product->id)
-            ->whereNotIn('id', $keptIds ?: [0])
-            ->delete();
-
-        if ($inserts) {
-            ProductVariant::insert($inserts);
-        }
-
-        return $total;
+        return (int) ProductVariant::where('product_id', $product->id)->sum('quantity');
     }
 
-    /**
-     * Khóa so khớp biến thể: phân biệt "không có" với chuỗi rỗng.
-     */
-    private function variantKey(?string $size, ?string $color): string
+    private function supportsVariantPauseColumn(): bool
     {
-        return ($size ?? '~') . '||' . ($color ?? '~');
+        return $this->variantPauseColumnAvailable ??= Schema::hasColumn('product_variants', 'is_paused');
     }
 
     /**
@@ -610,9 +766,9 @@ class ProductController extends Controller
             return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
         }
 
-        // Product dùng SoftDeletes. Giữ nguyên ảnh và bản ghi media để có thể
-        // khôi phục đầy đủ sản phẩm; xóa file ở đây khiến thao tác "xóa mềm"
-        // trở thành không thể phục hồi.
+        // Product dùng SoftDeletes: giữ nguyên media và biến thể để có thể khôi
+        // phục sản phẩm/đọc đúng đơn cũ. Đặc biệt không xóa object tại đây vì
+        // đường dẫn content-addressed có thể đang được sản phẩm khác dùng chung.
         $product->delete();
 
         return response()->json(['success' => 'Sản phẩm đã được xóa thành công.']);
@@ -622,6 +778,8 @@ class ProductController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
+            'ids' => 'required|string',
+            'images' => 'required|array|min:1',
             'images.*' => 'file|image|max:2048', // Mỗi file phải là hình ảnh và không quá 2MB
         ]);
 
@@ -640,21 +798,29 @@ class ProductController extends Controller
         if (!is_array($ids) || count($ids) !== count($images)) {
             return response()->json([
                 'error' => 'Số lượng IDs và ảnh không khớp.',
-                'ids' => count($ids),
+                'ids' => is_array($ids) ? count($ids) : 0,
                 'images' => count($images)
             ], 400);
         }
 
+        $products = Product::whereIn('id', $ids)->get()->keyBy('id');
+        if ($products->count() !== count(array_unique(array_map('intval', $ids)))) {
+            return response()->json(['error' => 'Có sản phẩm không tồn tại.'], 422);
+        }
+
+        $sortOrders = ImageModel::whereIn('product_id', $ids)
+            ->selectRaw('product_id, COALESCE(MAX(sort_order), 0) AS max_sort')
+            ->groupBy('product_id')
+            ->pluck('max_sort', 'product_id')
+            ->map(fn ($value) => (int) $value)
+            ->all();
+
         foreach ($ids as $index => $id) {
             if (isset($images[$index])) {
-                $image = $images[$index];
-                $path = $image->store('public/images');
-                $imageName = $image->getClientOriginalName();
-
-                ImageModel::create([
-                    'product_id' => $id,
-                    'path' => $path,
-                    'name' => $imageName
+                $product = $products->get((int) $id);
+                $sortOrders[$product->id] = ($sortOrders[$product->id] ?? 0) + 1;
+                $this->productMedia->store($product, $images[$index], [
+                    'sort_order' => $sortOrders[$product->id],
                 ]);
             }
         }

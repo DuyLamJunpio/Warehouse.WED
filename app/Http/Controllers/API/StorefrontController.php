@@ -28,11 +28,12 @@ class StorefrontController extends Controller
     {
         $products = Product::with([
             'category',
-            'variants',
+            'variants.style',
+            'styles.image',
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
-            ->where('status', '!=', 0) // 0 = ngưng kinh doanh
+            ->storefrontVisible()
             ->orderByDesc('is_featured')
             ->orderBy('product_name')
             ->get();
@@ -52,7 +53,8 @@ class StorefrontController extends Controller
     {
         $product = Product::with([
             'category',
-            'variants',
+            'variants.style',
+            'styles.image',
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
@@ -62,7 +64,7 @@ class StorefrontController extends Controller
                     $query->orWhere('id', (int) $slug);
                 }
             })
-            ->where('status', '!=', 0)
+            ->storefrontVisible()
             ->first();
 
         if (!$product) {
@@ -103,7 +105,7 @@ class StorefrontController extends Controller
 
         // Mỗi bộ sưu tập đang hiện được dựng thành một khối riêng trên trang chủ.
         $collections = Collection::live()
-            ->with(['products' => fn($q) => $q->where('status', '!=', 0)])
+            ->with(['products' => fn($q) => $q->storefrontVisible()])
             ->get()
             ->map(fn($collection) => [
                 'id' => $collection->id,
@@ -157,8 +159,11 @@ class StorefrontController extends Controller
 
     private function categories(): array
     {
+        // Trang cửa hàng chỉ dựa vào trạng thái do quản trị viên thiết lập.
+        // Không đồng bộ theo số sản phẩm ở đây vì thao tác đó có thể tự chuyển
+        // một danh mục "Đang dùng" thành ẩn ngay trước khi trả dữ liệu cho web.
         $categories = Categories::where('status', 1)
-            ->withCount(['products' => fn($q) => $q->where('status', '!=', 0)])
+            ->withCount(['products' => fn($q) => $q->storefrontVisible()])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
@@ -199,6 +204,7 @@ class StorefrontController extends Controller
                 'image' => $c->image ? $this->url($c->image) : null,
                 'description' => $c->description,
                 'count' => $c->products_count,
+                'link_url' => $c->link_url,
             ])
             ->values()
             ->all();
@@ -241,9 +247,12 @@ class StorefrontController extends Controller
                 ->sum('quantity'),
             'price' => $price,
             // Chỉ có giá gạch ngang khi thực sự đang giảm giá.
-            'compare_price' => $product->discount_price && $product->discount_price < $product->sell_price
+            'compare_price' => $product->discount_percent !== null
                 ? (int) $product->sell_price
                 : null,
+            // Phần trăm luôn tính từ giá gốc và giá khuyến mại đã lưu, bất kể
+            // người quản trị nhập mức giảm theo tiền hay theo phần trăm.
+            'discount_percent' => $product->discount_percent,
             'is_featured' => (bool) $product->is_featured,
             // Hàng không theo dõi tồn kho không bị chặn bởi số lượng, nhưng vẫn
             // cần ít nhất một biến thể vì checkout nhận variant_id bắt buộc.
@@ -253,9 +262,19 @@ class StorefrontController extends Controller
             'total_stock' => (int) $product->variants->sum('quantity'),
             'images' => $gallery->all(),
             'videos' => $videos->map(fn($v) => $this->url($v->path))->values()->all(),
+            // Ảnh nằm một lần ở cấp mẫu; các biến thể chỉ trả style_id để tránh
+            // lặp cùng URL hàng chục lần cho mọi tổ hợp màu/size.
+            'styles' => $product->styles->map(fn($style) => [
+                'id' => $style->id,
+                'name' => $style->name,
+                'image' => $style->image?->path
+                    ? $this->url($style->image->path)
+                    : ($pinned?->path ? $this->url($pinned->path) : null),
+            ])->values()->all(),
             'variants' => $product->variants->map(fn($v) => [
                 // Web bán hàng gửi id này lại khi đặt hàng, đừng đổi định dạng.
                 'id' => $v->id,
+                'style_id' => $v->product_style_id,
                 'size' => $v->size,
                 'color' => $v->color,
                 'sku' => $v->sku,

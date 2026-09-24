@@ -321,6 +321,16 @@
                                     <span>Khách hàng & VIP</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="{{ route('vouchers.index') }}"
+                                    class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('vouchers.*') ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-white font-medium' }}">
+                                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('vouchers.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 8h.01M15 12h.01" />
+                                    </svg>
+                                    <span>Voucher & Khuyến mãi</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
@@ -336,20 +346,9 @@
                                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('content*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    <span>Nội dung web RUNGU</span>
+                                    <span>Nội dung web bán hàng</span>
                                 </a>
                             </li>
-                            @if (config('features.print_studio'))
-                                <li>
-                                    <a href="{{ route('print.pricing') }}"
-                                        class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('print.*') ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-white font-medium' }}">
-                                        <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('print.*') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 4h6v3H9V4zM7 7h10l1 5H6l1-5zM6 12h12v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6z" />
-                                        </svg>
-                                        <span>Studio in theo yêu cầu</span>
-                                    </a>
-                                </li>
-                            @endif
                             <li>
                                 <a href="{{ route('settings.sales') }}"
                                     class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('settings*') ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-white font-medium' }}">

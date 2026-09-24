@@ -30,7 +30,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 gap-3">
                 <div>
                     <h2 class="text-base font-bold text-slate-900 dark:text-white">Slide ảnh đầu trang (Hero Banner)</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Ảnh/Video lớn chạy luân phiên ở đầu trang chủ</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Ảnh/Video lớn chạy luân phiên ở đầu trang chủ · Kéo thẻ để đổi thứ tự</p>
                 </div>
                 <button type="button" id="btn-them-slide"
                     class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
@@ -54,8 +54,9 @@
 
             <div id="danh-sach-slide" class="p-5 space-y-3">
                 @forelse ($banners as $b)
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 bg-slate-50/60 dark:bg-slate-700/30 border border-slate-200/70 dark:border-slate-700/70 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-slate-700/50"
-                        data-id="{{ $b->id }}">
+                    <div class="slide-card flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 bg-slate-50/60 dark:bg-slate-700/30 border border-slate-200/70 dark:border-slate-700/70 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-grab active:cursor-grabbing"
+                        data-id="{{ $b->id }}" data-media-url="{{ Storage::url($b->media_path) }}"
+                        data-poster-url="{{ $b->poster_path ? Storage::url($b->poster_path) : '' }}" draggable="true">
                         <div class="w-full sm:w-36 h-20 overflow-hidden bg-slate-200 dark:bg-slate-700 rounded-lg shrink-0 relative">
                             @if ($b->isVideo())
                                 <video src="{{ Storage::url($b->media_path) }}" muted class="object-cover w-full h-full"></video>
@@ -87,6 +88,11 @@
                             </x-badge>
 
                             <div class="inline-flex items-center gap-1">
+                                <button type="button" data-id="{{ $b->id }}" data-status="{{ $b->status ? '1' : '0' }}"
+                                    class="bat-tat-slide p-1.5 {{ $b->status ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 dark:hover:text-white dark:hover:bg-slate-700' }} rounded-lg transition-colors"
+                                    title="{{ $b->status ? 'Tạm ẩn slide' : 'Bật hiển thị slide' }}">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </button>
                                 <button type="button" data-id="{{ $b->id }}" data-direction="up"
                                     class="doi-thu-tu p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 dark:hover:text-white dark:hover:bg-slate-700 rounded-lg transition-colors"
                                     title="Đẩy lên">
@@ -103,6 +109,11 @@
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
+                                </button>
+                                <button type="button" data-id="{{ $b->id }}"
+                                    class="nhan-ban-slide p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 dark:hover:bg-sky-950/40 rounded-lg transition-colors"
+                                    title="Nhân bản thành bản nháp">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a1 1 0 011-1h8a1 1 0 011 1v10a1 1 0 01-1 1h-4m-5 3H4a1 1 0 01-1-1V8a1 1 0 011-1h8a1 1 0 011 1v8a1 1 0 01-1 1H8z"/></svg>
                                 </button>
                                 <button type="button" data-id="{{ $b->id }}" data-name="{{ $b->heading ?: 'slide này' }}"
                                     class="xoa-slide p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
@@ -302,17 +313,25 @@
                     <p id="canh-bao-anh" class="hidden mt-1 text-xs font-medium text-rose-600"></p>
                 </div>
 
-                <div id="vung-video" class="hidden space-y-3">
+                <div id="slide-media-preview" class="hidden overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
+                    <img id="slide-preview-image" src="" alt="Xem trước banner" class="hidden w-full h-40 object-cover">
+                    <video id="slide-preview-video" class="hidden w-full h-40 object-cover" controls muted playsinline></video>
+                    <p id="slide-preview-note" class="px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400"></p>
+                </div>
+
+                <div id="vung-video" class="hidden">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ảnh bìa video (Poster)</label>
                         <input type="file" name="poster" accept="image/*"
                             class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 dark:file:bg-slate-700 dark:file:text-slate-300">
+                        <p class="mt-1 text-[11px] text-slate-400">Dùng làm ảnh chờ khi video đang tải.</p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ảnh riêng cho Mobile</label>
-                        <input type="file" name="mobile" accept="image/*"
-                            class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 dark:file:bg-slate-700 dark:file:text-slate-300">
-                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ảnh riêng cho Mobile</label>
+                    <input type="file" name="mobile" accept="image/jpeg,image/png,image/webp,image/avif"
+                        class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 dark:file:bg-slate-700 dark:file:text-slate-300">
+                    <p class="mt-1 text-[11px] text-slate-400">Tùy chọn cho cả ảnh lẫn video. Dùng ảnh dọc 4:5 để banner dễ đọc hơn trên điện thoại.</p>
                 </div>
 
                 <div>
@@ -396,8 +415,14 @@
                             class="block w-full text-xs rounded-xl border-slate-300 bg-white px-3 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                     </div>
                 </div>
+                <div class="flex flex-wrap gap-2 -mt-1">
+                    <button type="button" class="lich-slide px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg dark:bg-indigo-950/50 dark:text-indigo-300" data-preset="now">Hiện ngay</button>
+                    <button type="button" class="lich-slide px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg dark:bg-slate-700 dark:text-slate-300" data-preset="week">Kết thúc sau 7 ngày</button>
+                    <button type="button" class="lich-slide px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg dark:bg-slate-700 dark:text-slate-300" data-preset="clear">Bỏ lịch hẹn</button>
+                </div>
 
                 <label class="flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <input type="hidden" name="status" value="0">
                     <input type="checkbox" name="status" value="1" checked
                         class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 mr-2 dark:border-slate-600 dark:bg-slate-700">
                     Kích hoạt hiển thị slide này
@@ -513,7 +538,38 @@
             let idDangSua = null;
             const csrf = () => ({ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') });
             const moDrawer = () => window.openDrawer('drawer-slide');
-            const dongDrawer = () => window.closeDrawer('drawer-slide');
+            let slidePreviewUrl = null;
+            const datXemTruocSlide = (url = '', mediaType = 'image', note = '', poster = '', laFileTam = false) => {
+                if (slidePreviewUrl) {
+                    URL.revokeObjectURL(slidePreviewUrl);
+                    slidePreviewUrl = null;
+                }
+
+                const wrap = $('#slide-media-preview');
+                const image = $('#slide-preview-image');
+                const video = $('#slide-preview-video');
+                if (!url) {
+                    video.trigger('pause').removeAttr('src poster');
+                    image.removeAttr('src');
+                    wrap.addClass('hidden');
+                    return;
+                }
+
+                wrap.removeClass('hidden');
+                $('#slide-preview-note').text(note || (mediaType === 'video' ? 'Xem trước video banner' : 'Xem trước ảnh banner'));
+                if (mediaType === 'video') {
+                    image.addClass('hidden').removeAttr('src');
+                    video.removeClass('hidden').attr('src', url).attr('poster', poster || '');
+                } else {
+                    video.trigger('pause').addClass('hidden').removeAttr('src poster');
+                    image.removeClass('hidden').attr('src', url);
+                }
+                if (laFileTam) slidePreviewUrl = url;
+            };
+            const dongDrawer = () => {
+                datXemTruocSlide();
+                window.closeDrawer('drawer-slide');
+            };
             const slideCtaSelect = $('#slide-cta-link-select');
             const slideCtaInput = $('#slide-cta-link');
             let linkSlideDangChonSan = false;
@@ -549,12 +605,14 @@
                 $('#form-slide')[0].reset();
                 capNhatLinkSlide();
                 $('#vung-video, #canh-bao-anh').addClass('hidden');
+                datXemTruocSlide();
                 $('#slide-media').prop('required', true);
                 moDrawer();
             });
 
             $(document).on('click', '.sua-slide', function() {
                 const s = $(this).data('slide');
+                const card = $(this).closest('.slide-card');
                 idDangSua = s.id;
                 $('#tieu-de-drawer').text('Sửa slide');
                 $('#form-slide')[0].reset();
@@ -572,6 +630,12 @@
                 $('#slide-media').prop('required', false);
                 $('#vung-video').toggleClass('hidden', s.media_type !== 'video');
                 $('#canh-bao-anh').addClass('hidden');
+                datXemTruocSlide(
+                    card.attr('data-media-url'),
+                    s.media_type,
+                    s.media_type === 'video' ? 'Video hiện tại của slide' : 'Ảnh hiện tại của slide',
+                    card.attr('data-poster-url')
+                );
                 moDrawer();
             });
 
@@ -582,6 +646,13 @@
 
                 const laVideo = file.type.startsWith('video/');
                 $('#vung-video').toggleClass('hidden', !laVideo);
+                datXemTruocSlide(
+                    URL.createObjectURL(file),
+                    laVideo ? 'video' : 'image',
+                    'Xem trước file mới: ' + file.name,
+                    '',
+                    true
+                );
 
                 const mbToiDa = laVideo ? {{ $limits['video_mb'] }} : {{ $limits['anh_mb'] }};
                 const canhBaos = [];
@@ -603,6 +674,27 @@
                     URL.revokeObjectURL(img.src);
                 };
                 img.src = URL.createObjectURL(file);
+            });
+
+            const dinhDangNgayGio = (date) => {
+                const pad = (number) => String(number).padStart(2, '0');
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+            };
+
+            $(document).on('click', '.lich-slide', function() {
+                const preset = $(this).data('preset');
+                const now = new Date();
+                const form = $('#form-slide');
+                if (preset === 'clear') {
+                    form.find('[name=starts_at], [name=ends_at]').val('');
+                    return;
+                }
+                form.find('[name=starts_at]').val(dinhDangNgayGio(now));
+                form.find('[name=status]').prop('checked', true);
+                if (preset === 'week') {
+                    now.setDate(now.getDate() + 7);
+                    form.find('[name=ends_at]').val(dinhDangNgayGio(now));
+                }
             });
 
             $('#form-slide').submit(function(e) {
@@ -636,6 +728,73 @@
                     data: { direction: $(this).data('direction') },
                     success: () => location.reload(),
                     error: window.showAjaxError
+                });
+            });
+
+            $(document).on('click', '.bat-tat-slide', function() {
+                const button = $(this);
+                $.ajax({
+                    url: '/content/banner/' + button.data('id') + '/toggle',
+                    type: 'POST',
+                    headers: csrf(),
+                    success: function(r) {
+                        window.showToast(r.success);
+                        setTimeout(() => location.reload(), 350);
+                    },
+                    error: window.showAjaxError
+                });
+            });
+
+            $(document).on('click', '.nhan-ban-slide', function() {
+                const button = $(this);
+                button.prop('disabled', true);
+                $.ajax({
+                    url: '/content/banner/' + button.data('id') + '/duplicate',
+                    type: 'POST',
+                    headers: csrf(),
+                    success: function(r) {
+                        window.showToast(r.success);
+                        setTimeout(() => location.reload(), 500);
+                    },
+                    error: window.showAjaxError,
+                    complete: function() { button.prop('disabled', false); }
+                });
+            });
+
+            let slideDangKeo = null;
+            let thuTuDaDoi = false;
+            $(document).on('dragstart', '.slide-card', function(e) {
+                slideDangKeo = this;
+                thuTuDaDoi = false;
+                $(this).addClass('opacity-50');
+                e.originalEvent.dataTransfer.effectAllowed = 'move';
+            });
+            $(document).on('dragover', '.slide-card', function(e) {
+                e.preventDefault();
+                if (!slideDangKeo || this === slideDangKeo) return;
+                const rect = this.getBoundingClientRect();
+                const datSau = e.originalEvent.clientY > rect.top + rect.height / 2;
+                $(this)[datSau ? 'after' : 'before'](slideDangKeo);
+                thuTuDaDoi = true;
+            });
+            $(document).on('dragend', '.slide-card', function() {
+                $(this).removeClass('opacity-50');
+                if (!slideDangKeo || !thuTuDaDoi) {
+                    slideDangKeo = null;
+                    return;
+                }
+                const ids = $('#danh-sach-slide .slide-card').map(function() { return $(this).data('id'); }).get();
+                slideDangKeo = null;
+                $.ajax({
+                    url: '{{ route('content.banners.reorder') }}',
+                    type: 'POST',
+                    headers: csrf(),
+                    data: { ids: ids },
+                    success: function(r) { window.showToast(r.success); },
+                    error: function(xhr) {
+                        window.showAjaxError(xhr);
+                        setTimeout(() => location.reload(), 700);
+                    }
                 });
             });
 

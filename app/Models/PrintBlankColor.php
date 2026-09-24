@@ -18,9 +18,10 @@ class PrintBlankColor extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['print_blank_id', 'name', 'hex', 'tone', 'sort_order', 'is_active'];
+    protected $fillable = ['print_blank_id', 'name', 'hex', 'tone', 'sizes', 'sort_order', 'is_active'];
 
     protected $casts = [
+        'sizes' => 'array',
         'sort_order' => 'integer',
         'is_active' => 'boolean',
     ];

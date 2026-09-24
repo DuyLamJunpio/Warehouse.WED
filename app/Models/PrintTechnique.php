@@ -16,11 +16,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class PrintTechnique extends Model
 {
     protected $fillable = [
-        'name', 'slug', 'description', 'max_colors', 'accepts_photo', 'accepts_gradient',
+        'name', 'slug', 'description', 'price', 'max_colors', 'accepts_photo', 'accepts_gradient',
         'needs_underbase', 'min_dpi', 'file_types', 'lead_days', 'moq', 'sort_order', 'is_active',
     ];
 
     protected $casts = [
+        'price' => 'integer',
         'max_colors' => 'integer',
         'accepts_photo' => 'boolean',
         'accepts_gradient' => 'boolean',
@@ -59,6 +60,7 @@ class PrintTechnique extends Model
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'price' => $this->price,
             'max_colors' => $this->max_colors,
             'accepts_photo' => $this->accepts_photo,
             'accepts_gradient' => $this->accepts_gradient,

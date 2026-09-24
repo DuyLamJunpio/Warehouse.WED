@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Categories;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\ProductStyle;
 use App\Models\ProductVariant;
 use App\Models\Supplier;
 use App\Models\User;
@@ -147,11 +148,18 @@ class DatabaseSeeder extends Seeder
     private function seedVariants(Product $product): void
     {
         $sort = 0;
+        $style = ProductStyle::create([
+            'product_id' => $product->id,
+            'name' => 'Mẫu mặc định',
+            'name_key' => 'mẫu mặc định',
+            'sort_order' => 0,
+        ]);
 
         foreach (self::SIZES as $size) {
             foreach (self::COLORS as $color) {
                 ProductVariant::create([
                     'product_id' => $product->id,
+                    'product_style_id' => $style->id,
                     'size' => $size,
                     'color' => $color,
                     'sku' => strtoupper(Str::slug($product->slug)) . '-' . $size . '-' . strtoupper(Str::slug($color)),

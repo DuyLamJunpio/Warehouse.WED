@@ -23,7 +23,7 @@ return new class extends Migration
     {
         Schema::create('storefront_orders', function (Blueprint $table) {
             $table->id();
-            // Mã 12 ký tự trên URL /checkout/{ref} — đủ ngẫu nhiên để không dò được.
+            // Mã 10 ký tự trên URL /checkout/{ref} — đủ ngẫu nhiên để không dò được.
             $table->string('ref', 32)->unique();
             // Mã số nguyên PayOS khớp giao dịch theo. Webhook chỉ biết mã này.
             $table->bigInteger('order_code')->unique();

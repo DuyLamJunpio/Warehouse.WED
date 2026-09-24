@@ -31,12 +31,13 @@ class PrintStorefrontController extends Controller
     public function catalogue()
     {
         $pricing = PrintPricing::current();
+        $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
 
         $blanks = PrintBlank::with(['colors', 'mockups', 'techniques', 'product.variants', 'category'])
-            ->where('is_active', true)
+            ->storefrontVisible()
             ->orderBy('sort_order')->orderBy('id')
             ->get()
-            ->map(fn (PrintBlank $blank) => $this->blankPayload($blank));
+            ->map(fn (PrintBlank $blank) => $this->blankPayload($blank, $pricing));
 
         return response()->json([
             'pricing_version_id' => PrintPricing::currentVersionId(),
@@ -47,13 +48,12 @@ class PrintStorefrontController extends Controller
              * bên đó là sớm muộn hai bên lệch nhau, và lệch trần mm nghĩa là
              * studio cho khách kéo một khổ mà máy chủ từ chối ngay sau đó.
              */
+            'pricing_mode' => $pricing['mode'] ?? 'legacy',
+            'display_combined_price' => (bool) ($pricing['display_combined_price'] ?? false) && $commonTechniquePrice !== null,
+            'common_technique_price' => $commonTechniquePrice,
             'positions' => PrintPositions::payload(),
             'blanks' => $blanks,
-            'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->values(),
-            'pricing_mode' => PrintPricing::MODE_SIMPLE,
-            'blank_technique_prices' => $pricing['blank_technique_prices'] ?? [],
-            // Giữ các trường cũ để phiên bản storefront cũ không lỗi khi đọc
-            // catalogue trong lúc được nâng cấp sang bảng giá gọn.
+            'techniques' => collect($pricing['techniques'] ?? [])->where('is_active', true)->filter(fn ($t) => ($t['price'] ?? null) !== null)->values(),
             'tiers' => $pricing['tiers'] ?? [],
             'cells' => $pricing['cells'] ?? [],
             'rules' => $pricing['rules'] ?? [],
@@ -74,9 +74,21 @@ class PrintStorefrontController extends Controller
         ]);
     }
 
-    private function blankPayload(PrintBlank $blank): array
+    private function blankPayload(PrintBlank $blank, array $pricing = []): array
     {
         $sizeMap = $blank->sizeMap();
+        $colors = $blank->colors->where('is_active', true)->values();
+        $sizes = $colors
+            ->flatMap(fn ($color) => $blank->sizesForColor($color))
+            ->unique()
+            ->values()
+            ->all();
+        $displayPrice = null;
+
+        $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
+        if ((bool) ($pricing['display_combined_price'] ?? false) && $commonTechniquePrice !== null) {
+            $displayPrice = (int) $blank->effectiveBasePrice() + $commonTechniquePrice;
+        }
 
         return [
             'id' => $blank->id,
@@ -84,6 +96,7 @@ class PrintStorefrontController extends Controller
             'name' => $blank->name,
             'description' => $blank->description,
             'base_price' => $blank->effectiveBasePrice(),
+            'display_price' => $displayPrice,
             'product_id' => $blank->product_id,
             /*
              * Danh mục để web bán hàng dựng hàng nút lọc trên trang In áo.
@@ -109,17 +122,18 @@ class PrintStorefrontController extends Controller
             'lead_days' => $blank->lead_days,
             'template_url' => $blank->template_path ? Storage::url($blank->template_path) : null,
             'technique_ids' => $blank->techniques->pluck('id')->all(),
-            // Nối kho thì size lấy từ biến thể thật; không nối thì phôi chỉ có
-            // một cỡ duy nhất, và nói thẳng ra thay vì để danh sách rỗng.
-            'sizes' => $sizeMap ? array_keys($sizeMap) : ['Một cỡ'],
+            // Danh sách gộp giúp web cũ vẫn dựng được ô chọn; `colors[].sizes`
+            // mới là nguồn chính xác để lọc size sau khi khách đổi màu.
+            'sizes' => $sizes ?: ($sizeMap ? array_keys($sizeMap) : ['Một cỡ']),
             // Size vẫn gửi sang để khách chọn áo, nhưng không còn làm thay đổi giá.
             'size_surcharge' => array_fill_keys(array_keys($sizeMap), 0),
             'size_pricing' => 'flat',
-            'colors' => $blank->colors->where('is_active', true)->values()->map(fn ($c) => [
+            'colors' => $colors->map(fn ($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
                 'hex' => $c->hex,
                 'tone' => $c->tone,
+                'sizes' => $blank->sizesForColor($c),
             ]),
             'position_keys' => $blank->positionKeys(),
             'mockups' => $blank->mockups->map(fn ($m) => [
@@ -144,7 +158,9 @@ class PrintStorefrontController extends Controller
     public function quote(Request $request)
     {
         $data = $this->validatedDesign($request);
-        $blank = PrintBlank::with(['colors', 'product.variants'])->findOrFail($data['blank_id']);
+        $blank = PrintBlank::storefrontVisible()
+            ->with(['colors', 'product.variants'])
+            ->findOrFail($data['blank_id']);
 
         return response()->json($this->quoteFor($blank, $data));
     }
@@ -170,7 +186,9 @@ class PrintStorefrontController extends Controller
             'placements.*.kind' => 'required|in:image,text',
             'placements.*.asset_id' => 'required_if:placements.*.kind,image|nullable|exists:print_assets,id',
             'placements.*.text_content' => 'required_if:placements.*.kind,text|nullable|string|max:80',
-            'placements.*.text_font_id' => 'required_if:placements.*.kind,text|nullable|exists:print_fonts,id',
+            // Có thể dùng phông hệ thống mặc định khi shop chưa khai báo phông
+            // riêng. Nếu có id thì vẫn phải trỏ tới phông thật trong kho.
+            'placements.*.text_font_id' => 'nullable|exists:print_fonts,id',
             'placements.*.text_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'placements.*.x_mm' => 'required|numeric',
             'placements.*.y_mm' => 'required|numeric',
@@ -200,6 +218,15 @@ class PrintStorefrontController extends Controller
         }
 
         $color = $blank->colors->firstWhere('name', $data['color_name']);
+        if (!$color || !in_array($data['size'], $blank->sizesForColor($color), true)) {
+            return [
+                'lines' => [],
+                'unit_price' => 0,
+                'total' => 0,
+                'errors' => ['Màu và size áo đã chọn không còn bán cùng nhau.'],
+                'warnings' => [],
+            ];
+        }
         $assets = PrintAsset::whereIn('id', collect($data['placements'])->pluck('asset_id')->filter())
             ->get()->keyBy('id');
 
@@ -230,7 +257,7 @@ class PrintStorefrontController extends Controller
                 'product_id' => $blank->product_id,
             ],
             'size' => $data['size'],
-            'size_surcharge' => (int) ($sizeMap[$data['size']] ?? 0),
+            'size_surcharge' => 0,
             'color_name' => $data['color_name'],
             'tone' => $color?->tone ?? 'light',
             'technique_id' => (int) $data['technique_id'],
@@ -304,7 +331,9 @@ class PrintStorefrontController extends Controller
     public function storeDesign(Request $request)
     {
         $data = $this->validatedDesign($request);
-        $blank = PrintBlank::with(['colors', 'product.variants'])->findOrFail($data['blank_id']);
+        $blank = PrintBlank::storefrontVisible()
+            ->with(['colors', 'product.variants'])
+            ->findOrFail($data['blank_id']);
         $quote = $this->quoteFor($blank, $data);
 
         // Thiết kế có lỗi thì KHÔNG lưu: một bản ghi giá 0 đồng nằm chờ duyệt

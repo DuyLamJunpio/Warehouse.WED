@@ -215,6 +215,18 @@
             if (!res.ok) throw new Error(data.error || data.message || 'HTTP ' + res.status);
             return data;
         };
+        const SPIN = '<svg class="inline-block h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 0-4 4h4a4 4 0 0 1 4-4V0a8 8 0 0 0-4 4z"></path></svg>';
+        const busy = (button, label) => {
+            const original = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-60', 'cursor-wait');
+            button.innerHTML = '<span class="inline-flex items-center gap-2">' + SPIN + '<span>' + label + '</span></span>';
+            return () => {
+                button.disabled = false;
+                button.classList.remove('opacity-60', 'cursor-wait');
+                button.innerHTML = original;
+            };
+        };
 
         const checkedTechs = (root, selector) =>
             Array.from(root.querySelectorAll(selector + ':checked')).map(cb => parseInt(cb.value, 10));
@@ -222,7 +234,8 @@
         document.querySelectorAll('[data-asset]').forEach(card => {
             const id = card.dataset.asset;
 
-            card.querySelector('[data-a-save]')?.addEventListener('click', async () => {
+            card.querySelector('[data-a-save]')?.addEventListener('click', async (event) => {
+                const restore = busy(event.currentTarget, 'Đang lưu...');
                 try {
                     const r = await post('/print/library/' + id, {
                         name: card.querySelector('[data-a-name]').value.trim(),
@@ -234,9 +247,12 @@
                     });
                     toast(r.success);
                 } catch (err) { toast(err.message, false); }
+                finally { restore(); }
             });
 
             card.querySelector('[data-a-toggle]')?.addEventListener('change', async (e) => {
+                e.target.disabled = true;
+                e.target.classList.add('animate-pulse');
                 try {
                     const r = await post('/print/library/' + id + '/toggle', { is_active: e.target.checked });
                     card.classList.toggle('opacity-60', !e.target.checked);
@@ -244,6 +260,9 @@
                 } catch (err) {
                     e.target.checked = !e.target.checked;
                     toast(err.message, false);
+                } finally {
+                    e.target.disabled = false;
+                    e.target.classList.remove('animate-pulse');
                 }
             });
         });
@@ -252,7 +271,8 @@
         document.querySelectorAll('[data-font]').forEach(row => {
             const id = row.dataset.font;
 
-            row.querySelector('[data-f-save]')?.addEventListener('click', async () => {
+            row.querySelector('[data-f-save]')?.addEventListener('click', async (event) => {
+                const restore = busy(event.currentTarget, 'Đang lưu...');
                 try {
                     const r = await post('/print/fonts/' + id, {
                         name: row.querySelector('[data-f-name]').value.trim(),
@@ -262,9 +282,12 @@
                     });
                     toast(r.success);
                 } catch (err) { toast(err.message, false); }
+                finally { restore(); }
             });
 
             row.querySelector('[data-f-toggle]')?.addEventListener('change', async (e) => {
+                e.target.disabled = true;
+                e.target.classList.add('animate-pulse');
                 try {
                     const r = await post('/print/fonts/' + id + '/toggle', { is_active: e.target.checked });
                     row.classList.toggle('opacity-60', !e.target.checked);
@@ -272,6 +295,9 @@
                 } catch (err) {
                     e.target.checked = !e.target.checked;
                     toast(err.message, false);
+                } finally {
+                    e.target.disabled = false;
+                    e.target.classList.remove('animate-pulse');
                 }
             });
         });
@@ -286,12 +312,12 @@
             // Không có tệp là dùng phông hệ thống — hợp lệ, không phải lỗi.
             if (file) fd.append('file', file);
 
-            e.currentTarget.disabled = true;
+            const restore = busy(e.currentTarget, 'Đang tải lên...');
             try {
                 const r = await post('{{ route('print.fonts.store') }}', fd, true);
                 toast(r.success);
                 setTimeout(() => location.reload(), 1000);
-            } catch (err) { toast(err.message, false); e.currentTarget.disabled = false; }
+            } catch (err) { toast(err.message, false); restore(); }
         });
 
         document.getElementById('btnAddAsset')?.addEventListener('click', async (e) => {
@@ -310,14 +336,14 @@
             fd.append('max_width_mm', document.getElementById('nMax').value || '1');
             checkedTechs(document, '[data-n-tech]').forEach(id => fd.append('technique_ids[]', id));
 
-            e.currentTarget.disabled = true;
+            const restore = busy(e.currentTarget, 'Đang tải lên...');
             try {
                 const r = await post('{{ route('print.library.store') }}', fd, true);
                 // Ảnh không có nền trong suốt vẫn được nhận, nhưng cảnh báo phải
                 // ở lại đủ lâu để người dùng đọc kịp trước khi trang tải lại.
                 toast(r.success, r.has_alpha !== false);
                 setTimeout(() => location.reload(), r.has_alpha === false ? 3500 : 1000);
-            } catch (err) { toast(err.message, false); e.currentTarget.disabled = false; }
+            } catch (err) { toast(err.message, false); restore(); }
         });
     })();
     </script>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\PrintPositions;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -50,6 +51,19 @@ class PrintBlank extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Categories::class, 'categories_id')->withTrashed();
+    }
+
+    /**
+     * Phôi được phép hiện trong studio in áo của web bán hàng.
+     *
+     * `categories_id` ở phôi chỉ dùng để nhóm chip lọc trong studio, không phải
+     * công tắc bán hàng. Nếu dùng trạng thái danh mục ở đây, tắt một danh mục
+     * hàng bán sẵn có thể vô tình làm biến mất toàn bộ phôi in. Phôi có công
+     * tắc riêng `is_active` và đó là nguồn quyết định duy nhất tại storefront.
+     */
+    public function scopeStorefrontVisible(Builder $query): Builder
+    {
+        return $query->where('print_blanks.is_active', true);
     }
 
     public function colors(): HasMany
@@ -120,5 +134,21 @@ class PrintBlank extends Model
         }
 
         return $sizes;
+    }
+
+    /**
+     * Size thực sự đặt được cho một màu. Màu chưa khai size riêng kế thừa toàn
+     * bộ size sản phẩm nối kho; phôi độc lập thì luôn có "Một cỡ".
+     *
+     * @return string[]
+     */
+    public function sizesForColor(PrintBlankColor $color): array
+    {
+        $sizes = array_values(array_filter(
+            $color->sizes ?? [],
+            fn ($size) => is_string($size) && trim($size) !== '',
+        ));
+
+        return $sizes ?: (array_keys($this->sizeMap()) ?: ['Một cỡ']);
     }
 }

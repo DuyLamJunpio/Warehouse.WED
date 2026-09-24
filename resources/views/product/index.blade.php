@@ -260,16 +260,23 @@
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                 Giá vốn / Giá nhập (VNĐ)
                             </label>
-                            <input type="text" inputmode="numeric" name="import_price" placeholder="0"
+                            <input type="text" inputmode="numeric" name="import_price" placeholder="Để trống nếu chưa có"
                                 class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                                Giá khuyến mãi (VNĐ)
+                                Giá khuyến mãi
                             </label>
-                            <input type="text" inputmode="numeric" name="discount_price" placeholder="Bỏ trống nếu không giảm"
-                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <div class="flex gap-2">
+                                <select name="discount_type" class="discount-type w-28 shrink-0 text-xs rounded-xl border-slate-300 bg-white px-2.5 py-2.5 focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                    <option value="amount">Giảm tiền</option>
+                                    <option value="percent">Giảm %</option>
+                                </select>
+                                <input type="text" inputmode="numeric" name="discount_value" placeholder="Số tiền giảm"
+                                    class="discount-value o-tien min-w-0 flex-1 text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            </div>
+                            <p class="discount-preview mt-1 text-[11px] text-slate-500 dark:text-slate-400">Để trống nếu không giảm.</p>
                         </div>
                     </div>
 
@@ -288,8 +295,27 @@
                     </div>
                 </div>
 
-                {{-- SECTION 4: QUY CÁCH / MÙI HƯƠNG --}}
+                {{-- SECTION 4: MẪU SẢN PHẨM VÀ BIẾN THỂ --}}
                 <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Mẫu, màu & size
+                            </div>
+                            <p class="mt-1.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                                Khai tên và ảnh một lần cho mỗi mẫu; mọi màu/size bên trong sẽ dùng chung ảnh đó để không làm nặng storage.
+                            </p>
+                        </div>
+                        <button type="button" data-target="#styles-add"
+                            class="addStyleCard shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
+                            + Thêm mẫu
+                        </button>
+                    </div>
+                    <div id="styles-add" class="space-y-4"></div>
+                </div>
+
+                {{-- Khối ma trận cũ được giữ ẩn một phiên bản để các bookmark/form cũ không lỗi JS. --}}
+                <div class="hidden">
                     <div class="flex items-center justify-between">
                         <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Phân loại quy cách & mùi hương
@@ -504,16 +530,23 @@
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                 Giá vốn / Giá nhập (VNĐ)
                             </label>
-                            <input type="text" inputmode="numeric" name="import_price" id="import_price_edit"
+                            <input type="text" inputmode="numeric" name="import_price" id="import_price_edit" placeholder="Để trống nếu chưa có"
                                 class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                                Giá khuyến mãi (VNĐ)
+                                Giá khuyến mãi
                             </label>
-                            <input type="text" inputmode="numeric" name="discount_price" id="discount_price_edit"
-                                class="o-tien block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <div class="flex gap-2">
+                                <select name="discount_type" class="discount-type w-28 shrink-0 text-xs rounded-xl border-slate-300 bg-white px-2.5 py-2.5 focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                                    <option value="amount">Giảm tiền</option>
+                                    <option value="percent">Giảm %</option>
+                                </select>
+                                <input type="text" inputmode="numeric" name="discount_value" id="discount_value_edit" placeholder="Số tiền giảm"
+                                    class="discount-value o-tien min-w-0 flex-1 text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            </div>
+                            <p class="discount-preview mt-1 text-[11px] text-slate-500 dark:text-slate-400">Để trống nếu không giảm.</p>
                         </div>
                     </div>
 
@@ -532,8 +565,27 @@
                     </div>
                 </div>
 
-                {{-- SECTION 4: MA TRẬN BIẾN THỂ --}}
+                {{-- SECTION 4: MẪU SẢN PHẨM; MỖI ẢNH CHỈ LƯU MỘT LẦN --}}
                 <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Mẫu, màu & size
+                            </div>
+                            <p class="mt-1.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                                Mỗi mẫu có một ảnh dùng chung. Hai mẫu khác nhau vẫn có thể có cùng màu và cùng size.
+                            </p>
+                        </div>
+                        <button type="button" data-target="#styles-edit"
+                            class="addStyleCard shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
+                            + Thêm mẫu
+                        </button>
+                    </div>
+                    <div id="styles-edit" class="space-y-4"></div>
+                </div>
+
+                {{-- Ma trận phẳng cũ không còn gửi dữ liệu; để ẩn trong giai đoạn chuyển tiếp. --}}
+                <div class="hidden">
                     <div class="flex items-center justify-between">
                         <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Phân loại quy cách & mùi hương
@@ -622,6 +674,57 @@
             let editingProductId = null;
             let currentFilter = 'all';
             let variantRowIndex = 100;
+            let styleRowIndex = 0;
+            let currentProductImages = [];
+            const styleQuickSizes = @json($variantQuickSizes);
+            const styleQuickColors = @json($variantQuickColors);
+            const stylePresets = @json($variantCombinationPresets);
+
+            const renderDiscountPreview = (form) => {
+                const mode = form.find('[name="discount_type"]').val();
+                const rawValue = form.find('[name="discount_value"]').val();
+                const sellPrice = parseInt(String(form.find('[name="sell_price"]').val() || '').replace(/\D/g, ''), 10) || 0;
+                const preview = form.find('.discount-preview');
+
+                if (!rawValue || !sellPrice) {
+                    preview.text('Để trống nếu không giảm.');
+                    return;
+                }
+
+                const reduction = mode === 'percent'
+                    ? Math.round(sellPrice * (parseFloat(rawValue) || 0) / 100)
+                    : (parseInt(String(rawValue).replace(/\D/g, ''), 10) || 0);
+                const salePrice = Math.max(0, sellPrice - reduction);
+                const actualPercent = Math.round((reduction / sellPrice) * 1000) / 10;
+                const percentLabel = String(actualPercent).replace('.', ',');
+                preview.text(`Giá khuyến mãi dự kiến: ${window.nhomNghin(salePrice)} ₫ · giảm ${percentLabel}%`);
+            };
+
+            const configureDiscountInput = (form, clearValue = false) => {
+                const input = form.find('[name="discount_value"]');
+                const isPercent = form.find('[name="discount_type"]').val() === 'percent';
+                if (clearValue) input.val('');
+
+                if (isPercent) {
+                    input.removeClass('o-tien').attr({ type: 'number', inputmode: 'decimal', min: '0', max: '100', step: '0.1', placeholder: 'Ví dụ 10' });
+                } else {
+                    input.addClass('o-tien').attr({ type: 'text', inputmode: 'numeric', placeholder: 'Số tiền giảm' });
+                    input.removeAttr('min max step');
+                }
+
+                renderDiscountPreview(form);
+            };
+
+            $('#formAdd, #formEdit').each(function() {
+                const form = $(this);
+                configureDiscountInput(form);
+                form.on('change', '[name="discount_type"]', function() {
+                    configureDiscountInput(form, true);
+                });
+                form.on('input change', '[name="discount_value"], [name="sell_price"]', function() {
+                    renderDiscountPreview(form);
+                });
+            });
 
             const variantRow = (data) => {
                 data = data || {};
@@ -643,6 +746,185 @@
                         </button>
                     </div>
                 `);
+            };
+
+            /** Một dòng tồn kho nằm bên trong đúng một mẫu. */
+            const styleVariantRow = (styleIndex, data) => {
+                data = data || {};
+                const i = variantRowIndex++;
+                const prefix = `styles[${styleIndex}][variants][${i}]`;
+                const isPaused = !!data.paused || !!data.is_paused || (!!data.id && Number(data.quantity) === 0
+                    && (!String(data.color || '').trim() || !String(data.size || '').trim()));
+                const row = $(`
+                    <div class="style-variant-row grid grid-cols-12 items-center gap-2 p-2.5 bg-slate-50/80 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-600">
+                        <input type="hidden" class="style-variant-id" name="${prefix}[id]">
+                        <input type="hidden" class="style-variant-paused" name="${prefix}[paused]" value="0">
+                        <input type="text" class="style-variant-color col-span-3 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[color]" maxlength="50" required placeholder="Màu (Đen, Be...)">
+                        <input type="text" class="style-variant-size col-span-2 text-xs font-semibold rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[size]" maxlength="50" required placeholder="Size">
+                        <input type="number" class="style-variant-quantity col-span-2 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center font-medium" min="0" name="${prefix}[quantity]" placeholder="SL tồn">
+                        <input type="text" class="style-variant-price o-tien col-span-4 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" inputmode="numeric" name="${prefix}[price_override]" placeholder="Giá riêng (nếu có)">
+                        <button type="button" class="removeStyleVariant col-span-1 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors" title="Bỏ biến thể">
+                            <svg class="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                `);
+
+                row.find('.style-variant-id').val(data.id || '');
+                row.find('.style-variant-color').val(data.color || '');
+                row.find('.style-variant-size').val(data.size || '');
+                row.find('.style-variant-quantity').val(data.quantity !== undefined ? data.quantity : 0);
+                row.find('.style-variant-price').val(data.price_override ? window.nhomNghin(data.price_override) : '');
+                row.find('.style-variant-paused').val(isPaused ? '1' : '0');
+                row.attr('data-existing', data.id ? '1' : '0');
+                row.attr('data-paused', isPaused ? '1' : '0');
+                if (isPaused) {
+                    row.find('.style-variant-color, .style-variant-size').prop('required', false);
+                }
+                if (data.id) {
+                    const button = row.find('.removeStyleVariant');
+                    button.data('default-icon', button.html());
+                    if (isPaused) {
+                        button.text('↺')
+                            .attr('title', 'Khôi phục tồn kho trước khi tạm dừng')
+                            .addClass('text-emerald-600 hover:text-emerald-700');
+                    } else {
+                        button.attr('title', 'Tạm dừng bán biến thể (đưa tồn kho về 0)');
+                    }
+                }
+                return row;
+            };
+
+            const refreshStyleNumbers = (container) => {
+                $(container).find('.style-card').each(function(index) {
+                    $(this).find('.style-number').text(`Mẫu ${index + 1}`);
+                });
+            };
+
+            const setStylePreview = (card, src) => {
+                const frame = card.find('.style-image-preview');
+                const image = frame.find('img');
+                const oldObjectUrl = card.data('style-object-url');
+                if (oldObjectUrl) {
+                    URL.revokeObjectURL(oldObjectUrl);
+                    card.removeData('style-object-url');
+                }
+
+                if (src) {
+                    image.attr('src', src);
+                    frame.removeClass('hidden');
+                } else {
+                    image.attr('src', '');
+                    frame.addClass('hidden');
+                }
+            };
+
+            /** Card mẫu: tên + đúng một ảnh + nhiều tổ hợp màu/size. */
+            const styleCard = (data) => {
+                data = data || {};
+                const styleIndex = styleRowIndex++;
+                const prefix = `styles[${styleIndex}]`;
+                const existing = !!data.id;
+                const availableImages = [...currentProductImages];
+                const card = $(`
+                    <section class="style-card rounded-2xl border border-indigo-200/80 bg-white p-4 shadow-xs dark:border-indigo-900/70 dark:bg-slate-700/40" data-style-index="${styleIndex}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <span class="style-number text-[10px] font-bold uppercase tracking-wider text-indigo-500"></span>
+                                <input type="hidden" class="style-id" name="${prefix}[id]">
+                                <label class="mt-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">Tên mẫu <span class="text-rose-500">*</span></label>
+                                <input type="text" class="style-name mt-1 block w-full text-sm font-semibold rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                                    name="${prefix}[name]" maxlength="100" required placeholder="VD: Bản đồ Việt Nam, Trống đồng...">
+                            </div>
+                            <button type="button" class="removeStyleCard ${existing ? 'hidden' : ''} mt-5 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg" title="Bỏ mẫu chưa lưu">✕</button>
+                        </div>
+
+                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-[96px_1fr] gap-3 items-start">
+                            <div class="style-image-preview hidden relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+                                <img alt="Ảnh mẫu" class="h-full w-full object-cover">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                    <span>Chọn ảnh riêng cho mẫu</span>
+                                    <input type="file" class="style-image-file hidden" name="${prefix}[image]" accept="image/jpeg,image/png,image/webp,image/gif">
+                                </label>
+                                <select class="style-image-select block w-full rounded-xl border-slate-300 bg-white px-3 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white" name="${prefix}[image_id]">
+                                    <option value="">Hoặc dùng ảnh sản phẩm đã có</option>
+                                </select>
+                                <p class="text-[10px] leading-4 text-slate-400">Ảnh này được lưu một lần và dùng chung cho toàn bộ biến thể bên dưới.</p>
+                                <p class="style-image-error hidden text-[10px] font-semibold text-rose-600">Vui lòng chọn một ảnh cho mẫu này.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-600">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Màu, size, tồn kho</p>
+                                <button type="button" class="addStyleVariantRow px-2.5 py-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 rounded-lg dark:bg-indigo-950/60 dark:text-indigo-300">+ Thêm dòng</button>
+                            </div>
+                            <div class="style-size-chips mt-2 flex flex-wrap gap-1"></div>
+                            <div class="style-color-chips mt-1.5 flex flex-wrap gap-1"></div>
+                            <div class="mt-3 flex flex-col sm:flex-row gap-2">
+                                <input type="text" class="style-generator block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3 py-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="S,M,L,XL | Đen/Trắng/Be">
+                                <button type="button" class="generateStyleVariants px-3 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl">Tạo tổ hợp</button>
+                            </div>
+                            <div class="style-presets mt-2 flex flex-wrap gap-1"></div>
+                            <div class="style-variants mt-3 space-y-2"></div>
+                        </div>
+                    </section>
+                `);
+
+                card.find('.style-id').val(data.id || '');
+                card.find('.style-name').val(data.name || '');
+
+                const select = card.find('.style-image-select');
+                availableImages
+                    .filter(image => (image.media_type || 'image') === 'image')
+                    .forEach(image => {
+                        select.append($('<option>').val(image.id).text(image.name || `Ảnh #${image.id}`));
+                    });
+                select.val(data.image_model_id || '');
+
+                const existingPath = data.image && data.image.path ? window.storageUrl(data.image.path) : '';
+                setStylePreview(card, existingPath);
+                const fileInput = card.find('.style-image-file');
+
+                fileInput.on('change', function() {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+                    const url = URL.createObjectURL(file);
+                    setStylePreview(card, url);
+                    card.data('style-object-url', url);
+                    select.val('');
+                    card.find('.style-image-error').addClass('hidden');
+                });
+
+                select.on('change', function() {
+                    const image = availableImages.find(item => String(item.id) === String($(this).val()));
+                    fileInput.val('');
+                    setStylePreview(card, image ? window.storageUrl(image.path) : existingPath);
+                    if (image || existingPath) card.find('.style-image-error').addClass('hidden');
+                });
+
+                const variantsBox = card.find('.style-variants');
+                (data.variants || []).forEach(variant => variantsBox.append(styleVariantRow(styleIndex, variant)));
+                if (!variantsBox.children().length) variantsBox.append(styleVariantRow(styleIndex));
+
+                styleQuickSizes.forEach(size => {
+                    card.find('.style-size-chips').append(
+                        $('<button type="button">').addClass('style-size-chip px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] text-slate-600 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300').attr('data-val', size).text(`+ ${size}`)
+                    );
+                });
+                styleQuickColors.forEach(color => {
+                    card.find('.style-color-chips').append(
+                        $('<button type="button">').addClass('style-color-chip px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] text-slate-600 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300').attr('data-val', color).text(`+ ${color}`)
+                    );
+                });
+                stylePresets.forEach(preset => {
+                    card.find('.style-presets').append(
+                        $('<button type="button">').addClass('style-preset px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-[10px] text-indigo-600 dark:bg-indigo-950/40 dark:border-indigo-900 dark:text-indigo-300').attr('data-val', preset.value).text(preset.label)
+                    );
+                });
+
+                return card;
             };
 
             $(document).on('click', '.addVariantRow', function() {
@@ -754,6 +1036,224 @@
             bindVariantGenerator('#variant-generator-add', '#variants-add');
             bindVariantGenerator('#variant-generator-edit', '#variants-edit');
 
+            const styleVariantExists = (card, size, color) => {
+                const wantedSize = normalizeVariantValue(size);
+                const wantedColor = normalizeVariantValue(color);
+                let exists = false;
+
+                card.find('.style-variant-row').each(function() {
+                    const row = $(this);
+                    const rowSize = normalizeVariantValue(row.find('.style-variant-size').val());
+                    const rowColor = normalizeVariantValue(row.find('.style-variant-color').val());
+
+                    if (rowSize === wantedSize && rowColor === wantedColor) {
+                        exists = true;
+                        return false;
+                    }
+                });
+
+                return exists;
+            };
+
+            const appendStyleVariant = (card, data) => {
+                const row = styleVariantRow(card.data('style-index'), data);
+                card.find('.style-variants').append(row);
+                return row;
+            };
+
+            const findCompatibleStyleVariant = (card, size, color) => {
+                const wantedSize = normalizeVariantValue(size);
+                const wantedColor = normalizeVariantValue(color);
+                let compatible = $();
+
+                card.find('.style-variant-row[data-existing="0"]').each(function() {
+                    const row = $(this);
+                    if (row.attr('data-paused') === '1') return;
+
+                    const rowSize = normalizeVariantValue(row.find('.style-variant-size').val());
+                    const rowColor = normalizeVariantValue(row.find('.style-variant-color').val());
+                    const sizeMatches = !rowSize || rowSize === wantedSize;
+                    const colorMatches = !rowColor || rowColor === wantedColor;
+
+                    if (sizeMatches && colorMatches) {
+                        compatible = row;
+                        return false;
+                    }
+                });
+
+                return compatible;
+            };
+
+            const appendGeneratedStyleVariants = (card, value) => {
+                const parsed = parseVariantGenerator(value);
+                if (!parsed.sizes.length && !parsed.colors.length) return 0;
+
+                let added = 0;
+                (parsed.sizes.length ? parsed.sizes : ['']).forEach(size => {
+                    (parsed.colors.length ? parsed.colors : ['']).forEach(color => {
+                        if (styleVariantExists(card, size, color)) return;
+
+                        const compatible = findCompatibleStyleVariant(card, size, color);
+                        if (compatible.length) {
+                            compatible.find('.style-variant-size').val(size);
+                            compatible.find('.style-variant-color').val(color);
+                        } else {
+                            appendStyleVariant(card, { size: size, color: color, quantity: 0 });
+                        }
+                        added++;
+                    });
+                });
+
+                return added;
+            };
+
+            const fillStyleVariantField = (card, fieldSelector, value) => {
+                let targetRow = $();
+                card.find('.style-variant-row').each(function() {
+                    const row = $(this);
+                    if (row.attr('data-paused') === '1') return;
+                    if (!normalizeVariantValue(row.find(fieldSelector).val())) {
+                        targetRow = row;
+                        return false;
+                    }
+                });
+
+                if (!targetRow.length) targetRow = appendStyleVariant(card);
+                targetRow.find(fieldSelector).val(value).focus();
+            };
+
+            const disposeStyleCards = (container) => {
+                $(container).find('.style-card').each(function() {
+                    setStylePreview($(this), '');
+                });
+                $(container).empty();
+            };
+
+            const resetAddStyles = () => {
+                currentProductImages = [];
+                disposeStyleCards('#styles-add');
+                $('#styles-add').append(styleCard());
+                refreshStyleNumbers('#styles-add');
+            };
+
+            const validateStyleImages = (form) => {
+                let firstMissing = null;
+                form.find('.style-card').each(function() {
+                    const card = $(this);
+                    const fileInput = card.find('.style-image-file').get(0);
+                    const hasUpload = !!(fileInput && fileInput.files && fileInput.files.length);
+                    const hasSelectedImage = !!card.find('.style-image-select').val();
+                    const hasPreview = !!card.find('.style-image-preview img').attr('src');
+                    const isExistingStyle = !!card.find('.style-id').val();
+                    const isLegacyDefault = normalizeVariantValue(card.find('.style-name').val()) === 'mẫu mặc định';
+                    const missing = !hasUpload && !hasSelectedImage && !hasPreview && !isExistingStyle && !isLegacyDefault;
+
+                    card.find('.style-image-error').toggleClass('hidden', !missing);
+                    if (missing && !firstMissing) firstMissing = card.get(0);
+                });
+
+                if (!firstMissing) return true;
+                firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            };
+
+            $(document).on('click', '.addStyleCard', function() {
+                const targetSelector = $(this).data('target');
+                if (targetSelector === '#styles-add') currentProductImages = [];
+
+                const target = $(targetSelector);
+                const card = styleCard();
+                target.append(card);
+                refreshStyleNumbers(target);
+                card.find('.style-name').trigger('focus');
+            });
+
+            $(document).on('click', '.removeStyleCard', function() {
+                const card = $(this).closest('.style-card');
+                const container = card.parent();
+                if (container.find('.style-card').length <= 1) {
+                    window.showToast('Sản phẩm cần giữ lại ít nhất một mẫu.', 'warning');
+                    return;
+                }
+
+                setStylePreview(card, '');
+                card.remove();
+                refreshStyleNumbers(container);
+            });
+
+            $(document).on('click', '.addStyleVariantRow', function() {
+                const row = appendStyleVariant($(this).closest('.style-card'));
+                row.find('.style-variant-color').trigger('focus');
+            });
+
+            $(document).on('click', '.removeStyleVariant', function() {
+                const button = $(this);
+                const row = button.closest('.style-variant-row');
+                const container = row.closest('.style-variants');
+
+                if (row.attr('data-existing') !== '1') {
+                    if (container.find('.style-variant-row').length <= 1) {
+                        window.showToast('Mỗi mẫu cần ít nhất một biến thể có đủ màu và size.', 'warning');
+                        return;
+                    }
+                    row.remove();
+                    return;
+                }
+
+                const quantity = row.find('.style-variant-quantity');
+                if (row.attr('data-paused') === '1') {
+                    const previousQuantity = row.data('previous-quantity');
+                    quantity.val(previousQuantity !== undefined ? previousQuantity : 0);
+                    row.find('.style-variant-paused').val('0');
+                    row.find('.style-variant-color, .style-variant-size').prop('required', true);
+                    row.attr('data-paused', '0')
+                        .removeClass('opacity-60 ring-1 ring-amber-300 dark:ring-amber-700');
+                    button.html(button.data('default-icon'))
+                        .attr('title', 'Tạm dừng bán biến thể (đưa tồn kho về 0)')
+                        .removeClass('text-emerald-600 hover:text-emerald-700');
+                    return;
+                }
+
+                button.data('default-icon', button.html());
+                row.data('previous-quantity', quantity.val());
+                quantity.val(0);
+                row.find('.style-variant-paused').val('1');
+                row.find('.style-variant-color, .style-variant-size').prop('required', false);
+                row.attr('data-paused', '1')
+                    .addClass('opacity-60 ring-1 ring-amber-300 dark:ring-amber-700');
+                button.text('↺')
+                    .attr('title', 'Khôi phục tồn kho trước khi tạm dừng')
+                    .addClass('text-emerald-600 hover:text-emerald-700');
+            });
+
+            $(document).on('click', '.style-size-chip', function() {
+                fillStyleVariantField($(this).closest('.style-card'), '.style-variant-size', $(this).attr('data-val'));
+            });
+
+            $(document).on('click', '.style-color-chip', function() {
+                fillStyleVariantField($(this).closest('.style-card'), '.style-variant-color', $(this).attr('data-val'));
+            });
+
+            $(document).on('click', '.style-preset', function() {
+                $(this).closest('.style-card').find('.style-generator')
+                    .val($(this).attr('data-val'))
+                    .trigger('focus');
+            });
+
+            $(document).on('click', '.generateStyleVariants', function() {
+                const card = $(this).closest('.style-card');
+                const input = card.find('.style-generator');
+                if (appendGeneratedStyleVariants(card, input.val()) > 0) input.val('');
+            });
+
+            $(document).on('keydown', '.style-generator', function(e) {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                $(this).closest('.style-card').find('.generateStyleVariants').trigger('click');
+            });
+
+            resetAddStyles();
+
             // Media Pickers
             const addPicker = createMediaPicker('#dropzone-file', '#image-preview', '#choose-image');
             const editPicker = createMediaPicker('#dropzone-file-edit', '#image-preview-edit-new', '#choose-image-edit');
@@ -813,13 +1313,16 @@
             // Form Add Submit
             $('#formAdd').submit(function(e) {
                 e.preventDefault();
+                if (!validateStyleImages($(this))) return;
                 submitFormWithProgress($(this), '{{ route('product.add') }}', function(response) {
                     window.showToast(response.success);
                     $('#closeDrawerAdd').click();
                     $('#formAdd').trigger('reset');
+                    configureDiscountInput($('#formAdd'));
                     $('#image-preview').empty();
                     addPicker.reset();
                     $('#variants-add').empty();
+                    resetAddStyles();
                     reloadDataTable();
                 });
             });
@@ -828,11 +1331,14 @@
             $('#formEdit').submit(function(e) {
                 e.preventDefault();
                 if (!editingProductId) return;
+                if (!validateStyleImages($(this))) return;
 
                 submitFormWithProgress($(this), '/product/edit/' + editingProductId, function(response) {
                     window.showToast(response.success);
                     $('#closeDrawerEdit').click();
                     editPicker.reset();
+                    disposeStyleCards('#styles-edit');
+                    currentProductImages = [];
                     reloadDataTable();
                 });
             });
@@ -846,6 +1352,10 @@
                 $('#image-preview-edit-new').empty();
                 editPicker.reset();
                 $('#formEdit').trigger('reset');
+                configureDiscountInput($('#formEdit'));
+                disposeStyleCards('#styles-edit');
+                $('#variants-edit').empty();
+                currentProductImages = [];
 
                 $.ajax({
                     url: '/product/get-product/' + product_id,
@@ -855,7 +1365,13 @@
                         $('#product_name_edit').val(item.product_name);
                         $('#import_price_edit').val(window.nhomNghin(item.import_price ?? ''));
                         $('#export_price_edit').val(window.nhomNghin(item.sell_price ?? ''));
-                        $('#discount_price_edit').val(window.nhomNghin(item.discount_price ?? ''));
+                        $('#formEdit [name="discount_type"]').val('amount');
+                        const discountReduction = item.discount_price !== null && item.discount_price !== undefined
+                            && Number(item.discount_price) < Number(item.sell_price)
+                            ? Number(item.sell_price) - Number(item.discount_price)
+                            : '';
+                        $('#discount_value_edit').val(discountReduction === '' ? '' : window.nhomNghin(discountReduction));
+                        configureDiscountInput($('#formEdit'));
                         $('#material_edit').val(item.material);
                         $('#brand_edit').val(item.brand);
                         $('#audience_edit').val(item.audience || 'Mọi không gian');
@@ -865,10 +1381,27 @@
                         $('#categories_edit').val(item.categories_id);
                         $('#supplier_edit').val(item.supplier_id);
 
-                        const variantsBox = $('#variants-edit').empty();
-                        $.each(item.variants || [], function(i, v) {
-                            variantsBox.append(variantRow(v));
-                        });
+                        currentProductImages = Array.isArray(item.product_image) ? item.product_image : [];
+                        const stylesBox = $('#styles-edit').empty();
+                        const receivedStyles = Array.isArray(item.styles) ? item.styles : [];
+                        const pinnedImage = currentProductImages.find(image => !!image.is_pined)
+                            || currentProductImages.find(image => (image.media_type || 'image') === 'image')
+                            || null;
+                        const styles = receivedStyles.length ? receivedStyles.map(style => ({
+                            ...style,
+                            image: style.image || currentProductImages.find(image => String(image.id) === String(style.image_model_id)) || null,
+                            variants: Array.isArray(style.variants)
+                                ? style.variants
+                                : (item.variants || []).filter(variant => String(variant.product_style_id) === String(style.id)),
+                        })) : [{
+                            name: 'Mẫu mặc định',
+                            image_model_id: pinnedImage ? pinnedImage.id : null,
+                            image: pinnedImage,
+                            variants: item.variants || [],
+                        }];
+
+                        styles.forEach(style => stylesBox.append(styleCard(style)));
+                        refreshStyleNumbers(stylesBox);
 
                         const previewEdit = $('#image-preview-edit');
                         const pinInput = $('#choose-image-edit');
@@ -890,6 +1423,13 @@
                                     url: '/delete-image/' + img.id,
                                     type: 'DELETE',
                                     success: function() {
+                                        $('#styles-edit .style-image-select').each(function() {
+                                            if (String($(this).val()) === String(img.id)) {
+                                                $(this).val('').trigger('change');
+                                            }
+                                            $(this).find(`option[value="${img.id}"]`).remove();
+                                        });
+                                        currentProductImages = currentProductImages.filter(image => String(image.id) !== String(img.id));
                                         card.remove();
                                         reloadDataTable();
                                     },

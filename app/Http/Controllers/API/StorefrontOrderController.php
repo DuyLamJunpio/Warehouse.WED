@@ -44,7 +44,7 @@ class StorefrontOrderController extends Controller
         ]);
 
         /*
-         * Mã PayOS phải là duy nhất suốt đời tài khoản người bán, nên một mã
+         * Mã thanh toán phải là duy nhất trong kho, nên một mã
          * đang thuộc đơn khác là lỗi thật chứ không phải chuyện ghi đè được:
          * mọi giao dịch báo về theo mã đó sẽ khớp sai đơn.
          */
@@ -156,7 +156,7 @@ class StorefrontOrderController extends Controller
             : response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
     }
 
-    /** Tra theo mã PayOS — webhook chỉ gửi mã này, không gửi mã trên URL. */
+    /** Tra theo mã thanh toán cũ — tính tương thích cho các luồng cũ. */
     public function showByCode(string $orderCode)
     {
         $order = StorefrontOrder::where('order_code', (int) $orderCode)->first();
@@ -167,7 +167,83 @@ class StorefrontOrderController extends Controller
     }
 
     /**
-     * Tạo đơn quản trị sau khi PayOS đã xác nhận thanh toán.
+     * Ghi nhận một giao dịch SePay đã được web bán hàng xác thực.
+     *
+     * SePay có thể gọi lại cùng webhook, hoặc khách có thể chuyển thiếu
+     * rồi chuyển bù. Vì thế phải khoá StorefrontOrder, lưu id giao dịch và cộng
+     * dồn ngay trong payload cùng một transaction. Chỉ webstore mới gọi
+     * endpoint này, sau khi đã kiểm tra Authorization của SePay.
+     */
+    public function recordSepayPayment(Request $request, string $ref)
+    {
+        $data = $request->validate([
+            'transaction_id' => 'required|integer|min:1',
+            'amount' => 'required|integer|min:1',
+            'reference' => 'nullable|string|max:120',
+        ]);
+
+        $result = DB::transaction(function () use ($ref, $data) {
+            $order = StorefrontOrder::where('ref', $ref)->lockForUpdate()->first();
+            if (! $order) {
+                return ['status' => 404, 'body' => ['error' => 'Không tìm thấy đơn hàng.']];
+            }
+
+            $payload = (array) $order->payload;
+            $payment = (array) ($payload['payment'] ?? []);
+            if (($payment['provider'] ?? null) !== 'sepay') {
+                return ['status' => 409, 'body' => ['error' => 'Đơn không dùng SePay.']];
+            }
+
+            $status = $payload['status'] ?? null;
+            if ($status === 'PAID') {
+                return ['status' => 200, 'body' => $payload];
+            }
+
+            $expiresAt = (int) ($payload['expiresAt'] ?? 0);
+            if (! in_array($status, ['PENDING', 'PROCESSING', 'UNDERPAID'], true)
+                || $expiresAt <= now()->getTimestampMs()) {
+                // Trả 2xx đecể SePay không retry một đơn đã hết hạn. Tiền về muộn
+                // vẫn nằm trong lịch sử SePay để nhân viên tra soát/hoàn tiền.
+                return ['status' => 200, 'body' => $payload + ['ignored' => 'expired_or_closed']];
+            }
+
+            $transactionId = (string) $data['transaction_id'];
+            $transactionIds = array_values(array_unique(array_map(
+                'strval',
+                (array) ($payload['sepayTransactionIds'] ?? []),
+            )));
+
+            if (in_array($transactionId, $transactionIds, true)) {
+                return ['status' => 200, 'body' => $payload];
+            }
+
+            $expectedAmount = (int) ($payment['amount'] ?? 0);
+            if ($expectedAmount < 1) {
+                throw new \RuntimeException('Số tiền đơn SePay không hợp lệ.');
+            }
+
+            $transactionIds[] = $transactionId;
+            $receivedAmount = max(0, (int) ($payload['amountPaid'] ?? 0)) + (int) $data['amount'];
+
+            $payload['sepayTransactionIds'] = $transactionIds;
+            $payload['amountPaid'] = $receivedAmount;
+            $payload['transactionRef'] = (string) ($data['reference'] ?: $transactionId);
+            $payload['status'] = $receivedAmount >= $expectedAmount ? 'PAID' : 'UNDERPAID';
+            if ($payload['status'] === 'PAID') {
+                $payload['paidAt'] = now()->getTimestampMs();
+            }
+
+            $order->payload = $payload;
+            $order->save();
+
+            return ['status' => 200, 'body' => $payload];
+        });
+
+        return response()->json($result['body'], $result['status']);
+    }
+
+    /**
+     * Tạo đơn quản trị sau khi SePay đã xác nhận thanh toán.
      *
      * Webhook và trang thanh toán có thể cùng nhìn thấy trạng thái PAID. Khoá
      * dòng StorefrontOrder giúp chúng gọi cùng lúc vẫn chỉ sinh duy nhất một
@@ -256,6 +332,7 @@ class StorefrontOrderController extends Controller
             'address' => (string) ($customer['address'] ?? ''),
             'note' => (string) ($customer['note'] ?? ''),
             'payment_method' => ($payload['paymentMethod'] ?? null) === 'cod' ? 'cod' : 'banking',
+            'voucher_code' => (string) data_get($cart, 'voucherCode') ?: null,
             'storefront_ref' => (string) ($payload['ref'] ?? ''),
             'refund_bank_name' => (string) ($refund['bankName'] ?? ''),
             'refund_account_number' => (string) ($refund['accountNumber'] ?? ''),
@@ -279,7 +356,7 @@ class StorefrontOrderController extends Controller
      * Ghi một phần thay đổi vào đơn.
      *
      * Hoà ở mức khoá ngoài cùng, đúng như phía web bán hàng vẫn làm, và nằm
-     * trong một transaction có khoá dòng: webhook PayOS và vòng poll của trang
+     * trong một transaction có khoá dòng: webhook SePay và vòng poll của trang
      * thanh toán thường chạy sát nhau, đọc rồi ghi rời nhau là một bên xoá mất
      * phần bên kia vừa ghi.
      */
@@ -310,7 +387,7 @@ class StorefrontOrderController extends Controller
      * Giành quyền gửi thư xác nhận cho một đơn.
      *
      * 200 = giành được, gửi đi. 409 = đã có người giành trước, đừng gửi. Hai
-     * đường đều xác nhận được một đơn đã trả tiền (webhook PayOS và vòng poll),
+     * đường đều xác nhận được một đơn đã trả tiền (webhook SePay và vòng poll),
      * nên thiếu chốt này là khách nhận hai, ba lá thư giống hệt nhau. Kiểm tra
      * và đánh dấu phải nằm trong cùng một transaction có khoá dòng, tách ra là
      * mở lại đúng khe hở đó.

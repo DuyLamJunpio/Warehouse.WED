@@ -156,7 +156,7 @@
             <thead>
                 <tr>
                     <th>Sản phẩm</th>
-                    <th>Quy cách / Phiên bản</th>
+                    <th>Phiên bản / biến thể</th>
                     <th class="center">SL</th>
                     <th class="right">Đơn giá</th>
                     <th class="right">Thành tiền</th>

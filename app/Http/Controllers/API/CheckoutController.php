@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -44,6 +45,7 @@ class CheckoutController extends Controller
             'items' => 'required|array|min:1|max:100',
             'items.*.variant_id' => 'required|integer|min:1',
             'items.*.quantity' => 'required|integer|min:1|max:100',
+            'voucher_code' => 'nullable|string|max:50|regex:/^[A-Za-z0-9_-]+$/',
         ]);
 
         $settings = Setting::sales();
@@ -109,14 +111,32 @@ class CheckoutController extends Controller
         }
 
         $shippingFee = Setting::shippingFeeFor($methodKey, array_sum($wanted), $settings);
+        $discount = 0;
+        $voucherCode = isset($data['voucher_code']) ? strtoupper(trim((string) $data['voucher_code'])) : null;
+
+        if ($voucherCode) {
+            $voucher = Voucher::where('code', $voucherCode)->first();
+            if (! $voucher) {
+                return response()->json(['success' => false, 'error' => 'Mã giảm giá không hợp lệ.'], 422);
+            }
+
+            $voucherQuote = $voucher->quote($subtotal, $shippingFee);
+            if (isset($voucherQuote['error'])) {
+                return response()->json(['success' => false, 'error' => $voucherQuote['error']], 422);
+            }
+
+            $discount = (int) $voucherQuote['discount'];
+            $shippingFee = (int) $voucherQuote['shipping'];
+        }
 
         return response()->json([
             'success' => true,
             'ok' => true,
             'items' => $items,
             'subtotal' => $subtotal,
+            'discount' => $discount,
             'shipping_fee' => $shippingFee,
-            'total_amount' => $subtotal + $shippingFee,
+            'total_amount' => $subtotal + $shippingFee - $discount,
         ]);
     }
 
@@ -135,6 +155,9 @@ class CheckoutController extends Controller
             'payment_method' => ['nullable', Rule::in(['cod', 'bank_transfer', 'banking'])],
             'expected_total_amount' => 'nullable|integer|min:0',
             'checkout_ref' => 'nullable|uuid',
+            // Mã này chỉ đến từ route handler của storefront (sau bí mật dùng
+            // chung). Giá trị giảm vẫn được dựng lại ở transaction bên dưới.
+            'voucher_code' => 'nullable|string|max:50|regex:/^[A-Za-z0-9_-]+$/',
             // Chỉ StorefrontOrderController gọi nội bộ sau khi PayOS xác nhận. Nó phải
             // khớp với khóa QR tạm của từng mẫu in để không nhận tiền trùng hai lần.
             'storefront_ref' => 'nullable|string|max:32|regex:/^[A-Za-z0-9]+$/',
@@ -169,6 +192,13 @@ class CheckoutController extends Controller
             'refund_account_name' => 'nullable|string|max:120',
         ]);
 
+        if (! config('features.print_studio') && ! empty($data['print_design_codes'])) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Tính năng in theo yêu cầu chưa được bật cho cửa hàng này.',
+            ], 422);
+        }
+
         $codes = array_values(array_unique($data['print_design_codes'] ?? []));
         $wanted = [];
         foreach ($data['items'] as $item) {
@@ -188,6 +218,9 @@ class CheckoutController extends Controller
             'address' => $data['address'],
             'note' => $data['note'] ?? null,
             'payment_method' => $data['payment_method'] ?? 'banking',
+            'voucher_code' => isset($data['voucher_code'])
+                ? strtoupper(trim((string) $data['voucher_code']))
+                : null,
             'items' => $wanted,
             'print_design_codes' => $fingerprintCodes,
             'storefront_ref' => $data['storefront_ref'] ?? null,
@@ -271,11 +304,14 @@ class CheckoutController extends Controller
         $itemCount = array_sum($wanted) + (int) $printDesigns->sum('qty');
         $shippingFee = Setting::shippingFeeFor($methodKey, $itemCount, $salesSettings);
         $shopShippingFee = Setting::shopShippingCost($methodKey, $itemCount, $salesSettings);
+        $shippingBeforeVoucher = $shippingFee;
 
         DB::beginTransaction();
         try {
             // Khoá các dòng biến thể để hai khách đặt cùng lúc không bán quá tồn.
-            $variants = ProductVariant::with('product')
+            $variants = ProductVariant::with([
+                'product' => fn ($query) => $query->storefrontVisible(),
+            ])
                 ->whereIn('id', array_keys($wanted))
                 ->lockForUpdate()
                 ->get()
@@ -322,14 +358,40 @@ class CheckoutController extends Controller
                 $subtotal += $unitPrice * $quantity;
             }
 
-            $totalAmount = $subtotal + $printFee + $shippingFee;
+            $discount = 0;
+            $voucherCode = isset($data['voucher_code']) ? strtoupper(trim((string) $data['voucher_code'])) : null;
+            if ($voucherCode) {
+                // Khoá đúng voucher trước khi kiểm lượt dùng. Hai khách thanh
+                // toán cùng mã giới hạn không thể cùng vượt qua lượt cuối.
+                $voucher = Voucher::where('code', $voucherCode)->lockForUpdate()->first();
+                if (! $voucher) {
+                    throw new \RuntimeException('Mã giảm giá không hợp lệ.');
+                }
+
+                $quote = $voucher->quote($subtotal + $printFee, $shippingFee);
+                if (isset($quote['error'])) {
+                    throw new \RuntimeException($quote['error']);
+                }
+
+                $discount = (int) $quote['discount'];
+                $shippingFee = (int) $quote['shipping'];
+                // Miễn phí vận chuyển là shop chịu thêm phần khách đáng lẽ trả.
+                if ($shippingFee < $shippingBeforeVoucher) {
+                    $shopShippingFee += $shippingBeforeVoucher - $shippingFee;
+                }
+                $voucher->increment('used_count');
+            }
+
+            $totalAmount = $subtotal + $printFee + $shippingFee - $discount;
             if (isset($data['expected_total_amount'])
                 && (int) $data['expected_total_amount'] !== $totalAmount) {
                 DB::rollBack();
 
                 return response()->json([
                     'success' => false,
-                    'error' => 'Giá hoặc phí giao hàng đã thay đổi. Vui lòng kiểm tra lại đơn.',
+                    'error' => 'Giá, khuyến mãi hoặc phí giao hàng đã thay đổi. Vui lòng kiểm tra lại đơn.',
+                    'discount' => $discount,
+                    'shipping_fee' => $shippingFee,
                     'total_amount' => $totalAmount,
                 ], 409);
             }
@@ -343,6 +405,11 @@ class CheckoutController extends Controller
                 'ward' => $data['ward'],
             ]);
 
+            $note = $data['note'] ?? null;
+            if ($voucherCode) {
+                $note = trim(($note ? $note . "\n" : '') . "Voucher: {$voucherCode}");
+            }
+
             $invoiceData = [
                 'invoice_type' => Invoice::TYPE_ORDER,
                 'order_code' => $this->generateOrderCode(),
@@ -352,6 +419,7 @@ class CheckoutController extends Controller
                 'customer_id' => $customer->id,
                 'user_id' => $this->systemUserId(),
                 'total_amount' => $totalAmount,
+                'discount' => $discount,
                 'shipping_fee' => $shippingFee,
                 // Khoản shop tự gánh: không cộng vào tiền khách trả, nhưng vẫn phải
                 // lưu lại, nếu không thì lúc tính lãi khoản này biến mất.
@@ -367,7 +435,7 @@ class CheckoutController extends Controller
                     : null,
                 // Chưa nhận được tiền: đơn chỉ được xác nhận sau khi chuyển khoản thành công.
                 'pay_status' => 0,
-                'note' => $data['note'] ?? null,
+                'note' => $note,
                 'signature_name' => $data['customer_name'],
             ];
 
@@ -465,6 +533,7 @@ class CheckoutController extends Controller
                 'message' => $paymentMethod === 'cod'
                     ? 'Đã nhận đơn hàng COD. Cửa hàng sẽ liên hệ xác nhận trước khi giao.'
                     : 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
+                'discount' => $discount,
             ], 201);
         } catch (\RuntimeException $e) {
             DB::rollBack();
@@ -621,7 +690,9 @@ class CheckoutController extends Controller
         // toán không chặn được khách đang thật sự muốn mua.
         Invoice::cancelExpiredHolds();
 
-        $variants = ProductVariant::with('product')
+        $variants = ProductVariant::with([
+            'product' => fn ($query) => $query->storefrontVisible(),
+        ])
             ->whereIn('id', array_column($data['items'], 'variant_id'))
             ->get()
             ->keyBy('id');
@@ -629,7 +700,9 @@ class CheckoutController extends Controller
         $result = [];
         foreach ($data['items'] as $item) {
             $variant = $variants->get((int) $item['variant_id']);
-            $available = $variant->quantity ?? 0;
+            // Sản phẩm thuộc danh mục đã tắt cũng được coi là không còn bán,
+            // kể cả khi khách giữ một giỏ cũ hoặc tự gọi API kiểm tra kho.
+            $available = $variant?->product ? $variant->quantity : 0;
             // Hàng không theo dõi tồn kho luôn đủ: số tồn của nó chỉ để tham khảo.
             $unlimited = (bool) $variant && ! $variant->product?->manage_stock;
 
@@ -638,8 +711,8 @@ class CheckoutController extends Controller
                 'available' => $available,
                 'manage_stock' => ! $unlimited,
                 'enough' => $unlimited || $available >= (int) $item['quantity'],
-                'product' => $variant->product->product_name ?? null,
-                'label' => $variant->label ?? null,
+                'product' => $variant?->product?->product_name,
+                'label' => $variant?->label,
             ];
         }
 

@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Categories;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Services\StorefrontNotifier;
 
 class categoryController extends Controller
 {
@@ -14,6 +16,10 @@ class categoryController extends Controller
     private const MAX_DEPTH = 2;
 
     private const PER_PAGE = 10;
+
+    public function __construct(private StorefrontNotifier $notifier)
+    {
+    }
 
     public function index()
     {
@@ -31,6 +37,7 @@ class categoryController extends Controller
      */
     private function listData(?string $keyword = null): array
     {
+        Categories::syncVisibilityStatuses();
         $query = Categories::roots()
             ->with(['children' => fn($q) => $q->withCount('products')])
             ->withCount('products')
@@ -47,6 +54,7 @@ class categoryController extends Controller
         return [
             'categories' => $query->paginate(self::PER_PAGE),
             'parentOptions' => Categories::roots()->orderBy('sort_order')->get(['id', 'name']),
+            'linkOptions' => $this->linkOptions(),
         ];
     }
 
@@ -57,6 +65,15 @@ class categoryController extends Controller
         }
 
         $data = $this->validated($request);
+
+        // Danh mục mới ẩn mặc định, chủ shop chủ động bật trong phần chỉnh sửa.
+        $data['status'] = array_key_exists('status', $data) && $data['status'] !== null
+            ? (int) $data['status']
+            : 0;
+        // Ẩn mặc định vẫn là chế độ tự động: khi sau này có sản phẩm, danh
+        // mục sẽ tự được bật. Chỉ trạng thái "đang hiện" lúc tạo mới mới là
+        // một lựa chọn bật thủ công cho danh mục rỗng.
+        $data['visibility_override'] = (int) $data['status'] === 1 ? true : null;
 
         $data['slug'] = $this->uniqueSlug($data['name']);
         $data['sort_order'] = $this->nextSortOrder($data['parent_id'] ?? null);
@@ -70,6 +87,8 @@ class categoryController extends Controller
         if (!$category->id) {
             return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
         }
+
+        $this->notifier->markDirty();
 
         return response()->json([
             'success' => 'Danh mục đã được thêm thành công!',
@@ -110,9 +129,51 @@ class categoryController extends Controller
             $data['image'] = $request->file('image')->store('public/images');
         }
 
-        return $category->update($data)
-            ? response()->json(['success' => 'Danh mục đã được sửa thành công!'])
-            : response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+        $requestedStatus = (int) ($data['status'] ?? $category->status);
+        $statusChanged = $requestedStatus !== (int) $category->status;
+
+        // Form luôn gửi cả status, kể cả khi chỉ sửa tên/mô tả. Chỉ tạo lựa
+        // chọn thủ công khi người dùng thực sự đổi trạng thái; nếu không một
+        // lần sửa mô tả có thể vô tình tắt cơ chế tự động theo sản phẩm.
+        if ($statusChanged) {
+            $data['visibility_override'] = $requestedStatus === 1;
+        }
+
+        $updated = DB::transaction(function () use ($category, $data, $requestedStatus, $statusChanged): bool {
+            if (!$category->update($data)) {
+                return false;
+            }
+
+            // Gạt trạng thái ở danh mục cha áp dụng cho cả nhánh. Khi bật lại,
+            // chỉ con có sản phẩm được bật; con rỗng để null để sau này tự bật
+            // ngay khi có sản phẩm.
+            if ($statusChanged && $category->children()->exists()) {
+                $children = $category->children()
+                    ->withCount(['products' => fn ($query) => $query->where('status', '!=', 0)])
+                    ->get();
+                foreach ($children as $child) {
+                    $visible = $requestedStatus === 1 && (int) $child->products_count > 0;
+                    $child->update([
+                        'status' => $visible ? 1 : 0,
+                        'visibility_override' => $requestedStatus === 0
+                            ? false
+                            : null,
+                    ]);
+                }
+            }
+
+            return true;
+        });
+
+        if (! $updated) {
+            return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+        }
+
+        // Đổi trạng thái danh mục phải xoá cache catalogue ngay: nếu không web
+        // bán hàng có thể còn hiện cả nhánh sản phẩm cũ tới hết chu kỳ cache.
+        $this->notifier->markDirty();
+
+        return response()->json(['success' => 'Danh mục đã được sửa thành công!']);
     }
 
     public function search(Request $request)
@@ -140,6 +201,7 @@ class categoryController extends Controller
         }
 
         $category->delete();
+        $this->notifier->markDirty();
 
         return response()->json(['success' => 'Danh mục đã được xóa thành công!']);
     }
@@ -166,6 +228,7 @@ class categoryController extends Controller
         [$category->sort_order, $neighbour->sort_order] = [$neighbour->sort_order, $category->sort_order];
         $category->save();
         $neighbour->save();
+        $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã cập nhật thứ tự.']);
     }
@@ -192,6 +255,18 @@ class categoryController extends Controller
                 },
             ],
             'description' => ['nullable', 'string', 'max:2000'],
+            'link_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && $value !== ''
+                        && !str_starts_with((string) $value, '/')
+                        && !filter_var($value, FILTER_VALIDATE_URL)) {
+                        $fail('Liên kết phải là đường dẫn nội bộ bắt đầu bằng / hoặc URL đầy đủ (https://...).');
+                    }
+                },
+            ],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['nullable', Rule::in([0, 1])],
         ]);
@@ -218,5 +293,28 @@ class categoryController extends Controller
     private function nextSortOrder(?int $parentId): int
     {
         return (int) Categories::where('parent_id', $parentId)->max('sort_order') + 1;
+    }
+
+    private function linkOptions(): array
+    {
+        $options = [
+            ['label' => 'Trang chủ', 'url' => '/'],
+            ['label' => 'Tất cả sản phẩm', 'url' => '/shop'],
+            ['label' => 'Sản phẩm mới', 'url' => '/shop?new=1'],
+            ['label' => 'Đang khuyến mãi', 'url' => '/shop?sale=1'],
+            ['label' => 'In áo theo yêu cầu', 'url' => '/in-ao'],
+            ['label' => 'Khối danh mục trên trang chủ', 'url' => '/#categories'],
+        ];
+
+        $categoryLinks = Categories::where('status', 1)
+            ->orderBy('sort_order')
+            ->get(['name'])
+            ->map(fn (Categories $category) => [
+                'label' => 'Danh mục: ' . $category->name,
+                'url' => '/shop?category=' . rawurlencode($category->name),
+            ])
+            ->all();
+
+        return array_merge($options, $categoryLinks);
     }
 }

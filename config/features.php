@@ -2,8 +2,8 @@
 
 return [
     /*
-     * Các module không còn phục vụ vận hành hiện tại được giữ nguyên dữ liệu,
-     * nhưng không hiện trong trang quản trị hay storefront.
+     * Các module tùy chọn được giữ nguyên mã nguồn nhưng tắt mặc định trong
+     * bản quản trị chung. Brand có nhu cầu có thể bật bằng biến môi trường.
      */
     'print_studio' => (bool) env('PRINT_STUDIO_ENABLED', false),
 ];
