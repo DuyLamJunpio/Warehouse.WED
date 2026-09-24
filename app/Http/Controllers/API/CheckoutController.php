@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * Nhận đơn đặt hàng từ web bán hàng.
@@ -32,6 +33,93 @@ class CheckoutController extends Controller
         return $paymentMethod === 'cod' ? 'cod' : 'bank_transfer';
     }
 
+    /**
+     * Báo giá và kiểm tồn từ dữ liệu hiện tại, trước khi khách xác nhận đơn.
+     * Không giữ hàng hay tạo Invoice; store() vẫn kiểm lại dưới khóa dòng.
+     */
+    public function quote(Request $request)
+    {
+        $data = $request->validate([
+            'payment_method' => ['required', Rule::in(['cod', 'bank_transfer', 'banking'])],
+            'items' => 'required|array|min:1|max:100',
+            'items.*.variant_id' => 'required|integer|min:1',
+            'items.*.quantity' => 'required|integer|min:1|max:100',
+        ]);
+
+        $settings = Setting::sales();
+        $methodKey = $this->settingKey($data['payment_method']);
+        if (empty($settings[$methodKey]['enabled'])) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Hình thức thanh toán này hiện không nhận đơn.',
+            ], 422);
+        }
+
+        $wanted = [];
+        foreach ($data['items'] as $item) {
+            $id = (int) $item['variant_id'];
+            $wanted[$id] = ($wanted[$id] ?? 0) + (int) $item['quantity'];
+            if ($wanted[$id] > 100) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Số lượng một mẫu sản phẩm không được vượt quá 100.',
+                ], 422);
+            }
+        }
+
+        $variants = ProductVariant::with('product')
+            ->whereIn('id', array_keys($wanted))->get()->keyBy('id');
+        $items = [];
+        $subtotal = 0;
+
+        foreach ($wanted as $id => $quantity) {
+            $variant = $variants->get($id);
+            if (!$variant || !$variant->product || $variant->product->trashed()
+                || (int) $variant->product->status === 0) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Một sản phẩm trong giỏ không còn được bán.',
+                ], 422);
+            }
+
+            $available = (int) $variant->quantity;
+            if ($variant->product->manage_stock && $available < $quantity) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Sản phẩm "' . $variant->product->product_name . '" ('
+                        . $variant->label . ') chỉ còn ' . $available . ' sản phẩm.',
+                    'variant_id' => $id,
+                    'available' => $available,
+                ], 422);
+            }
+
+            $price = $variant->selling_price;
+            $lineTotal = $price * $quantity;
+            $subtotal += $lineTotal;
+            $items[] = [
+                'variant_id' => $id,
+                'product' => $variant->product->product_name,
+                'label' => $variant->label,
+                'quantity' => $quantity,
+                'unit_price' => $price,
+                'line_total' => $lineTotal,
+                'available' => $available,
+                'manage_stock' => (bool) $variant->product->manage_stock,
+            ];
+        }
+
+        $shippingFee = Setting::shippingFeeFor($methodKey, array_sum($wanted), $settings);
+
+        return response()->json([
+            'success' => true,
+            'ok' => true,
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'shipping_fee' => $shippingFee,
+            'total_amount' => $subtotal + $shippingFee,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -42,7 +130,11 @@ class CheckoutController extends Controller
             'ward' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'note' => 'nullable|string|max:1000',
-            'payment_method' => 'nullable|string|max:50',
+            // `banking` là mã của luồng PayOS cũ; `bank_transfer` là chuyển
+            // khoản thủ công từ web bán hàng hiện tại.
+            'payment_method' => ['nullable', Rule::in(['cod', 'bank_transfer', 'banking'])],
+            'expected_total_amount' => 'nullable|integer|min:0',
+            'checkout_ref' => 'nullable|uuid',
             // Chỉ StorefrontOrderController gọi nội bộ sau khi PayOS xác nhận. Nó phải
             // khớp với khóa QR tạm của từng mẫu in để không nhận tiền trùng hai lần.
             'storefront_ref' => 'nullable|string|max:32|regex:/^[A-Za-z0-9]+$/',
@@ -52,8 +144,8 @@ class CheckoutController extends Controller
              * thường không mua kèm hàng bán sẵn, và bắt họ thêm một món vô nghĩa
              * chỉ để đơn hợp lệ là bắt sai chỗ.
              */
-            'items' => 'present|array',
-            'items.*.variant_id' => 'required|integer|exists:product_variants,id',
+            'items' => 'present|array|max:100',
+            'items.*.variant_id' => 'required|integer|min:1',
             'items.*.quantity' => 'required|integer|min:1|max:100',
 
             /*
@@ -78,6 +170,40 @@ class CheckoutController extends Controller
         ]);
 
         $codes = array_values(array_unique($data['print_design_codes'] ?? []));
+        $wanted = [];
+        foreach ($data['items'] as $item) {
+            $id = (int) $item['variant_id'];
+            $wanted[$id] = ($wanted[$id] ?? 0) + (int) $item['quantity'];
+        }
+        ksort($wanted, SORT_NUMERIC);
+
+        $fingerprintCodes = $codes;
+        sort($fingerprintCodes);
+        $fingerprint = hash('sha256', json_encode([
+            'customer_name' => $data['customer_name'],
+            'customer_phone' => $data['customer_phone'],
+            'customer_email' => $data['customer_email'] ?? null,
+            'province' => $data['province'],
+            'ward' => $data['ward'],
+            'address' => $data['address'],
+            'note' => $data['note'] ?? null,
+            'payment_method' => $data['payment_method'] ?? 'banking',
+            'items' => $wanted,
+            'print_design_codes' => $fingerprintCodes,
+            'storefront_ref' => $data['storefront_ref'] ?? null,
+            'refund_bank_name' => $data['refund_bank_name'] ?? null,
+            'refund_account_number' => $data['refund_account_number'] ?? null,
+            'refund_account_name' => $data['refund_account_name'] ?? null,
+        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        if (! empty($data['checkout_ref'])) {
+            $existing = Invoice::withTrashed()->orders()
+                ->where('checkout_ref', $data['checkout_ref'])->first();
+            if ($existing) {
+                return $this->existingCheckoutResponse($existing, $fingerprint);
+            }
+        }
+
         $printDesigns = collect();
 
         if ($codes) {
@@ -128,13 +254,6 @@ class CheckoutController extends Controller
         // toán không chặn được khách đang thật sự muốn mua.
         Invoice::cancelExpiredHolds();
 
-        // Gộp các dòng trùng biến thể để không trừ kho hai lần cho cùng một món.
-        $wanted = [];
-        foreach ($data['items'] as $item) {
-            $id = (int) $item['variant_id'];
-            $wanted[$id] = ($wanted[$id] ?? 0) + (int) $item['quantity'];
-        }
-
         // Phí giao hàng lấy từ cài đặt bán hàng, không phải hằng số trong mã nguồn.
         $paymentMethod = $data['payment_method'] ?? 'banking';
         $methodKey = $this->settingKey($paymentMethod);
@@ -173,8 +292,13 @@ class CheckoutController extends Controller
             foreach ($wanted as $variantId => $quantity) {
                 $variant = $variants->get($variantId);
 
-                if (!$variant || !$variant->product) {
+                if (!$variant || !$variant->product || $variant->product->trashed()
+                    || (int) $variant->product->status === 0) {
                     throw new \RuntimeException('Sản phẩm không còn tồn tại.');
+                }
+
+                if ($quantity > 100) {
+                    throw new \RuntimeException('Số lượng một mẫu sản phẩm không được vượt quá 100.');
                 }
 
                 // Hàng không theo dõi tồn kho vẫn bán được dù kho ghi 0.
@@ -198,6 +322,18 @@ class CheckoutController extends Controller
                 $subtotal += $unitPrice * $quantity;
             }
 
+            $totalAmount = $subtotal + $printFee + $shippingFee;
+            if (isset($data['expected_total_amount'])
+                && (int) $data['expected_total_amount'] !== $totalAmount) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Giá hoặc phí giao hàng đã thay đổi. Vui lòng kiểm tra lại đơn.',
+                    'total_amount' => $totalAmount,
+                ], 409);
+            }
+
             $customer = Customer::mergeByPhone([
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
@@ -210,10 +346,12 @@ class CheckoutController extends Controller
             $invoiceData = [
                 'invoice_type' => Invoice::TYPE_ORDER,
                 'order_code' => $this->generateOrderCode(),
+                'checkout_ref' => $data['checkout_ref'] ?? null,
+                'checkout_fingerprint' => ! empty($data['checkout_ref']) ? $fingerprint : null,
                 'order_status' => Invoice::STATUS_PENDING,
                 'customer_id' => $customer->id,
                 'user_id' => $this->systemUserId(),
-                'total_amount' => $subtotal + $printFee + $shippingFee,
+                'total_amount' => $totalAmount,
                 'shipping_fee' => $shippingFee,
                 // Khoản shop tự gánh: không cộng vào tiền khách trả, nhưng vẫn phải
                 // lưu lại, nếu không thì lúc tính lãi khoản này biến mất.
@@ -222,12 +360,11 @@ class CheckoutController extends Controller
                 'shipping_phone' => $customer->customer_phone,
                 'shipping_address' => implode(', ', [$data['address'], $data['ward'], $data['province']]),
                 'payment_method' => $paymentMethod,
-                // Kho bị trừ ngay lúc này, nên đơn phải có hạn: quá hạn mà không
-                // nhận được tiền thì lệnh orders:cancel-expired trả hàng về kho.
-                // COD không có hạn vì khách trả tiền khi nhận hàng.
-                'payment_expires_at' => $paymentMethod === 'cod'
-                    ? null
-                    : now()->addMinutes((int) config('services.storefront.payment_window_minutes', 30)),
+                // Chuyển khoản nhận qua SePay hoặc nhân viên đối soát không
+                // tự hết hạn; hết hạn tự động chỉ áp dụng QR PayOS cũ.
+                'payment_expires_at' => $paymentMethod === 'banking'
+                    ? now()->addMinutes((int) config('services.storefront.payment_window_minutes', 15))
+                    : null,
                 // Chưa nhận được tiền: đơn chỉ được xác nhận sau khi chuyển khoản thành công.
                 'pay_status' => 0,
                 'note' => $data['note'] ?? null,
@@ -322,7 +459,9 @@ class CheckoutController extends Controller
                 'subtotal' => $subtotal,
                 'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
-                'total_amount' => $subtotal + $printFee + $shippingFee,
+                'total_amount' => $totalAmount,
+                'order_status' => $invoice->order_status,
+                'pay_status' => (int) $invoice->pay_status,
                 'message' => $paymentMethod === 'cod'
                     ? 'Đã nhận đơn hàng COD. Cửa hàng sẽ liên hệ xác nhận trước khi giao.'
                     : 'Đã nhận đơn hàng. Đơn sẽ được xác nhận sau khi nhận được chuyển khoản.',
@@ -333,6 +472,15 @@ class CheckoutController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if (! empty($data['checkout_ref'])) {
+                // Hai request cùng ref có thể cùng vượt qua lần đọc đầu. Ràng
+                // buộc unique chặn bản ghi thứ hai, sau đó trả đơn đã commit.
+                $existing = Invoice::withTrashed()->orders()
+                    ->where('checkout_ref', $data['checkout_ref'])->first();
+                if ($existing) {
+                    return $this->existingCheckoutResponse($existing, $fingerprint);
+                }
+            }
             Log::error('Nhận đơn từ web bán hàng thất bại: ' . $e->getMessage());
             // Không lộ chi tiết lỗi hệ thống ra ngoài.
             return response()->json([
@@ -340,6 +488,50 @@ class CheckoutController extends Controller
                 'error' => 'Không tạo được đơn hàng, vui lòng thử lại.',
             ], 500);
         }
+    }
+
+    private function existingCheckoutResponse(Invoice $invoice, string $fingerprint)
+    {
+        if ($invoice->trashed() || ! hash_equals((string) $invoice->checkout_fingerprint, $fingerprint)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Mã yêu cầu đã được dùng cho một đơn khác.',
+            ], 409);
+        }
+
+        $invoice->loadMissing('productInvoices');
+
+        return response()->json([
+            'success' => true,
+            'already_created' => true,
+            'order_code' => $invoice->order_code,
+            'subtotal' => $invoice->subtotal,
+            'print_fee' => (int) ($invoice->print_fee ?? 0),
+            'shipping_fee' => (int) $invoice->shipping_fee,
+            'total_amount' => (int) $invoice->total_amount,
+            'order_status' => $invoice->order_status,
+            'pay_status' => (int) $invoice->pay_status,
+            'message' => 'Đơn hàng đã được ghi nhận trước đó.',
+        ]);
+    }
+
+    public function status(string $checkoutRef)
+    {
+        if (!Str::isUuid($checkoutRef)) {
+            return response()->json(['error' => 'Mã yêu cầu không hợp lệ.'], 422);
+        }
+
+        $order = Invoice::orders()->where('checkout_ref', $checkoutRef)->first();
+        if (!$order) {
+            return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order_code' => $order->order_code,
+            'order_status' => $order->order_status,
+            'pay_status' => (int) $order->pay_status,
+        ]);
     }
 
     /**

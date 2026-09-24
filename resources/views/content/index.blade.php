@@ -351,7 +351,7 @@
                             @if ($linkCategories->isNotEmpty())
                                 <optgroup label="Danh mục sản phẩm">
                                     @foreach ($linkCategories as $category)
-                                        <option value="/shop?category={{ rawurlencode($category->name) }}">
+                                        <option value="/san-pham?category={{ rawurlencode($category->slug) }}">
                                             Xem danh mục: {{ $category->name }}
                                         </option>
                                     @endforeach
@@ -371,7 +371,7 @@
                             <option value="__custom__">Tự nhập đường dẫn khác...</option>
                         </select>
                         <input type="text" name="cta_link" id="slide-cta-link" maxlength="255"
-                            placeholder="Chọn ở danh sách phía trên hoặc nhập /shop"
+                            placeholder="Chọn ở danh sách phía trên hoặc nhập /san-pham"
                             class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                         <p class="mt-1 text-[11px] text-slate-400">
                             Chọn một mục có sẵn để không cần nhớ URL. Nếu dẫn sang website khác, chọn “Tự nhập...” rồi nhập địa chỉ bắt đầu bằng <span class="font-mono">https://</span>.
@@ -452,7 +452,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Đường dẫn đích (URL)</label>
-                        <input type="text" name="cta_link" maxlength="255" placeholder="/shop"
+                        <input type="text" name="cta_link" maxlength="255" placeholder="/san-pham"
                             class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                     </div>
                 </div>

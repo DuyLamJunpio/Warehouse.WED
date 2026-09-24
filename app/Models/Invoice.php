@@ -68,6 +68,8 @@ class Invoice extends Model
         'signature_name',
         'signature',
         'order_code',
+        'checkout_ref',
+        'checkout_fingerprint',
         'order_status',
         'shipping_name',
         'shipping_phone',

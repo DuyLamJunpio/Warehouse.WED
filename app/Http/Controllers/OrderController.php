@@ -118,6 +118,9 @@ class OrderController extends Controller
             'order_status' => $order->order_status,
             'status_label' => $order->order_status_label,
             'next_statuses' => collect($order->next_statuses)
+                ->filter(fn($s) => $order->payment_method !== 'bank_transfer'
+                    || (int) $order->pay_status === 1
+                    || $s === Invoice::STATUS_CANCELLED)
                 ->map(fn($s) => ['value' => $s, 'label' => Invoice::ORDER_STATUSES[$s]])
                 ->values(),
             'created_at' => $order->created_at->format('d/m/Y H:i'),
@@ -128,6 +131,7 @@ class OrderController extends Controller
             'shipping_fee' => (int) $order->shipping_fee,
             'payment_method' => $order->payment_method,
             'pay_status' => $order->pay_status,
+            'payment_expires_at' => $order->payment_expires_at?->format('d/m/Y H:i'),
             'note' => $order->note,
             'subtotal' => $order->subtotal,
             'discount' => (int) $order->discount,
@@ -143,6 +147,56 @@ class OrderController extends Controller
         ]);
     }
 
+    /** Nhân viên chỉ đánh dấu đã đối soát; xác nhận và giao hàng là bước riêng. */
+    public function confirmPayment(Request $request, string $id)
+    {
+        try {
+            $result = DB::transaction(function () use ($request, $id) {
+                $order = Invoice::orders()->whereKey($id)->lockForUpdate()->first();
+                if (! $order) {
+                    return ['status' => 404, 'body' => ['error' => 'Không tìm thấy đơn hàng.']];
+                }
+
+                if ($order->payment_method !== 'bank_transfer') {
+                    return ['status' => 422, 'body' => ['error' => 'Chỉ đối soát thủ công cho đơn chuyển khoản.']];
+                }
+
+                if (in_array($order->order_status, Invoice::STATUS_RESTOCK, true)) {
+                    return ['status' => 409, 'body' => ['error' => 'Đơn đã hủy hoặc hoàn hàng; cần xử lý hoàn tiền riêng.']];
+                }
+
+                if ((int) $order->pay_status === 1) {
+                    return ['status' => 200, 'body' => [
+                        'success' => 'Đơn đã được ghi nhận thanh toán trước đó.',
+                        'already_paid' => true,
+                    ]];
+                }
+
+                $order->pay_status = 1;
+                $order->payment_expires_at = null;
+                $order->save();
+
+                Log::info('Nhân viên xác nhận chuyển khoản cho đơn web.', [
+                    'invoice_id' => $order->id,
+                    'order_code' => $order->order_code,
+                    'staff_user_id' => $request->user()->id,
+                ]);
+
+                return ['status' => 200, 'body' => [
+                    'success' => 'Đã ghi nhận chuyển khoản. Hãy xác nhận đơn khi sẵn sàng xử lý.',
+                    'pay_status' => 1,
+                    'order_status' => $order->order_status,
+                ]];
+            });
+
+            return response()->json($result['body'], $result['status']);
+        } catch (\Throwable $e) {
+            Log::error('Đối soát đơn chuyển khoản thất bại: ' . $e->getMessage(), ['invoice_id' => $id]);
+
+            return response()->json(['error' => 'Không ghi nhận được thanh toán.'], 500);
+        }
+    }
+
     /**
      * Đổi trạng thái đơn theo luồng đã định, cộng trả hàng về kho khi hủy/hoàn.
      */
@@ -152,18 +206,39 @@ class OrderController extends Controller
             'order_status' => ['required', Rule::in(array_keys(Invoice::ORDER_STATUSES))],
         ]);
 
-        $order = Invoice::orders()->with('productInvoices')->findOrFail($id);
         $newStatus = $data['order_status'];
-
-        if (!$order->canTransitionTo($newStatus)) {
-            return response()->json([
-                'error' => 'Không thể chuyển từ "' . $order->order_status_label
-                    . '" sang "' . Invoice::ORDER_STATUSES[$newStatus] . '".',
-            ], 422);
-        }
 
         DB::beginTransaction();
         try {
+            // Đọc và kiểm tra lại bên trong khóa; hai nhân viên bấm cùng lúc
+            // không được hoàn kho hai lần cho cùng một đơn.
+            $order = Invoice::orders()->with('productInvoices')
+                ->whereKey($id)->lockForUpdate()->first();
+            if (! $order) {
+                DB::rollBack();
+
+                return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
+            }
+
+            if (! $order->canTransitionTo($newStatus)) {
+                DB::rollBack();
+
+                return response()->json([
+                    'error' => 'Không thể chuyển từ "' . $order->order_status_label
+                        . '" sang "' . Invoice::ORDER_STATUSES[$newStatus] . '".',
+                ], 422);
+            }
+
+            if ($order->payment_method === 'bank_transfer'
+                && (int) $order->pay_status !== 1
+                && $newStatus !== Invoice::STATUS_CANCELLED) {
+                DB::rollBack();
+
+                return response()->json([
+                    'error' => 'Cần đối soát chuyển khoản trước khi xác nhận đơn.',
+                ], 422);
+            }
+
             if (in_array($newStatus, Invoice::STATUS_RESTOCK, true)) {
                 $order->restockLines();
             }

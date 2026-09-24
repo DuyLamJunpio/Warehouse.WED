@@ -39,8 +39,12 @@ class SettingController extends Controller
             'sales.*.shipping_fee' => 'nullable|integer|min:0',
             'sales.*.fee_payer' => 'required|in:' . Setting::PAYER_CUSTOMER . ',' . Setting::PAYER_SHOP,
             'sales.*.free_shipping_min_items' => 'nullable|integer|min:1',
+            'sales.bank_transfer.bank.code' => 'nullable|string|regex:/^[A-Za-z0-9]{2,20}$/',
+            'sales.bank_transfer.bank.account_number' => 'nullable|string|regex:/^[0-9]{6,25}$/',
+            'sales.bank_transfer.bank.account_name' => 'nullable|string|max:120',
         ]);
 
+        $currentBank = Setting::sales()['bank_transfer']['bank'];
         $settings = [];
         foreach (array_keys(Setting::salesDefaults()) as $method) {
             $threshold = $request->input("sales.$method.free_shipping_min_items");
@@ -56,6 +60,19 @@ class SettingController extends Controller
                     : (int) $threshold,
             ];
         }
+
+        $bank = [
+            'code' => strtoupper(trim((string) $request->input('sales.bank_transfer.bank.code', $currentBank['code']))),
+            'account_number' => trim((string) $request->input('sales.bank_transfer.bank.account_number', $currentBank['account_number'])),
+            'account_name' => trim((string) $request->input('sales.bank_transfer.bank.account_name', $currentBank['account_name'])),
+        ];
+
+        if ($settings['bank_transfer']['enabled'] && in_array('', $bank, true)) {
+            return response()->json([
+                'error' => 'Vui lòng nhập đầy đủ thông tin tài khoản nhận chuyển khoản.',
+            ], 422);
+        }
+        $settings['bank_transfer']['bank'] = $bank;
 
         // Tắt hết thì web bán hàng không còn đường nào để đặt hàng.
         if (!collect($settings)->contains(fn($method) => $method['enabled'])) {

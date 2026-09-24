@@ -62,6 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/order/variants', [OrderController::class, 'searchVariants'])->name('order.variants');
     Route::post('/order/store', [OrderController::class, 'store'])->name('order.store');
     Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
+    Route::post('/order/{id}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('order.confirm-payment');
     Route::post('/order/{id}/status', [OrderController::class, 'updateStatus'])->name('order.status');
     Route::get('/order/{id}/print', [OrderController::class, 'print'])->name('order.print');
 

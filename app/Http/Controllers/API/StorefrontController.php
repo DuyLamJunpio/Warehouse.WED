@@ -45,7 +45,8 @@ class StorefrontController extends Controller
     }
 
     /**
-     * Một sản phẩm theo slug - dùng để lấy tồn kho mới nhất ở trang chi tiết.
+     * Một sản phẩm theo slug hoặc ID dùng trong đường dẫn /san-pham/{id}.
+     * Trang chi tiết đọc riêng endpoint này để lấy giá và tồn kho mới nhất.
      */
     public function product(string $slug)
     {
@@ -55,7 +56,12 @@ class StorefrontController extends Controller
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
         ])
-            ->where('slug', $slug)
+            ->where(function ($query) use ($slug) {
+                $query->where('slug', $slug);
+                if (ctype_digit($slug)) {
+                    $query->orWhere('id', (int) $slug);
+                }
+            })
             ->where('status', '!=', 0)
             ->first();
 
@@ -136,7 +142,7 @@ class StorefrontController extends Controller
     private function sales(): array
     {
         return collect(Setting::sales())
-            ->map(fn($config) => [
+            ->map(fn($config, $method) => [
                 'enabled' => (bool) $config['enabled'],
                 'free_shipping' => (bool) $config['free_shipping']
                     || $config['fee_payer'] === Setting::PAYER_SHOP,
@@ -144,22 +150,54 @@ class StorefrontController extends Controller
                     ? 0
                     : max(0, (int) $config['shipping_fee']),
                 'free_shipping_min_items' => $config['free_shipping_min_items'],
+                'bank' => $method === 'bank_transfer' ? $config['bank'] : null,
             ])
             ->all();
     }
 
     private function categories(): array
     {
-        return Categories::where('status', 1)
+        $categories = Categories::where('status', 1)
             ->withCount(['products' => fn($q) => $q->where('status', '!=', 0)])
             ->orderBy('sort_order')
-            ->get()
+            ->orderBy('id')
+            ->get();
+
+        $byId = $categories->keyBy('id');
+        $children = $categories->groupBy('parent_id');
+        $ordered = [];
+        $visited = [];
+        $append = function (Categories $category) use (&$append, &$ordered, &$visited, $children): void {
+            if (isset($visited[$category->id])) {
+                return;
+            }
+
+            $visited[$category->id] = true;
+            $ordered[] = $category;
+            foreach ($children->get($category->id, []) as $child) {
+                $append($child);
+            }
+        };
+
+        // Nhánh gốc theo sort_order; con theo sort_order ngay sau cha. Nếu cha
+        // không còn hiển thị, vẫn đưa danh mục con ra thay vì làm mất nó.
+        foreach ($categories as $category) {
+            if ($category->parent_id === null || ! $byId->has($category->parent_id)) {
+                $append($category);
+            }
+        }
+        foreach ($categories as $category) {
+            $append($category);
+        }
+
+        return collect($ordered)
             ->map(fn($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
                 'slug' => $c->slug,
                 'parent_id' => $c->parent_id,
                 'image' => $c->image ? $this->url($c->image) : null,
+                'description' => $c->description,
                 'count' => $c->products_count,
             ])
             ->values()
@@ -185,6 +223,8 @@ class StorefrontController extends Controller
             'slug' => $product->slug,
             'name' => $product->product_name,
             'category' => $product->category->name ?? 'Khác',
+            'category_id' => $product->category?->id,
+            'category_slug' => $product->category?->slug,
             'description' => $product->description,
             'material' => $product->material,
             'brand' => $product->brand,
@@ -205,10 +245,11 @@ class StorefrontController extends Controller
                 ? (int) $product->sell_price
                 : null,
             'is_featured' => (bool) $product->is_featured,
-            // Hàng không theo dõi tồn kho (đặt may, hàng order) luôn bán được, kho
-            // ghi 0 cũng mặc kệ. Web bán hàng đọc cờ này để khỏi chặn nhầm.
+            // Hàng không theo dõi tồn kho không bị chặn bởi số lượng, nhưng vẫn
+            // cần ít nhất một biến thể vì checkout nhận variant_id bắt buộc.
             'manage_stock' => (bool) $product->manage_stock,
-            'in_stock' => ! $product->manage_stock || $product->variants->sum('quantity') > 0,
+            'in_stock' => $product->variants->isNotEmpty()
+                && (! $product->manage_stock || $product->variants->sum('quantity') > 0),
             'total_stock' => (int) $product->variants->sum('quantity'),
             'images' => $gallery->all(),
             'videos' => $videos->map(fn($v) => $this->url($v->path))->values()->all(),

@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CheckoutController;
+use App\Http\Controllers\API\SepayWebhookController;
 use App\Http\Controllers\API\PrintStorefrontController;
 use App\Http\Controllers\API\StorefrontController;
 use App\Http\Controllers\API\StorefrontOrderController;
@@ -123,14 +124,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::post('/webhooks/sepay', SepayWebhookController::class)->middleware('throttle:120,1');
+
 /*
  * Đặt hàng từ web bán hàng - công khai vì khách không có tài khoản.
  * Giới hạn số lần gọi để tránh bị spam đơn rác; mọi số tiền do server tự tính.
  */
 Route::middleware('throttle:20,1')->group(function () {
-    // Invoice chỉ được tạo từ luồng PayOS đã xác nhận. Webstore gọi controller này
-    // qua StorefrontOrderController::fulfill bằng request nội bộ, còn HTTP trực tiếp phải có bí mật.
+    // Web bán hàng tạo đơn thường ở trạng thái chờ thanh toán. Luồng PayOS cũ
+    // vẫn dùng cùng controller qua StorefrontOrderController::fulfill.
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('storefront.secret');
+    Route::post('/checkout/quote', [CheckoutController::class, 'quote']);
+    Route::get('/checkout/status/{checkoutRef}', [CheckoutController::class, 'status'])
+        ->middleware('storefront.secret');
     Route::post('/checkout/check-stock', [CheckoutController::class, 'checkStock']);
     // Chi web ban hang duoc goi: no da xac thuc chu ky PayOS truoc do.
     Route::post('/checkout/{orderCode}/paid', [CheckoutController::class, 'markPaid'])

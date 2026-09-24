@@ -50,4 +50,14 @@ return [
         'expiry_grace_minutes' => (int) env('STOREFRONT_EXPIRY_GRACE_MINUTES', 5),
     ],
 
+    'sepay' => [
+        'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY'),
+    ],
+
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_CHAT_ID'),
+        'topic_id' => env('TELEGRAM_TOPIC_ID'),
+    ],
+
 ];

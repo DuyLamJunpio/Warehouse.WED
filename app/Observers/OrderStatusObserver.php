@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Models\Invoice;
 use App\Services\CustomerMailer;
 use App\Services\OrderStatusMailer;
+use App\Services\TelegramNotifier;
+use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
 /**
  * Bắt mọi lần đơn hàng đổi trạng thái, để khách được báo bằng thư.
@@ -18,7 +20,7 @@ use App\Services\OrderStatusMailer;
  *
  * Thêm một đường thứ tư sau này thì cũng không phải nhớ gắn thư vào đó nữa.
  */
-class OrderStatusObserver
+class OrderStatusObserver implements ShouldHandleEventsAfterCommit
 {
     /**
      * Những bước chuyển không gửi thư.
@@ -32,6 +34,7 @@ class OrderStatusObserver
     public function __construct(
         private OrderStatusMailer $mailer,
         private CustomerMailer $customerMailer,
+        private TelegramNotifier $telegram,
     ) {}
 
     /** Gửi xác nhận ngay cả với đơn POS đã hoàn thành ngay lúc tạo. */
@@ -42,6 +45,7 @@ class OrderStatusObserver
         }
 
         $this->customerMailer->queueOrderReceived($invoice);
+        $this->telegram->orderCreated($invoice);
     }
 
     public function updated(Invoice $invoice): void

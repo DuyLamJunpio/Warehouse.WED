@@ -125,6 +125,33 @@
                             <p class="mt-1 text-[11px] text-slate-400">Để trống nếu không áp dụng chính sách mua nhiều freeship.</p>
                         </div>
                     </div>
+
+                    @if($key === 'bank_transfer')
+                        <div class="border-t border-slate-200/80 pt-5 dark:border-slate-700/80">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Tài khoản nhận chuyển khoản</h3>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Web bán hàng dùng thông tin này để tạo mã VietQR cho đơn hàng.</p>
+                            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    Mã ngân hàng (VietQR)
+                                    <input type="text" name="sales[bank_transfer][bank][code]" maxlength="20"
+                                        value="{{ $config['bank']['code'] }}" placeholder="VD: MB"
+                                        class="mt-1 block w-full rounded-xl border-slate-300 bg-white px-3.5 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                                </label>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    Số tài khoản
+                                    <input type="text" inputmode="numeric" name="sales[bank_transfer][bank][account_number]" maxlength="25"
+                                        value="{{ $config['bank']['account_number'] }}"
+                                        class="mt-1 block w-full rounded-xl border-slate-300 bg-white px-3.5 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                                </label>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    Tên chủ tài khoản
+                                    <input type="text" name="sales[bank_transfer][bank][account_name]" maxlength="120"
+                                        value="{{ $config['bank']['account_name'] }}"
+                                        class="mt-1 block w-full rounded-xl border-slate-300 bg-white px-3.5 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                                </label>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         @endforeach

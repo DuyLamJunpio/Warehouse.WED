@@ -42,7 +42,15 @@ class Setting extends Model
         ];
 
         return [
-            'bank_transfer' => $method,
+            'bank_transfer' => $method + [
+                // Thông tin đang hiển thị trên QR của web bán hàng. Đưa về QLBH
+                // để cửa hàng đổi tài khoản nhận tiền tại một nơi duy nhất.
+                'bank' => [
+                    'code' => 'MB',
+                    'account_number' => '0868238690',
+                    'account_name' => 'RUNGU BOTANICAL',
+                ],
+            ],
             'cod' => $method,
         ];
     }
@@ -55,6 +63,12 @@ class Setting extends Model
 
         foreach (static::salesDefaults() as $method => $defaults) {
             $settings[$method] = array_merge($defaults, (array) ($stored[$method] ?? []));
+            if ($method === 'bank_transfer') {
+                $settings[$method]['bank'] = array_merge(
+                    $defaults['bank'],
+                    (array) ($stored[$method]['bank'] ?? []),
+                );
+            }
         }
 
         return $settings;

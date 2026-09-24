@@ -70,6 +70,17 @@
                     <span>💳 {{ $order->payment_method ?? '—' }}</span>
                 @endif
             </span>
+            @if ($order->payment_method === 'bank_transfer')
+                <div class="mt-1 font-semibold {{ (int) $order->pay_status === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                    {{ (int) $order->pay_status === 1 ? 'Đã đối soát' : 'Chờ đối soát' }}
+                </div>
+                @if ((int) $order->pay_status !== 1 && !in_array($order->order_status, \App\Models\Invoice::STATUS_RESTOCK, true))
+                    <button type="button" data-order-id="{{ $order->id }}" data-order-code="{{ $order->order_code }}"
+                        class="btn-confirm-payment mt-1.5 text-xs font-semibold text-indigo-700 underline hover:text-indigo-900 dark:text-indigo-300">
+                        Xác nhận đã nhận tiền
+                    </button>
+                @endif
+            @endif
         </td>
 
         {{-- Actions --}}
@@ -77,6 +88,9 @@
             <div class="inline-flex items-center gap-1.5">
                 {{-- Fast Status Change Buttons --}}
                 @foreach ($order->next_statuses as $next)
+                    @if ($order->payment_method === 'bank_transfer' && (int) $order->pay_status !== 1 && $next !== \App\Models\Invoice::STATUS_CANCELLED)
+                        @continue
+                    @endif
                     <button type="button" data-order-id="{{ $order->id }}" data-status="{{ $next }}"
                         class="btn-doi-trang-thai inline-flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-all shadow-xs {{ $nutLui[$next] ?? 'text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800' }}">
                         {{ \App\Models\Invoice::ORDER_STATUSES[$next] }}

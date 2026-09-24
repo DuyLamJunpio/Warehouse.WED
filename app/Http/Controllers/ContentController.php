@@ -52,7 +52,7 @@ class ContentController extends Controller
             'linkCategories' => Categories::where('status', 1)
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->get(['id', 'name']),
+                ->get(['id', 'name', 'slug']),
             'headings' => $this->headingValues(),
             'headingLabels' => SiteText::HEADINGS,
             'limits' => [
