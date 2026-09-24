@@ -1,22 +1,24 @@
 <x-app-layout>
     @php
-        $variantQuickSizes = ['10g', '20g', '50g', '100g', '200g', 'Set mini', 'Set quà tặng'];
-        $variantQuickColors = ['Trầm hương', 'Quế', 'Tuyết tùng', 'Sả chanh', 'Oải hương', 'Không mùi'];
+        // Các khối cũ bên dưới chỉ còn để tương thích bookmark/script cũ.
+        // Gợi ý thực tế cho form mới được khởi tạo theo ngành hàng trong JS.
+        $variantQuickSizes = ['Nhỏ', 'Vừa', 'Lớn'];
+        $variantQuickColors = ['Tiêu chuẩn', 'Cao cấp', 'Giới hạn'];
         $variantCombinationPresets = [
             [
-                'label' => 'Trầm theo quy cách',
-                'count' => '4 quy cách',
-                'value' => '10g,20g,50g,100g | Trầm hương',
+                'label' => 'Một lựa chọn',
+                'count' => '1 SKU',
+                'value' => 'Tiêu chuẩn | Mặc định',
             ],
             [
-                'label' => 'Nến theo mùi hương',
-                'count' => '3 mùi hương',
-                'value' => '180g | Trầm hương/Quế/Tuyết tùng',
+                'label' => 'Ba lựa chọn',
+                'count' => '3 SKU',
+                'value' => 'Tiêu chuẩn/Cao cấp/Giới hạn | Mặc định',
             ],
             [
-                'label' => 'Gỗ thánh theo set',
-                'count' => '3 quy cách',
-                'value' => '1 thanh,3 thanh,5 thanh | Palo Santo',
+                'label' => 'Ba quy cách',
+                'count' => '3 SKU',
+                'value' => 'Mặc định | Nhỏ/Vừa/Lớn',
             ],
         ];
     @endphp
@@ -295,21 +297,45 @@
                     </div>
                 </div>
 
-                {{-- SECTION 4: MẪU SẢN PHẨM VÀ BIẾN THỂ --}}
+                {{-- SECTION 4: THUỘC TÍNH VÀ BIẾN THỂ --}}
                 <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Mẫu, màu & size
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Thuộc tính & biến thể
                             </div>
                             <p class="mt-1.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-                                Khai tên và ảnh một lần cho mỗi mẫu; mọi màu/size bên trong sẽ dùng chung ảnh đó để không làm nặng storage.
+                                Đặt tên thuộc tính theo sản phẩm của bạn. Mỗi dòng bên dưới là một SKU có giá và tồn kho riêng.
                             </p>
                         </div>
                         <button type="button" data-target="#styles-add"
                             class="addStyleCard shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
-                            + Thêm mẫu
+                            <span class="add-style-label">+ Thêm nhóm</span>
                         </button>
+                    </div>
+                    <div class="variant-setup rounded-xl border border-indigo-100 bg-white/80 p-3.5 dark:border-indigo-900/70 dark:bg-slate-800/50">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Chọn mẫu ngành hàng, rồi chỉnh tên nếu cần</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Sản phẩm một lựa chọn: dùng giá trị “Mặc định”.</p>
+                        </div>
+                        <div class="variant-preset-list mt-3 flex flex-wrap gap-1.5">
+                            <button type="button" data-variant-preset="apparel" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Thời trang</button>
+                            <button type="button" data-variant-preset="retail" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Bán lẻ</button>
+                            <button type="button" data-variant-preset="food" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Thực phẩm & đồ uống</button>
+                            <button type="button" data-variant-preset="beauty" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Mỹ phẩm</button>
+                            <button type="button" data-variant-preset="custom" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Tùy chỉnh</button>
+                        </div>
+                        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Nhóm chính
+                                <input type="text" name="variant_attribute_labels[style]" data-variant-attribute="style" value="Phiên bản" maxlength="40" required class="variant-attribute-label mt-1 block w-full rounded-lg border-slate-300 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            </label>
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Lựa chọn thứ nhất
+                                <input type="text" name="variant_attribute_labels[color]" data-variant-attribute="color" value="Lựa chọn 1" maxlength="40" required class="variant-attribute-label mt-1 block w-full rounded-lg border-slate-300 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            </label>
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Lựa chọn thứ hai
+                                <input type="text" name="variant_attribute_labels[size]" data-variant-attribute="size" value="Lựa chọn 2" maxlength="40" required class="variant-attribute-label mt-1 block w-full rounded-lg border-slate-300 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            </label>
+                        </div>
                     </div>
                     <div id="styles-add" class="space-y-4"></div>
                 </div>
@@ -565,21 +591,45 @@
                     </div>
                 </div>
 
-                {{-- SECTION 4: MẪU SẢN PHẨM; MỖI ẢNH CHỈ LƯU MỘT LẦN --}}
+                {{-- SECTION 4: THUỘC TÍNH VÀ BIẾN THỂ --}}
                 <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Mẫu, màu & size
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 4. Thuộc tính & biến thể
                             </div>
                             <p class="mt-1.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-                                Mỗi mẫu có một ảnh dùng chung. Hai mẫu khác nhau vẫn có thể có cùng màu và cùng size.
+                                Đổi tên ba thuộc tính để khớp ngành hàng. Mỗi dòng là một SKU có giá và tồn kho riêng.
                             </p>
                         </div>
                         <button type="button" data-target="#styles-edit"
                             class="addStyleCard shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-lg transition-all">
-                            + Thêm mẫu
+                            <span class="add-style-label">+ Thêm nhóm</span>
                         </button>
+                    </div>
+                    <div class="variant-setup rounded-xl border border-indigo-100 bg-white/80 p-3.5 dark:border-indigo-900/70 dark:bg-slate-800/50">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Chọn mẫu ngành hàng, rồi chỉnh tên nếu cần</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Sản phẩm một lựa chọn: dùng giá trị “Mặc định”.</p>
+                        </div>
+                        <div class="variant-preset-list mt-3 flex flex-wrap gap-1.5">
+                            <button type="button" data-variant-preset="apparel" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Thời trang</button>
+                            <button type="button" data-variant-preset="retail" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Bán lẻ</button>
+                            <button type="button" data-variant-preset="food" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Thực phẩm & đồ uống</button>
+                            <button type="button" data-variant-preset="beauty" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Mỹ phẩm</button>
+                            <button type="button" data-variant-preset="custom" class="variant-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">Tùy chỉnh</button>
+                        </div>
+                        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Nhóm chính
+                                <input type="text" name="variant_attribute_labels[style]" data-variant-attribute="style" value="Phiên bản" maxlength="40" required class="variant-attribute-label mt-1 block w-full rounded-lg border-slate-300 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            </label>
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Lựa chọn thứ nhất
+                                <input type="text" name="variant_attribute_labels[color]" data-variant-attribute="color" value="Lựa chọn 1" maxlength="40" required class="variant-attribute-label mt-1 block w-full rounded-lg border-slate-300 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            </label>
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Lựa chọn thứ hai
+                                <input type="text" name="variant_attribute_labels[size]" data-variant-attribute="size" value="Lựa chọn 2" maxlength="40" required class="variant-attribute-label mt-1 block w-full rounded-lg border-slate-300 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            </label>
+                        </div>
                     </div>
                     <div id="styles-edit" class="space-y-4"></div>
                 </div>
@@ -676,9 +726,148 @@
             let variantRowIndex = 100;
             let styleRowIndex = 0;
             let currentProductImages = [];
-            const styleQuickSizes = @json($variantQuickSizes);
-            const styleQuickColors = @json($variantQuickColors);
-            const stylePresets = @json($variantCombinationPresets);
+            const defaultVariantLabels = {
+                style: 'Phiên bản',
+                color: 'Lựa chọn 1',
+                size: 'Lựa chọn 2',
+            };
+            const industryVariantPresets = {
+                apparel: {
+                    labels: { style: 'Kiểu dáng', color: 'Màu sắc', size: 'Kích thước' },
+                    colors: ['Đen', 'Trắng', 'Be', 'Xanh'],
+                    sizes: ['S', 'M', 'L', 'XL'],
+                    examples: [{ label: 'Áo cơ bản', value: 'Đen,Trắng | S,M,L' }],
+                },
+                retail: {
+                    labels: { style: 'Phiên bản', color: 'Quy cách', size: 'Thông số / dung lượng' },
+                    colors: ['Tiêu chuẩn', 'Cao cấp', 'Giới hạn'],
+                    sizes: ['Nhỏ', 'Vừa', 'Lớn'],
+                    examples: [{ label: 'Ba quy cách', value: 'Tiêu chuẩn | Nhỏ,Vừa,Lớn' }],
+                },
+                food: {
+                    labels: { style: 'Hương vị', color: 'Quy cách', size: 'Khối lượng / đóng gói' },
+                    colors: ['Hộp lẻ', 'Set dùng thử', 'Set quà'],
+                    sizes: ['10g', '50g', '100g', '200g'],
+                    examples: [{ label: 'Set & khối lượng', value: 'Hộp lẻ,Set quà | 50g,100g' }],
+                },
+                beauty: {
+                    labels: { style: 'Dòng sản phẩm', color: 'Màu / mùi', size: 'Dung tích / kích thước' },
+                    colors: ['Không màu', 'Hương dịu', 'Hương đậm'],
+                    sizes: ['30ml', '50ml', '100ml'],
+                    examples: [{ label: 'Màu & dung tích', value: 'Không màu,Hương dịu | 30ml,50ml' }],
+                },
+                custom: {
+                    labels: defaultVariantLabels,
+                    colors: ['Lựa chọn A', 'Lựa chọn B'],
+                    sizes: ['Nhỏ', 'Lớn'],
+                    examples: [{ label: 'Ví dụ 4 SKU', value: 'Lựa chọn A,Lựa chọn B | Nhỏ,Lớn' }],
+                },
+            };
+
+            const normalizedLabel = (value, fallback) => String(value || '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 40) || fallback;
+
+            const variantLabelsFor = (form) => {
+                const labels = {};
+                Object.entries(defaultVariantLabels).forEach(([key, fallback]) => {
+                    labels[key] = normalizedLabel(
+                        form.find(`[data-variant-attribute="${key}"]`).val(),
+                        fallback,
+                    );
+                });
+                return labels;
+            };
+
+            const labelsForStyleCard = (card) => variantLabelsFor(card.closest('form'));
+
+            const stylePresetFor = (form) => industryVariantPresets[form.data('variant-preset')]
+                || industryVariantPresets.custom;
+
+            const setStyleVariantRowLabels = (row, labels) => {
+                row.find('.style-variant-color').attr({
+                    placeholder: labels.color,
+                    'aria-label': labels.color,
+                });
+                row.find('.style-variant-size').attr({
+                    placeholder: labels.size,
+                    'aria-label': labels.size,
+                });
+            };
+
+            const renderStyleQuickChoices = (card) => {
+                const form = card.closest('form');
+                const labels = labelsForStyleCard(card);
+                const preset = stylePresetFor(form);
+                const colorChips = card.find('.style-color-chips').empty();
+                const sizeChips = card.find('.style-size-chips').empty();
+                const examples = card.find('.style-presets').empty();
+
+                preset.colors.forEach(value => {
+                    colorChips.append(
+                        $('<button type="button">')
+                            .addClass('style-color-chip px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] text-slate-600 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300')
+                            .attr('data-val', value)
+                            .text(`+ ${labels.color}: ${value}`),
+                    );
+                });
+                preset.sizes.forEach(value => {
+                    sizeChips.append(
+                        $('<button type="button">')
+                            .addClass('style-size-chip px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] text-slate-600 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300')
+                            .attr('data-val', value)
+                            .text(`+ ${labels.size}: ${value}`),
+                    );
+                });
+                preset.examples.forEach(example => {
+                    examples.append(
+                        $('<button type="button">')
+                            .addClass('style-preset px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-[10px] text-indigo-600 dark:bg-indigo-950/40 dark:border-indigo-900 dark:text-indigo-300')
+                            .attr('data-val', example.value)
+                            .text(example.label),
+                    );
+                });
+            };
+
+            const refreshStyleCardPresentation = (card) => {
+                const labels = labelsForStyleCard(card);
+                card.find('.style-name-label-text').text(`Giá trị ${labels.style}`);
+                card.find('.style-name').attr('placeholder', `Ví dụ: ${labels.style} tiêu chuẩn`);
+                card.find('.style-image-heading').text(`Ảnh của ${labels.style} (không bắt buộc)`);
+                card.find('.style-image-help').text(`Chỉ chọn khi ${labels.style.toLowerCase()} này cần ảnh riêng; nếu để trống, web dùng ảnh sản phẩm.`);
+                card.find('.style-variant-heading').text(`${labels.color}, ${labels.size}, giá và tồn kho`);
+                card.find('.style-generator').attr('placeholder', `${labels.color} A,${labels.color} B | ${labels.size} 1,${labels.size} 2`);
+                card.find('.style-variant-row').each(function() {
+                    setStyleVariantRowLabels($(this), labels);
+                });
+                renderStyleQuickChoices(card);
+            };
+
+            const refreshVariantPresentation = (form) => {
+                const labels = variantLabelsFor(form);
+                form.find('.add-style-label').text(`+ Thêm ${labels.style}`);
+                form.find('.style-card').each(function(index) {
+                    const card = $(this);
+                    card.find('.style-number').text(`${labels.style} ${index + 1}`);
+                    refreshStyleCardPresentation(card);
+                });
+            };
+
+            const applyVariantPreset = (form, presetKey, labels = null) => {
+                const preset = industryVariantPresets[presetKey] || industryVariantPresets.custom;
+                const nextLabels = labels || preset.labels;
+                Object.entries(defaultVariantLabels).forEach(([key, fallback]) => {
+                    form.find(`[data-variant-attribute="${key}"]`).val(
+                        normalizedLabel(nextLabels[key], fallback),
+                    );
+                });
+                form.data('variant-preset', presetKey);
+                form.find('.variant-preset').removeClass('border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-950/60 dark:text-indigo-200');
+                form.find(`.variant-preset[data-variant-preset="${presetKey}"]`)
+                    .addClass('border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-950/60 dark:text-indigo-200');
+                refreshVariantPresentation(form);
+            };
 
             const renderDiscountPreview = (form) => {
                 const mode = form.find('[name="discount_type"]').val();
@@ -748,8 +937,8 @@
                 `);
             };
 
-            /** Một dòng tồn kho nằm bên trong đúng một mẫu. */
-            const styleVariantRow = (styleIndex, data) => {
+            /** Một SKU nằm trong đúng một giá trị của thuộc tính nhóm. */
+            const styleVariantRow = (styleIndex, data, labels = defaultVariantLabels) => {
                 data = data || {};
                 const i = variantRowIndex++;
                 const prefix = `styles[${styleIndex}][variants][${i}]`;
@@ -759,8 +948,8 @@
                     <div class="style-variant-row grid grid-cols-12 items-center gap-2 p-2.5 bg-slate-50/80 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-600">
                         <input type="hidden" class="style-variant-id" name="${prefix}[id]">
                         <input type="hidden" class="style-variant-paused" name="${prefix}[paused]" value="0">
-                        <input type="text" class="style-variant-color col-span-3 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[color]" maxlength="50" required placeholder="Màu (Đen, Be...)">
-                        <input type="text" class="style-variant-size col-span-2 text-xs font-semibold rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[size]" maxlength="50" required placeholder="Size">
+                        <input type="text" class="style-variant-color col-span-3 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[color]" maxlength="50" required>
+                        <input type="text" class="style-variant-size col-span-2 text-xs font-semibold rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" name="${prefix}[size]" maxlength="50" required>
                         <input type="number" class="style-variant-quantity col-span-2 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center font-medium" min="0" name="${prefix}[quantity]" placeholder="SL tồn">
                         <input type="text" class="style-variant-price o-tien col-span-4 text-xs rounded-lg bg-white border-slate-300 p-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" inputmode="numeric" name="${prefix}[price_override]" placeholder="Giá riêng (nếu có)">
                         <button type="button" class="removeStyleVariant col-span-1 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors" title="Bỏ biến thể">
@@ -775,6 +964,7 @@
                 row.find('.style-variant-quantity').val(data.quantity !== undefined ? data.quantity : 0);
                 row.find('.style-variant-price').val(data.price_override ? window.nhomNghin(data.price_override) : '');
                 row.find('.style-variant-paused').val(isPaused ? '1' : '0');
+                setStyleVariantRowLabels(row, labels);
                 row.attr('data-existing', data.id ? '1' : '0');
                 row.attr('data-paused', isPaused ? '1' : '0');
                 if (isPaused) {
@@ -795,9 +985,8 @@
             };
 
             const refreshStyleNumbers = (container) => {
-                $(container).find('.style-card').each(function(index) {
-                    $(this).find('.style-number').text(`Mẫu ${index + 1}`);
-                });
+                const target = $(container);
+                refreshVariantPresentation(target.closest('form'));
             };
 
             const setStylePreview = (card, src) => {
@@ -818,8 +1007,8 @@
                 }
             };
 
-            /** Card mẫu: tên + đúng một ảnh + nhiều tổ hợp màu/size. */
-            const styleCard = (data) => {
+            /** Card nhóm: một giá trị thuộc tính + nhiều SKU con. */
+            const styleCard = (data, labels = defaultVariantLabels) => {
                 data = data || {};
                 const styleIndex = styleRowIndex++;
                 const prefix = `styles[${styleIndex}]`;
@@ -831,11 +1020,11 @@
                             <div class="flex-1 min-w-0">
                                 <span class="style-number text-[10px] font-bold uppercase tracking-wider text-indigo-500"></span>
                                 <input type="hidden" class="style-id" name="${prefix}[id]">
-                                <label class="mt-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">Tên mẫu <span class="text-rose-500">*</span></label>
+                                <label class="mt-1 block text-xs font-semibold text-slate-700 dark:text-slate-300"><span class="style-name-label-text">Giá trị nhóm</span> <span class="text-rose-500">*</span></label>
                                 <input type="text" class="style-name mt-1 block w-full text-sm font-semibold rounded-xl border-slate-300 bg-white px-3.5 py-2.5 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-                                    name="${prefix}[name]" maxlength="100" required placeholder="VD: Bản đồ Việt Nam, Trống đồng...">
+                                    name="${prefix}[name]" maxlength="100" required>
                             </div>
-                            <button type="button" class="removeStyleCard ${existing ? 'hidden' : ''} mt-5 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg" title="Bỏ mẫu chưa lưu">✕</button>
+                            <button type="button" class="removeStyleCard ${existing ? 'hidden' : ''} mt-5 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg" title="Bỏ nhóm chưa lưu">✕</button>
                         </div>
 
                         <div class="mt-3 grid grid-cols-1 sm:grid-cols-[96px_1fr] gap-3 items-start">
@@ -844,26 +1033,25 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                    <span>Chọn ảnh riêng cho mẫu</span>
+                                    <span class="style-image-heading">Ảnh riêng (không bắt buộc)</span>
                                     <input type="file" class="style-image-file hidden" name="${prefix}[image]" accept="image/jpeg,image/png,image/webp,image/gif">
                                 </label>
                                 <select class="style-image-select block w-full rounded-xl border-slate-300 bg-white px-3 py-2 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white" name="${prefix}[image_id]">
-                                    <option value="">Hoặc dùng ảnh sản phẩm đã có</option>
+                                    <option value="">Dùng ảnh sản phẩm đã có (không bắt buộc)</option>
                                 </select>
-                                <p class="text-[10px] leading-4 text-slate-400">Ảnh này được lưu một lần và dùng chung cho toàn bộ biến thể bên dưới.</p>
-                                <p class="style-image-error hidden text-[10px] font-semibold text-rose-600">Mẫu này cần một ảnh riêng. Ảnh ở phần “Hình ảnh sản phẩm” không tự gán cho mẫu.</p>
+                                <p class="style-image-help text-[10px] leading-4 text-slate-400">Chỉ dùng khi nhóm này cần ảnh riêng; nếu để trống, web dùng ảnh sản phẩm.</p>
                             </div>
                         </div>
 
                         <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-600">
                             <div class="flex flex-wrap items-center justify-between gap-2">
-                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Màu, size, tồn kho</p>
-                                <button type="button" class="addStyleVariantRow px-2.5 py-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 rounded-lg dark:bg-indigo-950/60 dark:text-indigo-300">+ Thêm dòng</button>
+                                <p class="style-variant-heading text-[11px] font-bold uppercase tracking-wider text-slate-500">Lựa chọn, giá và tồn kho</p>
+                                <button type="button" class="addStyleVariantRow px-2.5 py-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 rounded-lg dark:bg-indigo-950/60 dark:text-indigo-300">+ Thêm SKU</button>
                             </div>
-                            <div class="style-size-chips mt-2 flex flex-wrap gap-1"></div>
-                            <div class="style-color-chips mt-1.5 flex flex-wrap gap-1"></div>
+                            <div class="style-color-chips mt-2 flex flex-wrap gap-1"></div>
+                            <div class="style-size-chips mt-1.5 flex flex-wrap gap-1"></div>
                             <div class="mt-3 flex flex-col sm:flex-row gap-2">
-                                <input type="text" class="style-generator block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3 py-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="S,M,L,XL | Đen/Trắng/Be">
+                                <input type="text" class="style-generator block flex-1 text-xs rounded-xl border-slate-300 bg-white px-3 py-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white">
                                 <button type="button" class="generateStyleVariants px-3 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl">Tạo tổ hợp</button>
                             </div>
                             <div class="style-presets mt-2 flex flex-wrap gap-1"></div>
@@ -894,35 +1082,21 @@
                     setStylePreview(card, url);
                     card.data('style-object-url', url);
                     select.val('');
-                    card.find('.style-image-error').addClass('hidden');
                 });
 
                 select.on('change', function() {
                     const image = availableImages.find(item => String(item.id) === String($(this).val()));
                     fileInput.val('');
                     setStylePreview(card, image ? window.storageUrl(image.path) : existingPath);
-                    if (image || existingPath) card.find('.style-image-error').addClass('hidden');
                 });
 
                 const variantsBox = card.find('.style-variants');
-                (data.variants || []).forEach(variant => variantsBox.append(styleVariantRow(styleIndex, variant)));
-                if (!variantsBox.children().length) variantsBox.append(styleVariantRow(styleIndex));
-
-                styleQuickSizes.forEach(size => {
-                    card.find('.style-size-chips').append(
-                        $('<button type="button">').addClass('style-size-chip px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] text-slate-600 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300').attr('data-val', size).text(`+ ${size}`)
-                    );
-                });
-                styleQuickColors.forEach(color => {
-                    card.find('.style-color-chips').append(
-                        $('<button type="button">').addClass('style-color-chip px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] text-slate-600 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300').attr('data-val', color).text(`+ ${color}`)
-                    );
-                });
-                stylePresets.forEach(preset => {
-                    card.find('.style-presets').append(
-                        $('<button type="button">').addClass('style-preset px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-[10px] text-indigo-600 dark:bg-indigo-950/40 dark:border-indigo-900 dark:text-indigo-300').attr('data-val', preset.value).text(preset.label)
-                    );
-                });
+                (data.variants || []).forEach(variant => variantsBox.append(styleVariantRow(styleIndex, variant, labels)));
+                if (!variantsBox.children().length) variantsBox.append(styleVariantRow(styleIndex, {
+                    color: 'Mặc định',
+                    size: 'Mặc định',
+                    quantity: 0,
+                }, labels));
 
                 return card;
             };
@@ -979,9 +1153,17 @@
                     .map(v => v.trim().slice(0, 50))
                     .filter(Boolean);
 
+                const first = split(parts[0]);
+                const second = split(parts.slice(1).join('|'));
+
                 return {
-                    sizes: split(parts[0]),
-                    colors: split(parts.slice(1).join('|')),
+                    // Trình tạo thuộc tính dùng thứ tự đang hiển thị: lựa chọn
+                    // thứ nhất | lựa chọn thứ hai. Hai alias giữ khối legacy ẩn
+                    // hoạt động cho tới khi có thể gỡ hẳn giao diện cũ.
+                    first,
+                    second,
+                    sizes: first,
+                    colors: second,
                 };
             };
 
@@ -1056,7 +1238,7 @@
             };
 
             const appendStyleVariant = (card, data) => {
-                const row = styleVariantRow(card.data('style-index'), data);
+                const row = styleVariantRow(card.data('style-index'), data, labelsForStyleCard(card));
                 card.find('.style-variants').append(row);
                 return row;
             };
@@ -1072,8 +1254,9 @@
 
                     const rowSize = normalizeVariantValue(row.find('.style-variant-size').val());
                     const rowColor = normalizeVariantValue(row.find('.style-variant-color').val());
-                    const sizeMatches = !rowSize || rowSize === wantedSize;
-                    const colorMatches = !rowColor || rowColor === wantedColor;
+                    const isDefaultRow = rowSize === 'mặc định' && rowColor === 'mặc định';
+                    const sizeMatches = !rowSize || rowSize === wantedSize || isDefaultRow;
+                    const colorMatches = !rowColor || rowColor === wantedColor || isDefaultRow;
 
                     if (sizeMatches && colorMatches) {
                         compatible = row;
@@ -1086,11 +1269,11 @@
 
             const appendGeneratedStyleVariants = (card, value) => {
                 const parsed = parseVariantGenerator(value);
-                if (!parsed.sizes.length && !parsed.colors.length) return 0;
+                if (!parsed.first.length && !parsed.second.length) return 0;
 
                 let added = 0;
-                (parsed.sizes.length ? parsed.sizes : ['']).forEach(size => {
-                    (parsed.colors.length ? parsed.colors : ['']).forEach(color => {
+                (parsed.first.length ? parsed.first : ['']).forEach(color => {
+                    (parsed.second.length ? parsed.second : ['']).forEach(size => {
                         if (styleVariantExists(card, size, color)) return;
 
                         const compatible = findCompatibleStyleVariant(card, size, color);
@@ -1112,7 +1295,8 @@
                 card.find('.style-variant-row').each(function() {
                     const row = $(this);
                     if (row.attr('data-paused') === '1') return;
-                    if (!normalizeVariantValue(row.find(fieldSelector).val())) {
+                    const currentValue = normalizeVariantValue(row.find(fieldSelector).val());
+                    if (!currentValue || currentValue === 'mặc định') {
                         targetRow = row;
                         return false;
                     }
@@ -1132,34 +1316,13 @@
             const resetAddStyles = () => {
                 currentProductImages = [];
                 disposeStyleCards('#styles-add');
-                $('#styles-add').append(styleCard());
+                const form = $('#formAdd');
+                applyVariantPreset(form, 'custom');
+                $('#styles-add').append(styleCard({
+                    name: 'Mặc định',
+                    variants: [{ color: 'Mặc định', size: 'Mặc định', quantity: 0 }],
+                }, variantLabelsFor(form)));
                 refreshStyleNumbers('#styles-add');
-            };
-
-            const validateStyleImages = (form) => {
-                let firstMissing = null;
-                form.find('.style-card').each(function() {
-                    const card = $(this);
-                    const fileInput = card.find('.style-image-file').get(0);
-                    const hasUpload = !!(fileInput && fileInput.files && fileInput.files.length);
-                    const hasSelectedImage = !!card.find('.style-image-select').val();
-                    const hasPreview = !!card.find('.style-image-preview img').attr('src');
-                    const isExistingStyle = !!card.find('.style-id').val();
-                    const isLegacyDefault = normalizeVariantValue(card.find('.style-name').val()) === 'mẫu mặc định';
-                    const missing = !hasUpload && !hasSelectedImage && !hasPreview && !isExistingStyle && !isLegacyDefault;
-
-                    card.find('.style-image-error').toggleClass('hidden', !missing);
-                    if (missing && !firstMissing) firstMissing = card.get(0);
-                });
-
-                if (!firstMissing) return true;
-                const styleName = normalizeVariantValue($(firstMissing).find('.style-name').val()) || 'chưa có tên';
-                window.showToast(
-                    'Mẫu “' + styleName + '” chưa có ảnh riêng. Hãy chọn ảnh ngay trong thẻ mẫu trước khi lưu.',
-                    'warning'
-                );
-                firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return false;
             };
 
             $(document).on('click', '.addStyleCard', function() {
@@ -1167,7 +1330,7 @@
                 if (targetSelector === '#styles-add') currentProductImages = [];
 
                 const target = $(targetSelector);
-                const card = styleCard();
+                const card = styleCard({}, labelsForStyleCard(target.closest('form')));
                 target.append(card);
                 refreshStyleNumbers(target);
                 card.find('.style-name').trigger('focus');
@@ -1177,7 +1340,7 @@
                 const card = $(this).closest('.style-card');
                 const container = card.parent();
                 if (container.find('.style-card').length <= 1) {
-                    window.showToast('Sản phẩm cần giữ lại ít nhất một mẫu.', 'warning');
+                    window.showToast('Sản phẩm cần giữ lại ít nhất một nhóm thuộc tính.', 'warning');
                     return;
                 }
 
@@ -1198,7 +1361,7 @@
 
                 if (row.attr('data-existing') !== '1') {
                     if (container.find('.style-variant-row').length <= 1) {
-                        window.showToast('Mỗi mẫu cần ít nhất một biến thể có đủ màu và size.', 'warning');
+                        window.showToast('Mỗi nhóm cần ít nhất một SKU có đủ hai lựa chọn.', 'warning');
                         return;
                     }
                     row.remove();
@@ -1255,6 +1418,19 @@
                 if (e.key !== 'Enter') return;
                 e.preventDefault();
                 $(this).closest('.style-card').find('.generateStyleVariants').trigger('click');
+            });
+
+            $(document).on('click', '.variant-preset', function() {
+                applyVariantPreset($(this).closest('form'), $(this).data('variant-preset'));
+            });
+
+            $(document).on('input', '.variant-attribute-label', function() {
+                const form = $(this).closest('form');
+                form.data('variant-preset', 'custom');
+                form.find('.variant-preset').removeClass('border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-950/60 dark:text-indigo-200');
+                form.find('.variant-preset[data-variant-preset="custom"]')
+                    .addClass('border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-950/60 dark:text-indigo-200');
+                refreshVariantPresentation(form);
             });
 
             resetAddStyles();
@@ -1318,7 +1494,6 @@
             // Form Add Submit
             $('#formAdd').submit(function(e) {
                 e.preventDefault();
-                if (!validateStyleImages($(this))) return;
                 submitFormWithProgress($(this), '{{ route('product.add') }}', function(response) {
                     window.showToast(response.success);
                     $('#closeDrawerAdd').click();
@@ -1336,7 +1511,6 @@
             $('#formEdit').submit(function(e) {
                 e.preventDefault();
                 if (!editingProductId) return;
-                if (!validateStyleImages($(this))) return;
 
                 submitFormWithProgress($(this), '/product/edit/' + editingProductId, function(response) {
                     window.showToast(response.success);
@@ -1386,6 +1560,12 @@
                         $('#categories_edit').val(item.categories_id);
                         $('#supplier_edit').val(item.supplier_id);
 
+                        applyVariantPreset(
+                            $('#formEdit'),
+                            'custom',
+                            item.variant_attribute_labels || defaultVariantLabels,
+                        );
+
                         currentProductImages = Array.isArray(item.product_image) ? item.product_image : [];
                         const stylesBox = $('#styles-edit').empty();
                         const receivedStyles = Array.isArray(item.styles) ? item.styles : [];
@@ -1405,7 +1585,7 @@
                             variants: item.variants || [],
                         }];
 
-                        styles.forEach(style => stylesBox.append(styleCard(style)));
+                        styles.forEach(style => stylesBox.append(styleCard(style, variantLabelsFor($('#formEdit')))));
                         refreshStyleNumbers(stylesBox);
 
                         const previewEdit = $('#image-preview-edit');

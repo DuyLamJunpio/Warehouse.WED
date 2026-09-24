@@ -27,6 +27,7 @@ use Illuminate\Validation\ValidationException;
 class ProductController extends Controller
 {
     private ?bool $variantPauseColumnAvailable = null;
+    private ?bool $variantAttributeLabelsColumnAvailable = null;
 
     public function __construct(private readonly ProductMediaService $productMedia)
     {
@@ -386,6 +387,10 @@ class ProductController extends Controller
             'discount_price' => 'nullable|integer|min:0|lte:sell_price',
             'is_featured' => 'nullable|boolean',
             'manage_stock' => 'nullable|boolean',
+            'variant_attribute_labels' => 'nullable|array',
+            'variant_attribute_labels.style' => 'nullable|string|max:40',
+            'variant_attribute_labels.color' => 'nullable|string|max:40',
+            'variant_attribute_labels.size' => 'nullable|string|max:40',
 
             // Media: ảnh tối đa 5MB, video tối đa 50MB (giới hạn theo từng file ở dưới).
             'media' => 'nullable|array',
@@ -432,6 +437,18 @@ class ProductController extends Controller
             if (array_key_exists($field, $data) && blank($data[$field])) {
                 $data[$field] = null;
             }
+        }
+
+        // Nhãn là dữ liệu hiển thị, còn giá trị và tồn kho tiếp tục dùng cấu
+        // trúc biến thể hiện có. Nhờ vậy sản phẩm cũ không bị ảnh hưởng.
+        if ($this->supportsVariantAttributeLabelsColumn()) {
+            $data['variant_attribute_labels'] = Product::normalizeVariantAttributeLabels(
+                $data['variant_attribute_labels'] ?? null,
+            );
+        } else {
+            // Cho phép triển khai code trước migration mà không làm lỗi tạo/sửa
+            // sản phẩm. Migration nullable sẽ được áp dụng riêng sau khi deploy.
+            unset($data['variant_attribute_labels']);
         }
 
         // Keep accepting discount_price from older clients while the admin form
@@ -598,14 +615,6 @@ class ProductController extends Controller
                 $image = $style->image;
             }
 
-            // Sản phẩm cũ chưa có ảnh vẫn được sửa thông tin. Mẫu mới thì bắt buộc
-            // có ảnh để khách phân biệt đúng mẫu ngoài cửa hàng.
-            if (!$image && !$style->exists && $nameKey !== 'mẫu mặc định') {
-                throw ValidationException::withMessages([
-                    "styles.$styleIndex.image" => 'Vui lòng chọn một ảnh cho mẫu này.',
-                ]);
-            }
-
             $style->fill([
                 'product_id' => $product->id,
                 'image_model_id' => $image?->id,
@@ -637,7 +646,7 @@ class ProductController extends Controller
                     );
                     if (isset($seenCombinations[$combinationKey])) {
                         throw ValidationException::withMessages([
-                            "styles.$styleIndex.variants.$variantIndex" => 'Biến thể màu/size bị trùng trong cùng mẫu.',
+                            "styles.$styleIndex.variants.$variantIndex" => 'Tổ hợp thuộc tính bị trùng trong cùng nhóm.',
                         ]);
                     }
                     $seenCombinations[$combinationKey] = true;
@@ -656,14 +665,14 @@ class ProductController extends Controller
                 $color = preg_replace('/\s+/u', ' ', trim((string) ($row['color'] ?? '')));
                 if ($size === '' || $color === '') {
                     throw ValidationException::withMessages([
-                        "styles.$styleIndex.variants.$variantIndex" => 'Mỗi biến thể phải có đủ màu và size.',
+                        "styles.$styleIndex.variants.$variantIndex" => 'Mỗi SKU cần có đủ hai lựa chọn đang thiết lập.',
                     ]);
                 }
 
                 $combinationKey = $style->id . '||' . mb_strtolower($color . '||' . $size, 'UTF-8');
                 if (isset($seenCombinations[$combinationKey])) {
                     throw ValidationException::withMessages([
-                        "styles.$styleIndex.variants.$variantIndex" => 'Biến thể màu/size bị trùng trong cùng mẫu.',
+                        "styles.$styleIndex.variants.$variantIndex" => 'Tổ hợp thuộc tính bị trùng trong cùng nhóm.',
                     ]);
                 }
                 $seenCombinations[$combinationKey] = true;
@@ -707,6 +716,14 @@ class ProductController extends Controller
     private function supportsVariantPauseColumn(): bool
     {
         return $this->variantPauseColumnAvailable ??= Schema::hasColumn('product_variants', 'is_paused');
+    }
+
+    private function supportsVariantAttributeLabelsColumn(): bool
+    {
+        return $this->variantAttributeLabelsColumnAvailable ??= Schema::hasColumn(
+            'products',
+            'variant_attribute_labels',
+        );
     }
 
     /**

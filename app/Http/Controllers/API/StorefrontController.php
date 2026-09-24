@@ -260,6 +260,11 @@ class StorefrontController extends Controller
             'in_stock' => $product->variants->isNotEmpty()
                 && (! $product->manage_stock || $product->variants->sum('quantity') > 0),
             'total_stock' => (int) $product->variants->sum('quantity'),
+            // Web bán hàng dùng nhãn này để hiển thị đúng ngữ cảnh ngành hàng
+            // (ví dụ Màu sắc/Kích thước hoặc Mùi hương/Quy cách).
+            'variant_attribute_labels' => Product::normalizeVariantAttributeLabels(
+                $product->variant_attribute_labels,
+            ),
             'images' => $gallery->all(),
             'videos' => $videos->map(fn($v) => $this->url($v->path))->values()->all(),
             // Ảnh nằm một lần ở cấp mẫu; các biến thể chỉ trả style_id để tránh

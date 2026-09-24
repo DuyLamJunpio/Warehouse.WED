@@ -13,6 +13,16 @@ class Product extends Model
     use HasFactory;
     use SoftDeletes;
 
+    /**
+     * Nhãn hiển thị của ba cấp biến thể. Dữ liệu tồn kho cũ vẫn giữ ở các cột
+     * style/color/size; nhãn này chỉ giúp mỗi ngành gọi chúng đúng ngữ cảnh.
+     */
+    public const DEFAULT_VARIANT_ATTRIBUTE_LABELS = [
+        'style' => 'Phiên bản',
+        'color' => 'Lựa chọn 1',
+        'size' => 'Lựa chọn 2',
+    ];
+
     protected $fillable = [
         'supplier_id',
         'categories_id',
@@ -24,6 +34,7 @@ class Product extends Model
         'brand',
         'audience',
         'unit',
+        'variant_attribute_labels',
         'import_price',
         'sell_price',
         'discount_price',
@@ -38,9 +49,23 @@ class Product extends Model
         'import_price' => 'integer',
         'sell_price' => 'integer',
         'discount_price' => 'integer',
+        'variant_attribute_labels' => 'array',
     ];
 
     protected $dates = ['deleted_at'];
+
+    /** Chuẩn hóa nhãn do quản trị viên tự đặt trước khi lưu hoặc trả về API. */
+    public static function normalizeVariantAttributeLabels(?array $labels): array
+    {
+        $normalized = [];
+
+        foreach (self::DEFAULT_VARIANT_ATTRIBUTE_LABELS as $key => $fallback) {
+            $value = preg_replace('/\s+/u', ' ', trim((string) ($labels[$key] ?? '')));
+            $normalized[$key] = mb_substr($value ?: $fallback, 0, 40, 'UTF-8');
+        }
+
+        return $normalized;
+    }
 
     /** Percentage discount derived from the stored sale price, for storefront display. */
     public function getDiscountPercentAttribute(): ?float
