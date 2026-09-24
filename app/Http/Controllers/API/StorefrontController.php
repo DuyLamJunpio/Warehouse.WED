@@ -234,7 +234,7 @@ class StorefrontController extends Controller
             'description' => $product->description,
             'material' => $product->material,
             'brand' => $product->brand,
-            'audience' => $product->audience ?: 'Unisex',
+            'audience' => $product->audience ?: 'Mọi khách hàng',
             // Hàng mới về trong 30 ngày, để web gắn nhãn "mới" bằng dữ liệu thật.
             'is_new' => $product->created_at?->gt(now()->subDays(30)) ?? false,
             // Ngày tạo thật, để web sắp "hàng mới về" theo đúng thứ tự nhập hàng.
