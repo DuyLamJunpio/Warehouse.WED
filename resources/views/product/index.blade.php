@@ -851,7 +851,7 @@
                                     <option value="">Hoặc dùng ảnh sản phẩm đã có</option>
                                 </select>
                                 <p class="text-[10px] leading-4 text-slate-400">Ảnh này được lưu một lần và dùng chung cho toàn bộ biến thể bên dưới.</p>
-                                <p class="style-image-error hidden text-[10px] font-semibold text-rose-600">Vui lòng chọn một ảnh cho mẫu này.</p>
+                                <p class="style-image-error hidden text-[10px] font-semibold text-rose-600">Mẫu này cần một ảnh riêng. Ảnh ở phần “Hình ảnh sản phẩm” không tự gán cho mẫu.</p>
                             </div>
                         </div>
 
@@ -1153,6 +1153,11 @@
                 });
 
                 if (!firstMissing) return true;
+                const styleName = normalizeVariantValue($(firstMissing).find('.style-name').val()) || 'chưa có tên';
+                window.showToast(
+                    'Mẫu “' + styleName + '” chưa có ảnh riêng. Hãy chọn ảnh ngay trong thẻ mẫu trước khi lưu.',
+                    'warning'
+                );
                 firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;
             };

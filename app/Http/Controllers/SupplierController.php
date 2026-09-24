@@ -71,7 +71,7 @@ class SupplierController extends Controller
             if ($supplier->id) {
                 return response()->json(['success' => 'Nhà cung cấp đã được thêm thành công!']);
             } else {
-                return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+                return response()->json(['error' => 'Chưa thể thêm nhà cung cấp. Thông tin chưa được lưu; vui lòng kiểm tra lại rồi thử lại.'], 500);
             }
         }
     }
@@ -118,7 +118,7 @@ class SupplierController extends Controller
             if ($result) {
                 return response()->json(['success' => 'Nhà cung cấp đã được sửa thành công!']);
             } else {
-                return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+                return response()->json(['error' => 'Chưa thể cập nhật nhà cung cấp. Các thay đổi chưa được lưu; vui lòng thử lại.'], 500);
             }
         }
     }

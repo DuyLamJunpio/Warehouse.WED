@@ -263,7 +263,9 @@ class ProductController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Thêm sản phẩm thất bại.', ['exception' => $e]);
-            return response()->json(['error' => 'Không thêm được sản phẩm. Vui lòng thử lại.'], 500);
+            return response()->json([
+                'error' => 'Chưa thể thêm sản phẩm. Sản phẩm chưa được lưu; hãy kiểm tra danh mục, giá, ảnh riêng của từng mẫu và thử lại.',
+            ], 500);
         }
     }
 
@@ -356,7 +358,9 @@ class ProductController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Sửa sản phẩm thất bại.', ['exception' => $e]);
-            return response()->json(['error' => 'Không sửa được sản phẩm. Vui lòng thử lại.'], 500);
+            return response()->json([
+                'error' => 'Chưa thể cập nhật sản phẩm. Các thay đổi chưa được lưu; hãy kiểm tra thông tin, ảnh của từng mẫu và thử lại.',
+            ], 500);
         }
     }
 

@@ -38,9 +38,9 @@ class CategoryController extends Controller
             $params['status'] = 1;
             $categories = Categories::create($params);
             if ($categories->id) {
-                return response()->json(['success' => 'Thể loại đã được thêm thành công!']);
+                return response()->json(['success' => 'Đã tạo danh mục. Danh mục mới đã sẵn sàng để gắn sản phẩm.']);
             } else {
-                return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+                return response()->json(['error' => 'Chưa thể tạo danh mục. Danh mục chưa được lưu; vui lòng kiểm tra thông tin rồi thử lại.'], 500);
             }
         }
     }
@@ -60,9 +60,9 @@ class CategoryController extends Controller
             $params = $request->except('_token');
             $result = $categories->update($params);
             if ($result) {
-                return response()->json(['success' => 'Thể loại đã được sửa thành công!']);
+                return response()->json(['success' => 'Đã cập nhật danh mục.']);
             } else {
-                return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+                return response()->json(['error' => 'Chưa thể cập nhật danh mục. Các thay đổi chưa được lưu; vui lòng thử lại.'], 500);
             }
         }
     }
@@ -87,6 +87,6 @@ class CategoryController extends Controller
         $this->authorize('delete', $categories);
         $categories = Categories::find($id);
         $categories->delete();
-        return response()->json(['success' => 'Thể loại đã được xóa thành công!']);
+        return response()->json(['success' => 'Đã xóa danh mục.']);
     }
 }

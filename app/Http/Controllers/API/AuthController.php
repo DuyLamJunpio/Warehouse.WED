@@ -101,9 +101,9 @@ class AuthController extends Controller
 
         $result = $user->save();
         if ($result) {
-            return response()->json(['success' => 'Cập nhật thành công!']);
+            return response()->json(['success' => 'Đã cập nhật thông tin tài khoản.']);
         } else {
-            return response()->json(['error' => 'Cập nhật thất bại.'], 500);
+            return response()->json(['error' => 'Chưa thể cập nhật thông tin tài khoản. Các thay đổi chưa được lưu; vui lòng thử lại.'], 500);
         }
     }
 
@@ -120,9 +120,9 @@ class AuthController extends Controller
         ]);
 
         if ($result) {
-            return response()->json(['success' => 'Cập nhật thành công!']);
+            return response()->json(['success' => 'Đã đổi mật khẩu.']);
         } else {
-            return response()->json(['error' => 'Cập nhật thất bại.'], 500);
+            return response()->json(['error' => 'Chưa thể đổi mật khẩu. Mật khẩu cũ vẫn được giữ nguyên; vui lòng thử lại.'], 500);
         }
 
     }
@@ -150,9 +150,9 @@ class AuthController extends Controller
             $user->avatar = $avatar->store('public/images');
             $result = $user->save();
             if ($result) {
-                return response()->json(['success' => 'Cập nhật thành công!']);
+                return response()->json(['success' => 'Đã cập nhật ảnh đại diện.']);
             } else {
-                return response()->json(['error' => 'Cập nhật thất bại.'], 500);
+                return response()->json(['error' => 'Chưa thể cập nhật ảnh đại diện. Ảnh cũ vẫn được giữ nguyên; vui lòng thử lại.'], 500);
             }
         }
     }
@@ -178,9 +178,9 @@ class AuthController extends Controller
 
         if ($staff->delete()) {
             // Không cần logout và làm mới session vì đây là API
-            return response()->json(['success' => 'Xóa tài khoản thành công!']);
+            return response()->json(['success' => 'Đã xóa tài khoản nhân viên.']);
         } else {
-            return response()->json(['error' => 'Xóa tài khoản thất bại.']);
+            return response()->json(['error' => 'Chưa thể xóa tài khoản nhân viên. Dữ liệu hiện vẫn được giữ nguyên; vui lòng thử lại.'], 500);
         }
     }
 }

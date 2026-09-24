@@ -83,7 +83,11 @@ return [
     |
     */
 
-    'locale' => 'en',
+    // Giao diện quản trị và web bán hàng phục vụ thị trường Việt Nam. Đặt trực
+    // tiếp ở đây để mọi thông báo mặc định của Laravel (xác thực, validation,
+    // đặt lại mật khẩu...) cùng dùng tiếng Việt, kể cả khi môi trường chưa có
+    // biến APP_LOCALE.
+    'locale' => 'vi',
 
     /*
     |--------------------------------------------------------------------------
@@ -96,7 +100,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'vi',
 
     /*
     |--------------------------------------------------------------------------

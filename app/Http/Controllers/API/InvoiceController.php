@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -281,7 +282,10 @@ class InvoiceController extends Controller
                 return response()->json(['success' => 'Hóa đơn đã được thêm thành công!', 'invoice_id' => $invoice->id]);
             } catch (Exception $e) {
                 DB::rollBack();
-                return response()->json(['error' => $e->getMessage()], 500);
+                Log::error('API lập hóa đơn thất bại.', ['exception' => $e]);
+                return response()->json([
+                    'error' => 'Chưa thể lập hóa đơn. Hóa đơn chưa được tạo và tồn kho chưa thay đổi; vui lòng kiểm tra lại rồi thử lại.',
+                ], 500);
             }
         }
     }
@@ -326,7 +330,10 @@ class InvoiceController extends Controller
             return response()->json(['success' => 'Hóa đơn đã được cập nhật thành công!', 'invoice_id' => $invoice->id]);
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error('API cập nhật hóa đơn thất bại.', ['exception' => $e]);
+            return response()->json([
+                'error' => 'Chưa thể cập nhật hóa đơn. Các thay đổi chưa được lưu; vui lòng thử lại.',
+            ], 500);
         }
     }
 
@@ -349,7 +356,10 @@ class InvoiceController extends Controller
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => "Hóa đơn không tồn tại"], 404);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error('API xóa hóa đơn thất bại.', ['exception' => $e]);
+            return response()->json([
+                'error' => 'Chưa thể xóa hóa đơn. Dữ liệu hiện vẫn được giữ nguyên; vui lòng tải lại trang rồi thử lại.',
+            ], 500);
         }
     }
 }

@@ -193,7 +193,9 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             Log::error('Đối soát đơn chuyển khoản thất bại: ' . $e->getMessage(), ['invoice_id' => $id]);
 
-            return response()->json(['error' => 'Không ghi nhận được thanh toán.'], 500);
+            return response()->json([
+                'error' => 'Chưa thể ghi nhận thanh toán. Đơn vẫn ở trạng thái cũ; hãy kiểm tra lại sao kê rồi thử lại.',
+            ], 500);
         }
     }
 
@@ -257,7 +259,9 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Đổi trạng thái đơn hàng thất bại: ' . $e->getMessage());
-            return response()->json(['error' => 'Không đổi được trạng thái: ' . $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Chưa thể đổi trạng thái đơn hàng. Trạng thái hiện tại vẫn được giữ nguyên; vui lòng tải lại trang rồi thử lại.',
+            ], 500);
         }
     }
 
@@ -437,7 +441,9 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Lập đơn tại quầy thất bại: ' . $e->getMessage());
-            return response()->json(['error' => 'Không lập được đơn: ' . $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Chưa thể lập đơn tại quầy. Đơn chưa được tạo và tồn kho chưa thay đổi; vui lòng kiểm tra lại rồi thử lại.',
+            ], 500);
         }
     }
 

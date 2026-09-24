@@ -85,7 +85,7 @@ class categoryController extends Controller
         $category = Categories::create($data);
 
         if (!$category->id) {
-            return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+            return response()->json(['error' => 'Chưa thể tạo danh mục. Danh mục chưa được lưu; vui lòng kiểm tra thông tin rồi thử lại.'], 500);
         }
 
         $this->notifier->markDirty();
@@ -166,7 +166,7 @@ class categoryController extends Controller
         });
 
         if (! $updated) {
-            return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+            return response()->json(['error' => 'Chưa thể cập nhật danh mục. Các thay đổi chưa được lưu; vui lòng thử lại.'], 500);
         }
 
         // Đổi trạng thái danh mục phải xoá cache catalogue ngay: nếu không web

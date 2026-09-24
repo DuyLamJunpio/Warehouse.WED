@@ -1041,7 +1041,7 @@
                     processData: false, // Không xử lý dữ liệu
                     contentType: false, // Không đặt kiểu nội dung mặc định
                     success: function(response) {
-                        alert(response.success);
+                        window.showToast(response.success, 'success');
                         $('#closeDrawerAdd').click();
                         $('#productTableAdd tr:not(:last)').remove();
                         $('form').find('input[type=text],input[type=number],input[type=file]')
@@ -1049,7 +1049,7 @@
                         reloadData('');
                     },
                     error: function(xhr) {
-                        alert('Error: ' + xhr.statusText);
+                        window.showAjaxError(xhr);
                     }
                 });
             });
@@ -1393,7 +1393,7 @@
                 },
                 error: function(xhr) {
                     // Xử lý lỗi
-                    alert('Error: ' + xhr.statusText);
+                    window.showAjaxError(xhr);
                 }
             });
 
@@ -1458,11 +1458,11 @@
                         $('#closeDrawerEdit').click();
                         $('#productTableEdit tr:not(:last)').remove();
                         reloadData('');
-                        alert('Hóa đơn đã được cập nhật thành công!');
+                        window.showToast('Đã cập nhật hóa đơn. Các thay đổi đã được lưu.', 'success');
                         $('#formEdit').trigger('reset'); // Reset form
                     },
                     error: function(xhr) {
-                        alert('Có lỗi xảy ra khi cập nhật hóa đơn.');
+                        window.showAjaxError(xhr);
                     }
                 });
             });
@@ -1494,7 +1494,7 @@
                         },
                         success: function(response) {
                             // Xử lý khi xóa thành công
-                            alert(response.success);
+                            window.showToast(response.success, 'success');
 
                             $('#closeDrawerDelete').click();
 
@@ -1509,7 +1509,7 @@
                         },
                         error: function(xhr) {
                             // Xử lý lỗi
-                            alert('Error: ' + xhr.statusText);
+                            window.showAjaxError(xhr);
                         }
                     });
                 });

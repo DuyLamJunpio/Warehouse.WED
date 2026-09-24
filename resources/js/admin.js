@@ -124,13 +124,16 @@ function setupAdminHelpers($) {
                            toastType === 'info' ? 'border-indigo-200 dark:border-indigo-800' :
                            'border-emerald-200 dark:border-emerald-800';
 
+        // Nội dung thông báo có thể đi từ API hoặc dữ liệu do người dùng nhập.
+        // Gán bằng .text() để tên sản phẩm, email... không thể trở thành HTML.
         const toast = $(`
             <div class="pointer-events-auto flex items-start gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border ${borderClass} text-slate-800 dark:text-slate-100 text-sm transform transition-all duration-200 translate-y-2 opacity-0 cursor-pointer select-none">
                 ${iconSvg}
-                <div class="flex-1 text-xs sm:text-sm font-medium leading-5 whitespace-pre-line">${message}</div>
+                <div class="admin-toast-message flex-1 text-xs sm:text-sm font-medium leading-5 whitespace-pre-line"></div>
                 <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs shrink-0 ml-1">✕</button>
             </div>
         `);
+        toast.find('.admin-toast-message').text(String(message).trim());
 
         toast.on('click', function () {
             toast.addClass('opacity-0 translate-x-4');
@@ -148,7 +151,7 @@ function setupAdminHelpers($) {
                 toast.addClass('opacity-0 translate-x-4');
                 setTimeout(() => toast.remove(), 200);
             },
-            toastType === 'error' ? 6000 : 3500
+            toastType === 'error' ? 8000 : 3500
         );
     };
 
@@ -163,12 +166,59 @@ function setupAdminHelpers($) {
         const raw = (xhr && xhr.responseText) || '';
         if (!raw) return '';
 
-        const warning = raw.match(/(?:Warning|Fatal error)[^<]*/i);
-        if (warning) return warning[0].trim();
+        // Không đưa warning/fatal error của PHP hoặc mã HTML thô cho người dùng:
+        // các dòng này không hướng dẫn được cách xử lý và có thể lộ chi tiết máy chủ.
+        if (/(?:warning|fatal error|exception|stack trace|internal server error)/i.test(raw)) {
+            return '';
+        }
+
+        // Khi session hết hạn, Laravel có thể trả trang đăng nhập với HTTP 200.
+        if (/(?:name=["']password["']|route\(['"]login|đăng nhập hệ thống)/i.test(raw)) {
+            return 'Phiên đăng nhập đã hết hạn. Hãy tải lại trang và đăng nhập lại trước khi tiếp tục.';
+        }
 
         // Bỏ thẻ HTML rồi lấy phần đầu, tránh đổ cả trang lỗi vào thông báo.
         const text = raw.replace(/<[^>]*>/g, ' ').replace(/[ \t\r\n]+/g, ' ').trim();
-        return text.length > 300 ? text.slice(0, 300) + '…' : text;
+        // Chỉ nhận phản hồi văn bản ngắn, rõ nghĩa. Nội dung HTML của proxy / CDN
+        // thường không hữu ích cho người dùng và có thể đang ở tiếng Anh.
+        return text.length > 0 && text.length <= 240 && !/<html|<!doctype/i.test(raw)
+            ? text
+            : '';
+    };
+
+    const tachThongBao = function (value) {
+        if (value === null || value === undefined || value === '') return '';
+        if (Array.isArray(value)) {
+            return value.map(tachThongBao).filter(Boolean).join('\n');
+        }
+        if (typeof value === 'object') {
+            return Object.values(value).map(tachThongBao).filter(Boolean).join('\n');
+        }
+        return String(value).trim();
+    };
+
+    const thongBaoTheoTrangThai = function (xhr) {
+        const status = Number((xhr && xhr.status) || 0);
+        const messages = {
+            200: 'Máy chủ trả về phản hồi không hợp lệ. Hãy tải lại trang rồi thực hiện lại thao tác.',
+            400: 'Dữ liệu gửi lên chưa hợp lệ. Vui lòng kiểm tra các trường đã nhập rồi thử lại.',
+            401: 'Phiên đăng nhập không còn hiệu lực. Hãy tải lại trang và đăng nhập lại.',
+            403: 'Tài khoản của bạn chưa có quyền thực hiện thao tác này. Hãy liên hệ quản trị viên nếu cần hỗ trợ.',
+            404: 'Không tìm thấy dữ liệu cần xử lý. Dữ liệu có thể đã bị xóa hoặc thay đổi; hãy tải lại trang.',
+            409: 'Dữ liệu vừa thay đổi hoặc đang được sử dụng ở nơi khác. Hãy tải lại trang rồi kiểm tra lại.',
+            413: 'Tệp tải lên vượt quá giới hạn của máy chủ. Hãy giảm dung lượng hoặc số lượng tệp rồi thử lại.',
+            419: 'Phiên làm việc đã hết hạn. Hãy tải lại trang trước khi thao tác lại.',
+            422: 'Dữ liệu chưa hợp lệ. Vui lòng kiểm tra các trường được yêu cầu rồi thử lại.',
+            429: 'Bạn thao tác quá nhanh. Vui lòng chờ ít phút rồi thử lại.',
+            500: 'Máy chủ chưa thể hoàn tất thao tác này. Dữ liệu chưa được thay đổi; vui lòng thử lại sau ít phút.',
+            502: 'Dịch vụ đang tạm thời không phản hồi. Vui lòng thử lại sau ít phút.',
+            503: 'Dịch vụ đang được bảo trì hoặc cấu hình chưa sẵn sàng. Vui lòng thử lại sau ít phút.',
+            504: 'Máy chủ phản hồi quá lâu. Hãy kiểm tra kết nối rồi thử lại; không bấm lưu nhiều lần liên tiếp.',
+        };
+
+        return messages[status] || (status > 0
+            ? 'Không thể hoàn tất thao tác (mã ' + status + '). Vui lòng tải lại trang rồi thử lại.'
+            : 'Không kết nối được đến máy chủ. Hãy kiểm tra mạng rồi thử lại.');
     };
 
     /**
@@ -198,21 +248,13 @@ function setupAdminHelpers($) {
             return;
         }
 
-        if (xhr && xhr.status === 413) {
-            window.showToast('Tệp tải lên vượt quá giới hạn của máy chủ.', 'error');
-            return;
-        }
-
-        const message = res.errors
-            ? Object.keys(res.errors)
-                  .map(function (k) {
-                      return res.errors[k].join('\n');
-                  })
-                  .join('\n')
-            : res.error ||
-              res.message ||
-              docThanPhanHoi(xhr) ||
-              'Lỗi: ' + ((xhr && xhr.statusText) || 'không rõ');
+        const serverMessage = tachThongBao(res.errors || res.error || res.message);
+        // Với trang lỗi mặc định bằng tiếng Anh, ưu tiên thông báo tiếng Việt theo
+        // mã HTTP. API nghiệp vụ vẫn giữ nguyên thông báo cụ thể do server trả về.
+        const isTechnicalMessage = /^(?:error|failed|invalid|internal server error|server error|unauthorized|forbidden|not found|bad request)/i.test(serverMessage);
+        const message = (!isTechnicalMessage && serverMessage) ||
+            docThanPhanHoi(xhr) ||
+            thongBaoTheoTrangThai(xhr);
 
         window.showToast(message, 'error');
     };
@@ -613,6 +655,4 @@ function setupAdminHelpers($) {
         }
     });
 }
-
-
 

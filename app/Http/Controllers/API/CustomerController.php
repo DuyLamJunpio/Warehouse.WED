@@ -70,7 +70,7 @@ class CustomerController extends Controller
             if ($customer->id) {
                 return response()->json(['success' => 'Khách hàng đã được thêm hoặc gộp thành công!']);
             } else {
-                return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+                return response()->json(['error' => 'Chưa thể lưu hồ sơ khách hàng. Thông tin chưa được cập nhật; vui lòng kiểm tra lại rồi thử lại.'], 500);
             }
         }
     }
@@ -170,7 +170,7 @@ class CustomerController extends Controller
             if ($result) {
                 return response()->json(['success' => 'Khách hàng đã được sửa thành công!']);
             } else {
-                return response()->json(['error' => 'Có lỗi xảy ra, vui lòng thử lại.'], 500);
+                return response()->json(['error' => 'Chưa thể cập nhật hồ sơ khách hàng. Các thay đổi chưa được lưu; vui lòng thử lại.'], 500);
             }
         }
     }

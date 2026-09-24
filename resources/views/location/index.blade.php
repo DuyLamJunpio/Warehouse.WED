@@ -118,14 +118,14 @@
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
-                        alert(response.message);
+                        window.showToast(response.message, 'success');
                         filterZone(response.location.zone);
                         filterShelf(response.location.shelf);
                         $('#zones').val(response.location.zone);
                         $('#shelves').val(response.location.shelf);
                     },
                     error: function(response) {
-                        alert(response.message); // Hiển thị thông báo lỗi
+                        window.showAjaxError(response);
                     }
                 });
             });

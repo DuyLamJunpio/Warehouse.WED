@@ -113,9 +113,14 @@ public function getLevel(Request $request)
         }
 
         if ($newLocation->save()) {
-            return response()->json(['message' => 'Thêm mới vị trí thành công', 'location' => $newLocation]);
+            return response()->json([
+                'message' => 'Đã tạo vị trí kho ' . $newLocation->code . '.',
+                'location' => $newLocation,
+            ]);
         } else {
-            return response()->json(['message' => 'Lỗi khi thêm vị trí mới'], 500);
+            return response()->json([
+                'error' => 'Chưa thể tạo vị trí kho. Vị trí mới chưa được lưu; vui lòng thử lại.',
+            ], 500);
         }
     }
 }

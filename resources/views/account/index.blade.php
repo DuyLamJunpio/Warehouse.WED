@@ -307,7 +307,7 @@
                     data: $(this).serialize(), // Serialize dữ liệu form
                     success: function(response) {
                         // Xử lý khi thêm thành công
-                        alert(response.success);
+                        window.showToast(response.success, 'success');
 
                         $('#closeDrawerAdd').click();
 
@@ -325,7 +325,7 @@
                     },
                     error: function(xhr) {
                         // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
+                        window.showAjaxError(xhr);
                     }
                 });
             });
@@ -357,7 +357,7 @@
                         },
                         success: function(response) {
                             // Xử lý khi xóa thành công
-                            alert(response.success);
+                            window.showToast(response.success, 'success');
 
                             $('#closeDrawerDelete').click();
 
@@ -372,7 +372,7 @@
                         },
                         error: function(xhr) {
                             // Xử lý lỗi
-                            alert('Error: ' + xhr.statusText);
+                            window.showAjaxError(xhr);
                         }
                     });
                 });
@@ -472,7 +472,7 @@
                     data: $(this).serialize(), // Serialize dữ liệu form
                     success: function(response) {
                         // Xử lý khi thêm thành công
-                        alert(response.success);
+                        window.showToast(response.success, 'success');
 
                         $('#closeDrawerEdit').click();
 
@@ -490,7 +490,7 @@
                     },
                     error: function(xhr) {
                         // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
+                        window.showAjaxError(xhr);
                     }
                 });
             });

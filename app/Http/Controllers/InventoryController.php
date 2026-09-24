@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Models\StockAdjustment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 /**
@@ -142,7 +143,11 @@ class InventoryController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Không cập nhật được tồn kho: ' . $e->getMessage()], 500);
+            Log::error('Điều chỉnh tồn kho thất bại.', ['exception' => $e]);
+
+            return response()->json([
+                'error' => 'Chưa thể cập nhật tồn kho. Số lượng hiện tại chưa thay đổi; vui lòng tải lại trang rồi thử lại.',
+            ], 500);
         }
     }
 

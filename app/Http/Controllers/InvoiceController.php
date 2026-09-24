@@ -290,7 +290,10 @@ class InvoiceController extends Controller
                 return response()->json(['success' => 'Hóa đơn đã được thêm thành công!']);
             } catch (Exception $e) {
                 DB::rollBack();
-                return response()->json(['error' => $e->getMessage()], 500);
+                Log::error('Lập hóa đơn thất bại.', ['exception' => $e]);
+                return response()->json([
+                    'error' => 'Chưa thể lập hóa đơn. Hóa đơn chưa được tạo và tồn kho chưa thay đổi; vui lòng kiểm tra lại rồi thử lại.',
+                ], 500);
             }
         }
     }
@@ -376,7 +379,10 @@ class InvoiceController extends Controller
             return response()->json(['success' => 'Hóa đơn đã được cập nhật thành công!', 'invoice_id' => $invoice->id]);
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error('Cập nhật hóa đơn thất bại.', ['exception' => $e]);
+            return response()->json([
+                'error' => 'Chưa thể cập nhật hóa đơn. Các thay đổi chưa được lưu; vui lòng tải lại trang rồi thử lại.',
+            ], 500);
         }
     }
 
@@ -457,7 +463,10 @@ class InvoiceController extends Controller
             return response()->json(['success' => 'Xóa hóa đơn thành công!']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error('Xóa hóa đơn thất bại.', ['exception' => $e]);
+            return response()->json([
+                'error' => 'Chưa thể xóa hóa đơn. Dữ liệu hiện vẫn được giữ nguyên; vui lòng tải lại trang rồi thử lại.',
+            ], 500);
         }
     }
 }

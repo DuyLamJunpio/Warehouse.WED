@@ -554,7 +554,7 @@ class CheckoutController extends Controller
             // Không lộ chi tiết lỗi hệ thống ra ngoài.
             return response()->json([
                 'success' => false,
-                'error' => 'Không tạo được đơn hàng, vui lòng thử lại.',
+                'error' => 'Chưa thể tạo đơn hàng. Đơn chưa được ghi nhận; vui lòng kiểm tra kết nối rồi thử lại.',
             ], 500);
         }
     }
@@ -671,7 +671,9 @@ class CheckoutController extends Controller
             DB::rollBack();
             Log::error('Ghi nhận thanh toán thất bại: ' . $e->getMessage(), ['order_code' => $orderCode]);
 
-            return response()->json(['error' => 'Không ghi nhận được thanh toán.'], 500);
+            return response()->json([
+                'error' => 'Chưa thể ghi nhận thanh toán. Nếu bạn đã chuyển khoản, vui lòng chờ cửa hàng đối soát trước khi thử lại.',
+            ], 500);
         }
     }
 
