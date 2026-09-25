@@ -546,6 +546,7 @@ class CheckoutController extends Controller
             return response()->json([
                 'success' => true,
                 'order_code' => $invoice->order_code,
+                'payment_reference' => $this->paymentReference((string) $invoice->order_code),
                 'subtotal' => $subtotal,
                 'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
@@ -596,6 +597,7 @@ class CheckoutController extends Controller
             'success' => true,
             'already_created' => true,
             'order_code' => $invoice->order_code,
+            'payment_reference' => $this->paymentReference((string) $invoice->order_code),
             'subtotal' => $invoice->subtotal,
             'print_fee' => (int) ($invoice->print_fee ?? 0),
             'shipping_fee' => (int) $invoice->shipping_fee,
@@ -620,6 +622,7 @@ class CheckoutController extends Controller
         return response()->json([
             'success' => true,
             'order_code' => $order->order_code,
+            'payment_reference' => $this->paymentReference((string) $order->order_code),
             'order_status' => $order->order_status,
             'pay_status' => (int) $order->pay_status,
         ]);
@@ -655,7 +658,7 @@ class CheckoutController extends Controller
             $bankBin,
             $accountNumber,
             max(0, (int) $invoice->total_amount),
-            (string) $invoice->order_code,
+            $this->paymentReference((string) $invoice->order_code),
         );
 
         $qrCode = new QrCode($payload);
@@ -688,9 +691,7 @@ class CheckoutController extends Controller
         $tlv = static fn (string $id, string $value): string => $id . str_pad((string) strlen($value), 2, '0', STR_PAD_LEFT) . $value;
         $beneficiary = $tlv('00', $bankBin) . $tlv('01', $accountNumber);
         $merchant = $tlv('00', 'A000000727') . $tlv('01', $beneficiary) . $tlv('02', 'QRIBFTTA');
-        // VietinBank qua SePay chỉ gửi biến động có nội dung bắt đầu bằng SEVQR.
-        // Mã đơn vẫn nằm sau tiền tố để webhook đối soát đúng Invoice.
-        $purpose = substr("SEVQR {$reference}", 0, 25);
+        $purpose = substr($reference, 0, 25);
 
         $payload = $tlv('00', '01')
             . $tlv('01', '12')
@@ -702,6 +703,15 @@ class CheckoutController extends Controller
             . '6304';
 
         return $payload . $this->crc16Ccitt($payload);
+    }
+
+    /**
+     * VietinBank chỉ đẩy biến động cho SePay khi nội dung bắt đầu bằng SEVQR.
+     * Mã đơn phía sau được webhook trích xuất để khớp đúng invoice.
+     */
+    private function paymentReference(string $orderCode): string
+    {
+        return substr('SEVQR ' . $orderCode, 0, 25);
     }
 
     private function crc16Ccitt(string $value): string
