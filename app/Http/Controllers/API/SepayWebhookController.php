@@ -38,9 +38,10 @@ class SepayWebhookController extends Controller
             'content' => 'nullable|string|max:1000',
         ]);
 
+        $paymentPattern = $this->paymentCodePattern();
         $code = strtoupper(trim((string) ($data['code'] ?? '')));
-        if (!preg_match('/^DH[0-9]{6}[A-Z0-9]{4}$/', $code)) {
-            preg_match('/(?<![A-Z0-9])(DH[0-9]{6}[A-Z0-9]{4})(?![A-Z0-9])/i',
+        if (! preg_match('/^' . $paymentPattern . '$/', $code)) {
+            preg_match('/(?<![A-Z0-9])(' . $paymentPattern . ')(?![A-Z0-9])/i',
                 (string) ($data['content'] ?? ''), $match);
             $code = strtoupper($match[1] ?? '');
         }
@@ -63,8 +64,16 @@ class SepayWebhookController extends Controller
                     preg_replace('/\D+/', '', $data['accountNumber']),
                 );
                 $order = $code !== ''
-                    ? Invoice::orders()->where('order_code', $code)->lockForUpdate()->first()
+                    ? Invoice::orders()
+                        ->where(fn ($query) => $query
+                            ->where('order_code', $code)
+                            ->orWhere('legacy_order_code', $code))
+                        ->lockForUpdate()
+                        ->first()
                     : null;
+                // Mã DH cũ chỉ còn là mã đối chiếu cho những giao dịch đang dở dang.
+                // Thông báo và lịch sử mới luôn hiển thị mã RUNGU hiện hành.
+                $matchedOrderCode = $order?->order_code ?: $code;
                 $result = 'unmatched';
 
                 if ($data['transferType'] !== 'in' || !$accountMatches) {
@@ -83,10 +92,20 @@ class SepayWebhookController extends Controller
                             . 'CẦN XỬ LÝ: SePay ghi nhận tiền sau khi đơn đã hủy/hoàn.');
                         $result = 'paid_after_cancel';
                     } else {
-                        $result = 'paid';
+                        try {
+                            $order->deductStockLines();
+                            $result = 'paid';
+                        } catch (\RuntimeException $e) {
+                            // Khách đã trả tiền nhưng hàng đã được bán trong thời
+                            // gian chờ chuyển khoản: ghi nhận tiền và báo nhân
+                            // viên xử lý, tuyệt đối không trừ kho một phần.
+                            $order->note = trim(($order->note ? $order->note . "\n" : '')
+                                . 'CẦN XỬ LÝ: đã nhận chuyển khoản nhưng ' . $e->getMessage());
+                            $result = 'paid_stock_shortage';
+                        }
                     }
                     $order->save();
-                    if ($result === 'paid') {
+                    if (in_array($result, ['paid', 'paid_stock_shortage'], true)) {
                         app(VoucherRedemption::class)->recordPaidOrder($order);
                     }
                 }
@@ -94,7 +113,7 @@ class SepayWebhookController extends Controller
                 DB::table('sepay_transactions')->insert([
                     'transaction_id' => $transactionId,
                     'invoice_id' => $order?->id,
-                    'order_code' => $code ?: null,
+                    'order_code' => $matchedOrderCode ?: null,
                     'amount' => (int) $data['transferAmount'],
                     'account_number' => $data['accountNumber'],
                     'result' => $result,
@@ -104,7 +123,7 @@ class SepayWebhookController extends Controller
 
                 return [
                     'result' => $result,
-                    'order_code' => $code,
+                    'order_code' => $matchedOrderCode,
                     'amount' => (int) $data['transferAmount'],
                     'transaction_id' => $transactionId,
                 ];
@@ -133,10 +152,22 @@ class SepayWebhookController extends Controller
                 $data,
             );
             Log::warning('SePay webhook cần đối soát', [
-                'transaction_id' => $data['id'], 'order_code' => $code, 'result' => $result['result'],
+                'transaction_id' => $data['id'], 'order_code' => $result['order_code'], 'result' => $result['result'],
             ]);
         }
 
         return response()->json(['success' => true]);
+    }
+
+    private function paymentCodePattern(): string
+    {
+        $prefix = strtoupper((string) config('services.sepay.payment_prefix', 'RUNGU'));
+        if (! preg_match('/^[A-Z]{2,5}$/', $prefix)) {
+            $prefix = 'RUNGU';
+        }
+
+        // DH được giữ để khớp các giao dịch đã tạo QR trước khi chuyển sang RUNGU.
+        // Các đơn mới dùng PREFIX + 10 chữ số (ngày + chuỗi số ngẫu nhiên).
+        return '(?:DH[0-9]{6}[A-Z0-9]{4}|' . preg_quote($prefix, '/') . '[0-9]{3,10})';
     }
 }

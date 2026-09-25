@@ -40,13 +40,13 @@ class SepayWebhookTest extends TestCase
 
     public function test_webhook_requires_key_and_exact_bank_order_and_amount_and_ignores_retries(): void
     {
-        $order = $this->order('DH260924AB12', 250000);
+        $order = $this->order('RUNGU2609241234', 250000);
         $payload = [
             'id' => 92704,
             'accountNumber' => '0868238690',
             'transferType' => 'in',
             'transferAmount' => 250000,
-            'content' => 'Thanh toan DH260924AB12',
+            'content' => 'SEVQR RUNGU2609241234',
         ];
 
         $this->postJson('/api/webhooks/sepay', $payload)->assertUnauthorized();
@@ -65,14 +65,14 @@ class SepayWebhookTest extends TestCase
 
     public function test_wrong_amount_or_bank_never_marks_order_paid(): void
     {
-        $order = $this->order('DH260924XY99', 300000);
+        $order = $this->order('RUNGU2609245678', 300000);
         $headers = ['Authorization' => 'Apikey test-sepay-key'];
         $payload = [
             'id' => 92705,
             'accountNumber' => '0868238690',
             'transferType' => 'in',
             'transferAmount' => 299000,
-            'code' => 'DH260924XY99',
+            'code' => 'RUNGU2609245678',
         ];
 
         $this->postJson('/api/webhooks/sepay', $payload, $headers)->assertOk();
@@ -97,7 +97,7 @@ class SepayWebhookTest extends TestCase
             'used_count' => 0,
             'status' => true,
         ]);
-        $order = $this->order('DH260924VC10', 250000);
+        $order = $this->order('RUNGU2609249012', 250000);
         $order->note = 'Voucher: PAYMENT10';
         $order->save();
         $headers = ['Authorization' => 'Apikey test-sepay-key'];
@@ -106,7 +106,7 @@ class SepayWebhookTest extends TestCase
             'accountNumber' => '0868238690',
             'transferType' => 'in',
             'transferAmount' => 250000,
-            'code' => 'DH260924VC10',
+            'code' => 'RUNGU2609249012',
         ];
 
         $this->assertSame(0, (int) $voucher->fresh()->used_count);

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\PrintDesign;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
@@ -311,8 +310,8 @@ class CheckoutController extends Controller
         Invoice::cancelExpiredHolds();
 
         // Phí giao hàng lấy từ cài đặt bán hàng, không phải hằng số trong mã nguồn.
-        $paymentMethod = $data['payment_method'] ?? 'banking';
-        $methodKey = $this->settingKey($paymentMethod);
+        $paymentMethod = $this->settingKey($data['payment_method'] ?? 'bank_transfer');
+        $methodKey = $paymentMethod;
         $salesSettings = Setting::sales();
 
         if (empty($salesSettings[$methodKey]['enabled'])) {
@@ -450,9 +449,9 @@ class CheckoutController extends Controller
                 'shipping_phone' => $customer->customer_phone,
                 'shipping_address' => implode(', ', [$data['address'], $data['ward'], $data['province']]),
                 'payment_method' => $paymentMethod,
-                // Chuyển khoản nhận qua SePay hoặc nhân viên đối soát không
-                // tự hết hạn; hết hạn tự động chỉ áp dụng QR PayOS cũ.
-                'payment_expires_at' => $paymentMethod === 'banking'
+                // Chuyển khoản nhận qua SePay chỉ giữ trạng thái chờ trong một
+                // khoảng ngắn; chưa trừ tồn cho tới khi SePay xác nhận tiền về.
+                'payment_expires_at' => $paymentMethod === 'bank_transfer'
                     ? now()->addMinutes((int) config('services.storefront.payment_window_minutes', 15))
                     : null,
                 // Chưa nhận được tiền: đơn chỉ được xác nhận sau khi chuyển khoản thành công.
@@ -483,26 +482,8 @@ class CheckoutController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                // max(0) để hàng không theo dõi tồn kho không tụt xuống số âm.
-                $line['variant']->quantity = max(0, $line['variant']->quantity - $line['quantity']);
-                $line['variant']->save();
             }
 
-            // Sản phẩm hết sạch tồn thì đánh dấu hết hàng.
-            foreach (array_unique(array_map(fn($l) => $l['variant']->product_id, $lines)) as $productId) {
-                $total = ProductVariant::where('product_id', $productId)->sum('quantity');
-                // Hàng không theo dõi tồn kho không bao giờ bị gắn "hết hàng".
-                Product::where('id', $productId)
-                    ->where('manage_stock', true)
-                    ->update(['status' => $total > 0 ? 1 : 2]);
-            }
-
-            /*
-             * Phôi in có nối kho thì vẫn phải trừ tồn — nó là chiếc áo thật đi
-             * ra khỏi kệ. Cố ý KHÔNG thêm nó vào $lines: tiền phôi đã nằm trong
-             * giá thiết kế rồi, chèn thêm một dòng hàng nữa là tính tiền hai lần.
-             * Ở đây tồn kho và tiền là hai việc tách rời.
-             */
             foreach ($printDesigns as $printDesign) {
                 // Chỉ đến đây mẫu mới thuộc một đơn thật. `store()` chỉ được gọi sau
                 // khi PayOS đã xác nhận, nên chuyển draft → pending tại đây là lúc duy nhất
@@ -513,32 +494,13 @@ class CheckoutController extends Controller
                     'review_status' => PrintDesign::STATUS_PENDING,
                 ]);
 
-                if (!$printDesign->blank?->product_id) {
-                    continue;
-                }
+            }
 
-                $blankVariant = ProductVariant::where('product_id', $printDesign->blank->product_id)
-                    ->where('size', $printDesign->size)
-                    ->where('color', $printDesign->color_name)
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($blankVariant) {
-                    $blankVariant->quantity = max(0, $blankVariant->quantity - $printDesign->qty);
-                    $blankVariant->save();
-                    continue;
-                }
-
-                // Không tìm thấy biến thể khớp thì bỏ qua trong im lặng là sai,
-                // nhưng chặn đơn cũng sai: khách đã thiết kế xong và đang trả
-                // tiền. Ghi log để nhân viên chỉnh tồn tay.
-                Log::warning(sprintf(
-                    'Đơn in %s: không tìm thấy biến thể %s/%s của sản phẩm #%d để trừ tồn.',
-                    $printDesign->code,
-                    $printDesign->size,
-                    $printDesign->color_name,
-                    $printDesign->blank->product_id,
-                ));
+            // COD giữ hàng ngay lúc khách chốt đơn. Với chuyển khoản, mã QR chỉ
+            // tạo đơn chờ; webhook SePay sẽ gọi cùng hàm này sau khi nhận tiền.
+            if ($paymentMethod === 'cod') {
+                $invoice->deductStockLines();
+                $invoice->save();
             }
 
             DB::commit();
@@ -707,11 +669,11 @@ class CheckoutController extends Controller
 
     /**
      * VietinBank chỉ đẩy biến động cho SePay khi nội dung bắt đầu bằng SEVQR.
-     * Mã đơn phía sau được webhook trích xuất để khớp đúng invoice.
+     * Mã đơn RUNGU phía sau được webhook trích xuất để khớp đúng invoice.
      */
-    private function paymentReference(string $orderCode): string
+    private function paymentReference(string $paymentCode): string
     {
-        return substr('SEVQR ' . $orderCode, 0, 25);
+        return substr('SEVQR ' . $paymentCode, 0, 25);
     }
 
     private function crc16Ccitt(string $value): string
@@ -778,6 +740,28 @@ class CheckoutController extends Controller
                 ]);
             }
 
+            try {
+                $order->deductStockLines();
+            } catch (\RuntimeException $e) {
+                $order->payment_expires_at = null;
+                $order->note = trim(($order->note ? $order->note . "\n" : '')
+                    . 'CẦN XỬ LÝ: đã ghi nhận thanh toán nhưng ' . $e->getMessage());
+                $order->save();
+                app(VoucherRedemption::class)->recordPaidOrder($order);
+                DB::commit();
+
+                Log::critical('Đã nhận tiền nhưng không thể trừ tồn.', [
+                    'order_code' => $orderCode,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'stock_issue' => true,
+                    'message' => 'Đã ghi nhận thanh toán; nhân viên sẽ xử lý vì tồn kho vừa thay đổi.',
+                ]);
+            }
+
             // Đơn thường được xác nhận ngay sau khi đã trả tiền. Riêng đơn in phải giữ
             // "chờ xác nhận" cho tới khi nhân viên duyệt xong file; PrintDesignController sẽ
             // chuyển nó sang confirmed khi tất cả mẫu đều được duyệt.
@@ -814,8 +798,8 @@ class CheckoutController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Thả hàng của những đơn bỏ ngang TRƯỚC khi kiểm tồn, để đơn chưa thanh
-        // toán không chặn được khách đang thật sự muốn mua.
+        // Huỷ đơn chuyển khoản quá hạn trước khi kiểm tồn. Các đơn mới chưa trừ
+        // tồn khi tạo QR nên thao tác này chỉ đổi trạng thái đơn, không hoàn kho.
         Invoice::cancelExpiredHolds();
 
         $variants = ProductVariant::with([
@@ -853,10 +837,21 @@ class CheckoutController extends Controller
     private function generateOrderCode(): string
     {
         do {
-            $code = 'DH' . now()->format('ymd') . strtoupper(Str::random(4));
+            $code = $this->paymentCodePrefix() . now()->format('ymd')
+                . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
         } while (Invoice::withTrashed()->where('order_code', $code)->exists());
 
         return $code;
+    }
+
+    private function paymentCodePrefix(): string
+    {
+        $prefix = strtoupper((string) config('services.sepay.payment_prefix', 'RUNGU'));
+        if (! preg_match('/^[A-Z]{2,5}$/', $prefix)) {
+            $prefix = 'RUNGU';
+        }
+
+        return $prefix;
     }
 
     /**

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\VoucherRedemption;
 use Illuminate\Http\Request;
@@ -17,9 +16,8 @@ use Illuminate\Validation\Rule;
  * Quản lý đơn hàng bán (invoices có invoice_type = 1): xem danh sách, đổi trạng
  * thái, in phiếu và lập đơn ngay tại quầy bằng bảng "Tạo đơn" của trang này.
  *
- * Tồn kho được trừ ngay lúc lập đơn chứ không đợi xác nhận, để hai người bán
- * cùng lúc không bán trùng một món. Vì vậy khi đơn bị hủy hoặc khách hoàn hàng
- * thì phải cộng trả về kho.
+ * Đơn tại quầy giữ hàng ngay khi lập. Đơn chuyển khoản từ web chỉ trừ tồn sau
+ * khi đã nhận tiền; khi hủy/hoàn chỉ cộng lại các đơn đã từng trừ tồn.
  */
 class OrderController extends Controller
 {
@@ -175,6 +173,19 @@ class OrderController extends Controller
 
                 $order->pay_status = 1;
                 $order->payment_expires_at = null;
+                try {
+                    $order->deductStockLines();
+                } catch (\RuntimeException $e) {
+                    $order->note = trim(($order->note ? $order->note . "\n" : '')
+                        . 'CẦN XỬ LÝ: đã ghi nhận chuyển khoản nhưng ' . $e->getMessage());
+                    $order->save();
+                    app(VoucherRedemption::class)->recordPaidOrder($order);
+
+                    return ['status' => 409, 'body' => [
+                        'error' => 'Đã ghi nhận chuyển khoản, nhưng không thể trừ tồn: ' . $e->getMessage(),
+                        'pay_status' => 1,
+                    ]];
+                }
                 $order->save();
                 app(VoucherRedemption::class)->recordPaidOrder($order);
 
@@ -419,15 +430,10 @@ class OrderController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                // max(0) để hàng không theo dõi tồn kho không tụt xuống số âm.
-                $line['variant']->quantity = max(0, $line['variant']->quantity - $line['quantity']);
-                $line['variant']->save();
             }
 
-            foreach (array_unique(array_map(fn($l) => $l['variant']->product_id, $lines)) as $productId) {
-                $total = ProductVariant::where('product_id', $productId)->sum('quantity');
-                Product::where('id', $productId)->update(['status' => $total > 0 ? 1 : 2]);
-            }
+            $invoice->deductStockLines();
+            $invoice->save();
 
             DB::commit();
 

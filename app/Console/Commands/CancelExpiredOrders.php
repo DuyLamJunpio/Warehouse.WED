@@ -8,9 +8,9 @@ use Illuminate\Console\Command;
 /**
  * Huỷ những đơn từ web bán hàng đã quá hạn thanh toán mà chưa nhận được tiền.
  *
- * Kho bị trừ ngay lúc khách bấm thanh toán (để người sau không mua trùng hàng),
- * nên khách bỏ ngang mà đơn cứ nằm đó là hàng bị giữ vĩnh viễn. Hạn thanh toán
- * đặt theo services.storefront.payment_window_minutes (mặc định 15 phút).
+ * Đơn chuyển khoản chưa trừ tồn trước khi SePay xác nhận tiền. Lệnh này chỉ hủy
+ * các đơn bỏ ngang để tránh nhân viên xử lý nhầm; hạn thanh toán đặt theo
+ * services.storefront.payment_window_minutes (mặc định 15 phút).
  *
  * Ân hạn tồn tại vì hai lý do: webstore đẩy đơn sang đây TRƯỚC khi tạo link
  * PayOS (nên hạn hai bên lệch nhau vài giây), và webhook báo đã trả tiền có thể
@@ -20,7 +20,7 @@ class CancelExpiredOrders extends Command
 {
     protected $signature = 'orders:cancel-expired {--dry-run : Chỉ liệt kê, không đổi gì}';
 
-    protected $description = 'Huỷ đơn web quá hạn thanh toán và hoàn hàng về kho';
+    protected $description = 'Huỷ đơn web quá hạn thanh toán';
 
     public function handle(): int
     {

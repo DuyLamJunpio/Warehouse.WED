@@ -52,6 +52,9 @@ return [
 
     'sepay' => [
         'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY'),
+        // Mã thanh toán hiển thị trong nội dung chuyển khoản. Giữ đồng bộ
+        // với tiền tố đã cấu hình tại SePay (mặc định RUNGU).
+        'payment_prefix' => env('SEPAY_PAYMENT_PREFIX', 'RUNGU'),
     ],
 
     'telegram' => [

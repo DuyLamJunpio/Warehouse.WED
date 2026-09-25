@@ -68,6 +68,7 @@ class Invoice extends Model
         'signature_name',
         'signature',
         'order_code',
+        'legacy_order_code',
         'checkout_ref',
         'checkout_fingerprint',
         'order_status',
@@ -78,6 +79,7 @@ class Invoice extends Model
         'shop_shipping_fee',
         'payment_method',
         'payment_expires_at',
+        'stock_deducted_at',
         // Tiền in của cả đơn, cộng dồn từ mọi mẫu. Tách riêng khỏi tiền hàng để
         // lúc tính lãi còn phân biệt được hai khoản.
         'print_fee',
@@ -89,6 +91,7 @@ class Invoice extends Model
 
     protected $casts = [
         'payment_expires_at' => 'datetime',
+        'stock_deducted_at' => 'datetime',
         'print_fee' => 'integer',
     ];
 
@@ -197,13 +200,107 @@ class Invoice extends Model
         return $query->get();
     }
     /**
-     * Cộng trả số lượng của từng dòng hàng về đúng biến thể đã bán.
+     * Trừ tồn đúng một lần sau khi đơn đã đủ điều kiện giữ hàng.
      *
-     * Dùng chung cho việc nhân viên huỷ đơn tay (OrderController) và lệnh tự huỷ
-     * đơn quá hạn (orders:cancel-expired) — hai nơi phải hoàn kho giống hệt nhau.
+     * Các biến thể được kiểm tra hết trước khi ghi bất cứ số lượng nào; nếu hàng
+     * vừa hết trong lúc khách chuyển khoản, đơn vẫn được ghi nhận tiền để nhân
+     * viên xử lý, nhưng kho không bị trừ dở dang.
+     */
+    public function deductStockLines(): void
+    {
+        if ($this->stock_deducted_at !== null) {
+            return;
+        }
+
+        $lines = $this->productInvoices()->get();
+        $requested = [];
+        foreach ($lines as $line) {
+            if (! $line->variant_id) {
+                throw new \RuntimeException("Dòng hàng #{$line->id} chưa có biến thể để trừ tồn.");
+            }
+
+            $requested[$line->variant_id] = ($requested[$line->variant_id] ?? 0) + $line->quantity;
+        }
+
+        // Phôi in cũng là hàng thật. Nó được cộng vào cùng danh sách trước khi
+        // kiểm tra để một đơn không thể trừ được sản phẩm thường rồi mới phát
+        // hiện phôi in đã hết.
+        $printDesigns = $this->printDesigns()->with('blank')->get();
+        foreach ($printDesigns as $printDesign) {
+            if (! $printDesign->blank?->product_id) {
+                continue;
+            }
+
+            $blankVariant = ProductVariant::where('product_id', $printDesign->blank->product_id)
+                ->where('size', $printDesign->size)
+                ->where('color', $printDesign->color_name)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $blankVariant) {
+                Log::warning(sprintf(
+                    'Đơn in %s: không tìm thấy biến thể %s/%s của sản phẩm #%d để trừ tồn.',
+                    $printDesign->code,
+                    $printDesign->size,
+                    $printDesign->color_name,
+                    $printDesign->blank->product_id,
+                ));
+                continue;
+            }
+
+            $requested[$blankVariant->id] = ($requested[$blankVariant->id] ?? 0) + $printDesign->qty;
+        }
+
+        $variantIds = array_keys($requested);
+        $variants = ProductVariant::with('product')
+            ->whereIn('id', $variantIds)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        $touchedProducts = [];
+        foreach ($requested as $variantId => $quantity) {
+            $variant = $variants->get($variantId);
+            if (! $variant || ! $variant->product) {
+                throw new \RuntimeException("Không tìm thấy biến thể #{$variantId} của đơn hàng.");
+            }
+
+            if ($variant->product->manage_stock && $variant->quantity < $quantity) {
+                throw new \RuntimeException(
+                    'Tồn kho không đủ cho ' . $variant->product->product_name . ' (' . $variant->label . ').'
+                );
+            }
+        }
+
+        foreach ($requested as $variantId => $quantity) {
+            $variant = $variants->get($variantId);
+            if (! $variant->product->manage_stock) {
+                continue;
+            }
+
+            $variant->quantity -= $quantity;
+            $variant->save();
+            $touchedProducts[$variant->product_id] = true;
+        }
+
+        foreach (array_keys($touchedProducts) as $productId) {
+            $total = ProductVariant::where('product_id', $productId)->sum('quantity');
+            Product::where('id', $productId)->update(['status' => $total > 0 ? 1 : 2]);
+        }
+
+        $this->stock_deducted_at = now();
+    }
+
+    /**
+     * Cộng trả số lượng của từng dòng hàng về đúng biến thể đã bán.
+     * Chỉ hoàn khi đơn đã từng trừ tồn.
      */
     public function restockLines(): void
     {
+        if ($this->stock_deducted_at === null) {
+            return;
+        }
+
         $touchedProducts = [];
 
         foreach ($this->productInvoices as $line) {
@@ -219,6 +316,10 @@ class Invoice extends Model
                 continue;
             }
 
+            if (! $variant->product?->manage_stock) {
+                continue;
+            }
+
             $variant->quantity += $line->quantity;
             $variant->save();
 
@@ -231,12 +332,10 @@ class Invoice extends Model
         }
     }
     /**
-     * Huỷ những đơn web quá hạn thanh toán và trả hàng về kho. Trả về số đơn đã huỷ.
+     * Huỷ những đơn web quá hạn thanh toán. Chỉ hoàn kho nếu đơn đã từng trừ tồn.
      *
      * Cố ý KHÔNG chạy bằng cron mà gọi ngay tại những chỗ hàng thật sự được cần:
      * lúc khách khác kiểm tồn hoặc đặt hàng, và lúc nhân viên mở trang Đơn hàng.
-     * Nhờ vậy một đơn bị bỏ ngang không bao giờ chặn được người mua thật — đúng
-     * khoảnh khắc người mua thật xuất hiện là hàng đã được thả ra.
      */
     public static function cancelExpiredHolds(): int
     {

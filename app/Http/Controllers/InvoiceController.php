@@ -393,13 +393,17 @@ class InvoiceController extends Controller
      * Ưu tiên variant_id gửi lên; nếu không có thì dùng cặp size/màu;
      * nếu sản phẩm chưa có biến thể nào thì tạo biến thể mặc định.
      */
-    /**
-     * Mã đơn hàng dạng DH + ngày + 4 ký tự ngẫu nhiên, ví dụ DH2608170A3F.
-     */
+    /** Mã đơn dạng RUNGU + ngày + 4 chữ số, đúng cấu trúc mã SePay. */
     private function generateOrderCode(): string
     {
+        $prefix = strtoupper((string) config('services.sepay.payment_prefix', 'RUNGU'));
+        if (! preg_match('/^[A-Z]{2,5}$/', $prefix)) {
+            $prefix = 'RUNGU';
+        }
+
         do {
-            $code = 'DH' . now()->format('ymd') . strtoupper(Str::random(4));
+            $code = $prefix . now()->format('ymd')
+                . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
         } while (Invoice::withTrashed()->where('order_code', $code)->exists());
 
         return $code;
