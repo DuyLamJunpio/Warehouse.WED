@@ -60,6 +60,13 @@
                                     {{ $design->color_name }} · size {{ $design->size }} ·
                                     {{ count($design->placements ?? []) }} hình
                                 </span>
+                                {{-- Tên phông chụp sẵn trong placements, không tốn thêm truy vấn. --}}
+                                @php($fontNames = collect($design->placements ?? [])->where('kind', 'text')->pluck('text_font_name')->filter()->unique())
+                                @if ($fontNames->isNotEmpty())
+                                    <span class="mt-0.5 inline-flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400">
+                                        <span class="font-serif font-bold">Aa</span> {{ $fontNames->implode(', ') }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ $design->technique?->name ?? '—' }}</td>
                             <td class="px-5 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{{ $design->qty }}</td>

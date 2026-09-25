@@ -28,11 +28,15 @@ class PrintAssetController extends Controller
 
     public function index()
     {
+        $fonts = PrintFont::orderBy('sort_order')->orderBy('id')->get();
+
         return view('print.library', [
             'assets' => PrintAsset::where('kind', PrintAsset::KIND_LIBRARY)
                 ->orderBy('sort_order')->orderBy('id')->get(),
             'techniques' => PrintTechnique::where('is_active', true)->orderBy('sort_order')->get(),
-            'fonts' => PrintFont::orderBy('sort_order')->orderBy('id')->get(),
+            'fonts' => $fonts,
+            // Không khai báo thì ô xem trước hiện phông mặc định chứ không phải phông vừa tải lên.
+            'fontFaceCss' => PrintFont::fontFaceCss($fonts),
         ]);
     }
 
@@ -254,6 +258,17 @@ class PrintAssetController extends Controller
                 ? 'Đã bật phông "' . $font->name . '".'
                 : 'Đã tắt phông "' . $font->name . '" — ẩn khỏi studio, thiết kế cũ giữ nguyên.',
         ]);
+    }
+
+    /**
+     * Tải tệp phông gốc. Xưởng phải cài đúng tệp này rồi mới convert to outlines
+     * được — Illustrator/Corel không đọc phông nhúng trong file SVG.
+     */
+    public function downloadFont(PrintFont $font)
+    {
+        abort_unless($font->file_path && Storage::exists($font->file_path), 404);
+
+        return Storage::download($font->file_path, $font->downloadName());
     }
 
     /** Kiểm tra bốn byte đầu theo định dạng font, không tin MIME của máy chủ. */

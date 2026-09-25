@@ -12,7 +12,7 @@
     $printTabs = [
         ['route' => 'print.techniques', 'label' => 'Kỹ thuật in', 'match' => 'print.techniques*'],
         ['route' => 'print.blanks', 'label' => 'Phôi in', 'match' => 'print.blanks*'],
-        ['route' => 'print.library', 'label' => 'Thư viện sticker', 'match' => 'print.library*'],
+        ['route' => 'print.library', 'label' => 'Phông chữ & sticker', 'match' => 'print.library*'],
         ['route' => 'print.designs', 'label' => 'Duyệt thiết kế', 'match' => 'print.designs*', 'badge' => $pendingDesigns],
     ];
 @endphp
