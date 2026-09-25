@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\StorefrontPaymentSession;
 use App\Models\Invoice;
 use App\Models\Setting;
 use App\Services\TelegramNotifier;
@@ -63,21 +64,43 @@ class SepayWebhookController extends Controller
                     preg_replace('/\D+/', '', (string) $bank['account_number']),
                     preg_replace('/\D+/', '', $data['accountNumber']),
                 );
-                $order = $code !== ''
+                // Phiên VietQR là luồng mới: trước khi tiền vào chưa có Invoice
+                // nào để màn quản trị hiển thị. Ưu tiên nó trước đơn cũ để mã
+                // RUNGU trên QR chính là mã Invoice được tạo sau thanh toán.
+                $session = $code !== ''
+                    ? StorefrontPaymentSession::where('payment_code', $code)
+                        ->lockForUpdate()
+                        ->first()
+                    : null;
+                $order = $session ? null : ($code !== ''
                     ? Invoice::orders()
                         ->where(fn ($query) => $query
                             ->where('order_code', $code)
                             ->orWhere('legacy_order_code', $code))
                         ->lockForUpdate()
                         ->first()
-                    : null;
+                    : null);
                 // Mã DH cũ chỉ còn là mã đối chiếu cho những giao dịch đang dở dang.
                 // Thông báo và lịch sử mới luôn hiển thị mã RUNGU hiện hành.
-                $matchedOrderCode = $order?->order_code ?: $code;
+                $matchedOrderCode = $session?->payment_code ?: ($order?->order_code ?: $code);
                 $result = 'unmatched';
 
                 if ($data['transferType'] !== 'in' || !$accountMatches) {
                     $result = 'wrong_direction_or_account';
+                } elseif ($session && $session->hasExpired()) {
+                    if ($session->status === StorefrontPaymentSession::STATUS_PENDING) {
+                        $session->forceFill(['status' => StorefrontPaymentSession::STATUS_EXPIRED])->save();
+                    }
+                    $result = 'expired_payment_session';
+                } elseif ($session && (int) $session->total_amount !== (int) $data['transferAmount']) {
+                    $result = 'amount_mismatch';
+                } elseif ($session && $session->status === StorefrontPaymentSession::STATUS_PAID) {
+                    $order = $session->invoice;
+                    $result = 'already_paid';
+                } elseif ($session) {
+                    $fulfilled = app(CheckoutController::class)->fulfillPaidPaymentSession($session);
+                    $order = $fulfilled['invoice'];
+                    $result = $fulfilled['stock_issue'] ? 'paid_stock_shortage' : 'paid';
                 } elseif ($order && $order->payment_method !== 'bank_transfer') {
                     $result = 'wrong_payment_method';
                 } elseif ($order && (int) $order->total_amount !== (int) $data['transferAmount']) {

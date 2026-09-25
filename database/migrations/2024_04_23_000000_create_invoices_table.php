@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
+            // Đơn từ web có thể được tạo sau xác nhận thanh toán mà không gắn
+            // với tài khoản nhân viên. Migration 2026_09_16 thực hiện thay đổi
+            // tương tự trên database đã triển khai.
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->bigInteger('total_amount');
             // 0 = phiếu nhập hàng từ nhà cung cấp, 1 = đơn hàng bán cho khách
             $table->integer('invoice_type');

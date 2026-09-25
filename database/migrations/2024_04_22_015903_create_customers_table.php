@@ -16,10 +16,12 @@ return new class extends Migration
             $table->timestamps();
             $table->string('customer_name');
             $table->string('customer_phone');
-            $table->string('customer_email');
-            $table->string('address');
+            // Web checkout nhận diện bằng số điện thoại; email và địa chỉ có
+            // thể được bổ sung ở lần mua sau.
+            $table->string('customer_email')->nullable();
+            $table->string('address')->nullable();
             $table->string('avatar')->nullable();
-            $table->integer('status');
+            $table->integer('status')->default(0);
             $table->softDeletes();
         });
     }

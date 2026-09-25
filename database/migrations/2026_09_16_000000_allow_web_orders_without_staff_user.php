@@ -11,11 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement('ALTER TABLE invoices ALTER COLUMN user_id DROP NOT NULL');
     }
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Chỉ siết lại khi mọi đơn đều đã được gán nhân viên, tránh làm mất dữ liệu.
         if (! DB::table('invoices')->whereNull('user_id')->exists()) {
             DB::statement('ALTER TABLE invoices ALTER COLUMN user_id SET NOT NULL');

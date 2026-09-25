@@ -42,7 +42,8 @@ return [
         // phẩm. Bỏ trống thì web vẫn tự đọc lại mỗi phút, chỉ là chậm hơn.
         'url' => env('STOREFRONT_URL'),
 
-        // Phải khớp PAYMENT_WINDOW_MINUTES bên webstore (lib/checkout.ts).
+        // Hạn của phiên VietQR. API trả expires_at để web bán hàng đếm ngược
+        // theo đúng giờ của server, tránh lệch thời gian giữa hai hệ thống.
         'payment_window_minutes' => (int) env('STOREFRONT_PAYMENT_WINDOW_MINUTES', 15),
 
         // Ân hạn trước khi tự huỷ: webhook SePay có thể tới muộn hơn

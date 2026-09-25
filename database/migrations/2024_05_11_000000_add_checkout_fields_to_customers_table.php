@@ -22,11 +22,14 @@ return new class extends Migration
             $table->index('customer_phone');
         });
 
-        // Email có thể bỏ trống: số điện thoại mới là thứ bắt buộc.
-        // Dùng SQL thẳng vì đổi cột bằng ->change() cần doctrine/dbal.
-        DB::statement('ALTER TABLE customers ALTER COLUMN customer_email DROP NOT NULL');
-        DB::statement('ALTER TABLE customers ALTER COLUMN address DROP NOT NULL');
-        DB::statement('ALTER TABLE customers ALTER COLUMN status SET DEFAULT 0');
+        // Email có thể bỏ trống: số điện thoại mới là thứ bắt buộc. PostgreSQL
+        // đang chạy production dùng ALTER COLUMN; SQLite của test không có cú
+        // pháp đó nên dùng Schema Builder để Laravel dựng lại bảng an toàn.
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE customers ALTER COLUMN customer_email DROP NOT NULL');
+            DB::statement('ALTER TABLE customers ALTER COLUMN address DROP NOT NULL');
+            DB::statement('ALTER TABLE customers ALTER COLUMN status SET DEFAULT 0');
+        }
     }
 
     public function down(): void
@@ -36,7 +39,9 @@ return new class extends Migration
             $table->dropColumn(['province', 'ward', 'note']);
         });
 
-        DB::statement('ALTER TABLE customers ALTER COLUMN customer_email SET NOT NULL');
-        DB::statement('ALTER TABLE customers ALTER COLUMN address SET NOT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE customers ALTER COLUMN customer_email SET NOT NULL');
+            DB::statement('ALTER TABLE customers ALTER COLUMN address SET NOT NULL');
+        }
     }
 };

@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\PrintDesign;
 use App\Models\ProductVariant;
 use App\Models\Setting;
+use App\Models\StorefrontPaymentSession;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\VoucherRedemption;
@@ -252,6 +253,11 @@ class CheckoutController extends Controller
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
 
         if (! empty($data['checkout_ref'])) {
+            $paymentSession = StorefrontPaymentSession::where('checkout_ref', $data['checkout_ref'])->first();
+            if ($paymentSession) {
+                return $this->existingPaymentSessionResponse($paymentSession, $fingerprint);
+            }
+
             $existing = Invoice::withTrashed()->orders()
                 ->where('checkout_ref', $data['checkout_ref'])->first();
             if ($existing) {
@@ -426,6 +432,71 @@ class CheckoutController extends Controller
                 ], 409);
             }
 
+            /*
+             * Chuyển khoản không tạo Invoice ở đây. Khách chỉ nhận một phiên
+             * thanh toán và mã VietQR; SePay xác nhận tiền vào mới gọi webhook
+             * để tạo đơn đã thanh toán. Nhờ đó quản trị không có đơn "chờ
+             * thanh toán" và voucher/tồn kho chưa bị động tới.
+             */
+            if ($paymentMethod === 'bank_transfer') {
+                $checkoutRef = $data['checkout_ref'] ?? (string) Str::uuid();
+                $paymentCode = $this->generatePaymentCode();
+                $expiresAt = now()->addMinutes(max(1, (int) config('services.storefront.payment_window_minutes', 15)));
+
+                $paymentSession = StorefrontPaymentSession::create([
+                    'checkout_ref' => $checkoutRef,
+                    'checkout_fingerprint' => $fingerprint,
+                    'payment_code' => $paymentCode,
+                    'payload' => [
+                        'customer' => [
+                            'customer_name' => $data['customer_name'],
+                            'customer_phone' => $data['customer_phone'],
+                            'customer_email' => $data['customer_email'] ?? null,
+                            'province' => $data['province'],
+                            'ward' => $data['ward'],
+                            'address' => $data['address'],
+                        ],
+                        'note' => $data['note'] ?? null,
+                        'voucher_code' => $voucherCode,
+                        'items' => array_map(fn (array $line) => [
+                            'product_id' => (int) $line['variant']->product_id,
+                            'variant_id' => (int) $line['variant']->id,
+                            'quantity' => (int) $line['quantity'],
+                            'unit_price' => (int) $line['unit_price'],
+                        ], $lines),
+                        'print_design_codes' => $codes,
+                        'financials' => [
+                            'subtotal' => $subtotal,
+                            'print_fee' => $printFee,
+                            'discount' => $discount,
+                            'shipping_fee' => $shippingFee,
+                            'shop_shipping_fee' => $shopShippingFee,
+                            'total_amount' => $totalAmount,
+                        ],
+                        'refund' => [
+                            'bank_name' => $data['refund_bank_name'] ?? null,
+                            'account_number' => $data['refund_account_number'] ?? null,
+                            'account_name' => $data['refund_account_name'] ?? null,
+                        ],
+                    ],
+                    'total_amount' => $totalAmount,
+                    'status' => StorefrontPaymentSession::STATUS_PENDING,
+                    'expires_at' => $expiresAt,
+                ]);
+
+                $paymentQrDataUri = $this->paymentQrDataUriFor(
+                    $paymentCode,
+                    $totalAmount,
+                );
+                if ($paymentQrDataUri === null) {
+                    throw new \RuntimeException('Chưa thể tạo mã VietQR. Phiên thanh toán chưa được ghi nhận.');
+                }
+
+                DB::commit();
+
+                return response()->json($this->paymentSessionResponseData($paymentSession, $paymentQrDataUri), 201);
+            }
+
             $customer = Customer::mergeByPhone([
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
@@ -560,7 +631,12 @@ class CheckoutController extends Controller
             DB::rollBack();
             if (! empty($data['checkout_ref'])) {
                 // Hai request cùng ref có thể cùng vượt qua lần đọc đầu. Ràng
-                // buộc unique chặn bản ghi thứ hai, sau đó trả đơn đã commit.
+                // buộc unique chặn bản ghi thứ hai, sau đó trả phiên/đơn đã commit.
+                $paymentSession = StorefrontPaymentSession::where('checkout_ref', $data['checkout_ref'])->first();
+                if ($paymentSession) {
+                    return $this->existingPaymentSessionResponse($paymentSession, $fingerprint);
+                }
+
                 $existing = Invoice::withTrashed()->orders()
                     ->where('checkout_ref', $data['checkout_ref'])->first();
                 if ($existing) {
@@ -574,6 +650,68 @@ class CheckoutController extends Controller
                 'error' => 'Chưa thể tạo đơn hàng. Đơn chưa được ghi nhận; vui lòng kiểm tra kết nối rồi thử lại.',
             ], 500);
         }
+    }
+
+    private function existingPaymentSessionResponse(StorefrontPaymentSession $session, string $fingerprint)
+    {
+        if (! hash_equals((string) $session->checkout_fingerprint, $fingerprint)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Mã yêu cầu đã được dùng cho một phiên thanh toán khác.',
+            ], 409);
+        }
+
+        if ($session->hasExpired()) {
+            if ($session->status === StorefrontPaymentSession::STATUS_PENDING) {
+                $session->forceFill(['status' => StorefrontPaymentSession::STATUS_EXPIRED])->save();
+            }
+
+            return response()->json([
+                'success' => false,
+                'expired' => true,
+                'error' => 'Mã VietQR đã hết hạn sau 15 phút. Vui lòng tạo mã thanh toán mới.',
+            ], 410);
+        }
+
+        if ($session->status === StorefrontPaymentSession::STATUS_PAID && $session->invoice) {
+            return response()->json($this->paymentSessionResponseData($session, null));
+        }
+
+        $paymentQrDataUri = $this->paymentQrDataUriFor($session->payment_code, (int) $session->total_amount);
+        if ($paymentQrDataUri === null) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Chưa thể dựng lại mã VietQR. Vui lòng thử lại sau ít phút.',
+            ], 503);
+        }
+
+        return response()->json($this->paymentSessionResponseData($session, $paymentQrDataUri));
+    }
+
+    private function paymentSessionResponseData(StorefrontPaymentSession $session, ?string $paymentQrDataUri): array
+    {
+        $invoice = $session->invoice;
+
+        return [
+            'success' => true,
+            'checkout_ref' => $session->checkout_ref,
+            // Đây là mã thanh toán. Khi tiền vào, Invoice mới tạo dùng đúng mã
+            // này nên khách và quản trị luôn đối chiếu cùng một chuỗi RUNGU.
+            'order_code' => $session->payment_code,
+            'payment_reference' => $this->paymentReference($session->payment_code),
+            'payment_qr_data_uri' => $paymentQrDataUri,
+            'expires_at' => $session->expires_at?->toIso8601String(),
+            'subtotal' => (int) data_get($session->payload, 'financials.subtotal', 0),
+            'print_fee' => (int) data_get($session->payload, 'financials.print_fee', 0),
+            'shipping_fee' => (int) data_get($session->payload, 'financials.shipping_fee', 0),
+            'discount' => (int) data_get($session->payload, 'financials.discount', 0),
+            'total_amount' => (int) $session->total_amount,
+            'order_status' => $invoice?->order_status,
+            'pay_status' => $session->status === StorefrontPaymentSession::STATUS_PAID ? 1 : 0,
+            'message' => $session->status === StorefrontPaymentSession::STATUS_PAID
+                ? 'SePay đã xác nhận thanh toán. Cửa hàng đã nhận đơn của bạn.'
+                : 'Mã VietQR đã được tạo. Vui lòng thanh toán trong 15 phút.',
+        ];
     }
 
     private function existingCheckoutResponse(Invoice $invoice, string $fingerprint)
@@ -628,6 +766,34 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Mã yêu cầu không hợp lệ.'], 422);
         }
 
+        $session = StorefrontPaymentSession::with('invoice')->where('checkout_ref', $checkoutRef)->first();
+        if ($session) {
+            if ($session->hasExpired()) {
+                if ($session->status === StorefrontPaymentSession::STATUS_PENDING) {
+                    $session->forceFill(['status' => StorefrontPaymentSession::STATUS_EXPIRED])->save();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'payment_state' => StorefrontPaymentSession::STATUS_EXPIRED,
+                    'order_code' => $session->payment_code,
+                    'payment_reference' => $this->paymentReference($session->payment_code),
+                    'pay_status' => 0,
+                    'expires_at' => $session->expires_at?->toIso8601String(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'payment_state' => $session->status,
+                'order_code' => $session->payment_code,
+                'payment_reference' => $this->paymentReference($session->payment_code),
+                'order_status' => $session->invoice?->order_status,
+                'pay_status' => $session->status === StorefrontPaymentSession::STATUS_PAID ? 1 : 0,
+                'expires_at' => $session->expires_at?->toIso8601String(),
+            ]);
+        }
+
         $order = Invoice::orders()->where('checkout_ref', $checkoutRef)->first();
         if (!$order) {
             return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
@@ -653,6 +819,29 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Mã yêu cầu không hợp lệ.'], 422);
         }
 
+        $session = StorefrontPaymentSession::where('checkout_ref', $checkoutRef)->first();
+        if ($session) {
+            if ($session->hasExpired()) {
+                if ($session->status === StorefrontPaymentSession::STATUS_PENDING) {
+                    $session->forceFill(['status' => StorefrontPaymentSession::STATUS_EXPIRED])->save();
+                }
+
+                return response()->json(['error' => 'Mã VietQR đã hết hạn.'], 410);
+            }
+
+            $image = $this->paymentQrImageFor($session->payment_code, (int) $session->total_amount);
+            if ($image === null) {
+                return response()->json([
+                    'error' => 'Chưa cấu hình đủ tài khoản nhận chuyển khoản để tạo mã VietQR.',
+                ], 422);
+            }
+
+            return response($image, 200, [
+                'Content-Type' => 'image/png',
+                'Cache-Control' => 'private, no-store, max-age=0',
+            ]);
+        }
+
         $invoice = Invoice::orders()->where('checkout_ref', $checkoutRef)->first();
         if (! $invoice) {
             return response()->json(['error' => 'Không tìm thấy đơn hàng.'], 404);
@@ -674,13 +863,24 @@ class CheckoutController extends Controller
     /** Dùng cho response checkout để landing không cần gọi thêm endpoint ảnh QR. */
     private function paymentQrDataUri(Invoice $invoice): ?string
     {
-        $image = $this->paymentQrImage($invoice);
+        return $this->paymentQrDataUriFor((string) $invoice->order_code, (int) $invoice->total_amount);
+    }
+
+    private function paymentQrDataUriFor(string $paymentCode, int $totalAmount): ?string
+    {
+        $image = $this->paymentQrImageFor($paymentCode, $totalAmount);
 
         return $image === null ? null : 'data:image/png;base64,' . base64_encode($image);
     }
 
     /** Dựng PNG QR từ dữ liệu đã có trong đơn, không gọi một dịch vụ bên ngoài. */
     private function paymentQrImage(Invoice $invoice): ?string
+    {
+        return $this->paymentQrImageFor((string) $invoice->order_code, (int) $invoice->total_amount);
+    }
+
+    /** Dựng QR cho phiên thanh toán chưa phải là Invoice. */
+    private function paymentQrImageFor(string $paymentCode, int $totalAmount): ?string
     {
         $recipient = $this->vietQrRecipient();
         if ($recipient === null) {
@@ -692,8 +892,8 @@ class CheckoutController extends Controller
         $payload = $this->vietQrPayload(
             $bankBin,
             $accountNumber,
-            max(0, (int) $invoice->total_amount),
-            $this->paymentReference((string) $invoice->order_code),
+            max(0, $totalAmount),
+            $this->paymentReference($paymentCode),
         );
 
         $qrCode = new QrCode($payload);
@@ -770,6 +970,139 @@ class CheckoutController extends Controller
         }
 
         return strtoupper(str_pad(dechex($crc), 4, '0', STR_PAD_LEFT));
+    }
+
+    /**
+     * Biến một phiên VietQR đã được SePay xác nhận thành Invoice đã thanh toán.
+     *
+     * Method này phải luôn được gọi trong transaction và với dòng phiên đã
+     * lock. Giá, voucher và phí ship lấy từ payload đã chốt lúc tạo QR, tránh
+     * tình huống khách đã trả đúng QR nhưng giá trên shop vừa đổi.
+     *
+     * @return array{invoice: Invoice, stock_issue: bool}
+     */
+    public function fulfillPaidPaymentSession(StorefrontPaymentSession $session): array
+    {
+        if ($session->status === StorefrontPaymentSession::STATUS_PAID && $session->invoice) {
+            return ['invoice' => $session->invoice, 'stock_issue' => false];
+        }
+
+        if ($session->hasExpired()) {
+            $session->forceFill(['status' => StorefrontPaymentSession::STATUS_EXPIRED])->save();
+            throw new \RuntimeException('Mã VietQR đã hết hạn.');
+        }
+
+        $payload = (array) $session->payload;
+        $customerData = (array) data_get($payload, 'customer', []);
+        $financials = (array) data_get($payload, 'financials', []);
+        $items = (array) data_get($payload, 'items', []);
+
+        if ($items === [] || ! isset($customerData['customer_name'], $customerData['customer_phone'])) {
+            throw new \RuntimeException('Phiên thanh toán thiếu dữ liệu đơn hàng.');
+        }
+
+        $customer = Customer::mergeByPhone([
+            'customer_name' => (string) $customerData['customer_name'],
+            'customer_phone' => (string) $customerData['customer_phone'],
+            'customer_email' => $customerData['customer_email'] ?? null,
+            'address' => (string) ($customerData['address'] ?? ''),
+            'province' => (string) ($customerData['province'] ?? ''),
+            'ward' => (string) ($customerData['ward'] ?? ''),
+        ]);
+
+        $voucherCode = strtoupper(trim((string) data_get($payload, 'voucher_code', '')));
+        $note = data_get($payload, 'note');
+        if ($voucherCode !== '') {
+            $note = trim(($note ? $note . "\n" : '') . "Voucher: {$voucherCode}");
+        }
+
+        $printDesignCodes = array_values(array_unique((array) data_get($payload, 'print_design_codes', [])));
+        $isPrintOrder = $printDesignCodes !== [];
+        $invoiceData = [
+            'invoice_type' => Invoice::TYPE_ORDER,
+            'order_code' => $session->payment_code,
+            'checkout_ref' => $session->checkout_ref,
+            'checkout_fingerprint' => $session->checkout_fingerprint,
+            'order_status' => $isPrintOrder ? Invoice::STATUS_PENDING : Invoice::STATUS_CONFIRMED,
+            'customer_id' => $customer->id,
+            'user_id' => $this->systemUserId(),
+            'total_amount' => (int) $session->total_amount,
+            'discount' => (int) data_get($financials, 'discount', 0),
+            'shipping_fee' => (int) data_get($financials, 'shipping_fee', 0),
+            'shop_shipping_fee' => (int) data_get($financials, 'shop_shipping_fee', 0),
+            'shipping_name' => (string) $customerData['customer_name'],
+            'shipping_phone' => $customer->customer_phone,
+            'shipping_address' => implode(', ', [
+                (string) ($customerData['address'] ?? ''),
+                (string) ($customerData['ward'] ?? ''),
+                (string) ($customerData['province'] ?? ''),
+            ]),
+            'payment_method' => 'bank_transfer',
+            'payment_expires_at' => null,
+            'pay_status' => 1,
+            'note' => $note,
+            'signature_name' => (string) $customerData['customer_name'],
+        ];
+
+        if (config('features.print_studio')) {
+            $invoiceData['print_fee'] = (int) data_get($financials, 'print_fee', 0);
+            $invoiceData['refund_bank_name'] = data_get($payload, 'refund.bank_name');
+            $invoiceData['refund_account_number'] = data_get($payload, 'refund.account_number');
+            $invoiceData['refund_account_name'] = data_get($payload, 'refund.account_name');
+        }
+
+        $invoice = Invoice::create($invoiceData);
+        foreach ($items as $item) {
+            DB::table('product_invoices')->insert([
+                'invoice_id' => $invoice->id,
+                'product_id' => (int) $item['product_id'],
+                'variant_id' => (int) $item['variant_id'],
+                'quantity' => (int) $item['quantity'],
+                'unit_price' => (int) $item['unit_price'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if ($printDesignCodes !== []) {
+            $printDesigns = PrintDesign::whereIn('code', $printDesignCodes)->lockForUpdate()->get();
+            if ($printDesigns->count() !== count($printDesignCodes)) {
+                throw new \RuntimeException('Không tìm thấy mẫu thiết kế của phiên thanh toán.');
+            }
+
+            foreach ($printDesigns as $printDesign) {
+                if ($printDesign->invoice_id !== null) {
+                    throw new \RuntimeException('Mẫu thiết kế đã thuộc một đơn hàng khác.');
+                }
+
+                $printDesign->update([
+                    'invoice_id' => $invoice->id,
+                    'pending_payment_ref' => null,
+                    'review_status' => PrintDesign::STATUS_PENDING,
+                ]);
+            }
+        }
+
+        $stockIssue = false;
+        try {
+            $invoice->deductStockLines();
+        } catch (\RuntimeException $e) {
+            // Tiền đã vào thật: vẫn lập đơn đã thanh toán để nhân viên xử lý,
+            // chỉ không được trừ kho dở dang.
+            $stockIssue = true;
+            $invoice->note = trim(($invoice->note ? $invoice->note . "\n" : '')
+                . 'CẦN XỬ LÝ: đã nhận chuyển khoản nhưng ' . $e->getMessage());
+            $invoice->save();
+        }
+
+        app(VoucherRedemption::class)->recordPaidOrder($invoice);
+        $session->forceFill([
+            'status' => StorefrontPaymentSession::STATUS_PAID,
+            'paid_at' => now(),
+            'invoice_id' => $invoice->id,
+        ])->save();
+
+        return ['invoice' => $invoice, 'stock_issue' => $stockIssue];
     }
 
     /**
@@ -918,10 +1251,19 @@ class CheckoutController extends Controller
 
     private function generateOrderCode(): string
     {
+        return $this->generatePaymentCode();
+    }
+
+    /** Mã phải duy nhất giữa Invoice cũ, đơn COD và phiên VietQR đang mở. */
+    private function generatePaymentCode(): string
+    {
         do {
             $code = $this->paymentCodePrefix() . now()->format('ymd')
                 . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        } while (Invoice::withTrashed()->where('order_code', $code)->exists());
+        } while (
+            Invoice::withTrashed()->where('order_code', $code)->exists()
+            || StorefrontPaymentSession::where('payment_code', $code)->exists()
+        );
 
         return $code;
     }

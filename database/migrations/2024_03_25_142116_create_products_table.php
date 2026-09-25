@@ -22,7 +22,10 @@ return new class extends Migration
             $table->string('material')->nullable();   // chất liệu: cotton, kaki, lụa...
             $table->string('brand')->nullable();
             $table->string('unit')->default('cái');
-            $table->bigInteger('import_price');
+            // Giá vốn có thể chưa xác định khi cửa hàng mới tạo sản phẩm.
+            // Migration 2026_09_13 giữ câu lệnh ALTER cho database đã triển khai;
+            // khai báo nullable ở đây để schema cài đặt mới và SQLite test có cùng cấu trúc cuối.
+            $table->bigInteger('import_price')->nullable();
             $table->bigInteger('sell_price');
             $table->bigInteger('discount_price')->nullable(); // giá khuyến mãi, null = không giảm
             $table->boolean('is_featured')->default(false);   // đưa lên trang chủ
