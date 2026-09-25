@@ -83,6 +83,11 @@ RUN chown -R www-data:www-data \
         storage \
         bootstrap/cache
 
+# Migration chạy trước khi service nhận traffic trên Render. Script chỉ dùng
+# `migrate --force`, không có thao tác reset/truncate dữ liệu.
+COPY docker/start.sh /usr/local/bin/start-app
+RUN chmod +x /usr/local/bin/start-app
+
 
 # Apache must serve Laravel /public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
@@ -95,3 +100,5 @@ RUN sed -ri \
 
 
 EXPOSE 80
+
+CMD ["/usr/local/bin/start-app"]
