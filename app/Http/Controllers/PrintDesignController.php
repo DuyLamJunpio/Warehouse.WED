@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\PrintDesign;
+use App\Services\PrintPositions;
 use App\Services\PrintReviewMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Hàng đợi duyệt thiết kế.
@@ -61,12 +63,15 @@ class PrintDesignController extends Controller
     public function show(PrintDesign $design)
     {
         $design->load(['blank.colors', 'blank.mockups', 'technique', 'reviewer', 'pricingVersion', 'invoice']);
+        $fonts = $design->textFonts();
 
         return view('print.design-detail', [
             'design' => $design,
             'invoice' => $design->invoice,
             'sheet' => $design->productionSheet(),
             'boxes' => $design->positionBoxes(),
+            'textLines' => $design->textLines($fonts),
+            'fontFaceCss' => $design->fontFaceCss($fonts),
         ]);
     }
 
@@ -76,13 +81,20 @@ class PrintDesignController extends Controller
      * Trả thẳng chuỗi SVG chứ không lưu ra đĩa: nó dựng lại từ `placements` trong
      * một phần nghìn giây, và lưu bản sao là tự tạo ra thứ có thể lệch với dữ liệu.
      */
-    public function svg(PrintDesign $design)
+    public function svg(PrintDesign $design, ?string $position = null)
     {
+        if ($position !== null && ! in_array($position, $design->positionKeys(), true)) {
+            abort(404);
+        }
+
         $design->loadMissing('blank');
 
-        return response($design->toSvg(), 200, [
+        // "INO4FNEBFS-mat-sau.svg": thợ nhận hai file vẫn biết file nào in mặt nào.
+        $name = $design->code . ($position !== null ? '-' . Str::slug(PrintPositions::label($position)) : '');
+
+        return response($design->toSvg($position), 200, [
             'Content-Type' => 'image/svg+xml; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $design->code . '.svg"',
+            'Content-Disposition' => 'attachment; filename="' . $name . '.svg"',
         ]);
     }
 

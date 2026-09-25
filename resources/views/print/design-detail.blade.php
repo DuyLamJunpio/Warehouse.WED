@@ -24,6 +24,12 @@
         };
     @endphp
 
+    {{-- Chữ lưu tên CSS "print-font-{id}" của studio; thiếu khai báo này thì ảnh
+         ghép hiện phông mặc định và nhân viên duyệt nhầm mặt chữ. --}}
+    @if ($fontFaceCss !== '')
+        <style>{!! $fontFaceCss !!}</style>
+    @endif
+
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <nav class="flex mb-2" aria-label="Breadcrumb">
@@ -40,15 +46,18 @@
                 {{ $design->technique?->name }} · {{ $design->qty }} áo
             </p>
         </div>
-        <div class="flex items-center gap-2.5">
+        <div class="flex flex-wrap items-center gap-2.5">
             @include('print.partials.design-status', ['design' => $design])
-            <a href="{{ route('print.designs.svg', $design) }}"
-                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-slate-800 dark:bg-slate-200 dark:text-slate-900 rounded-xl hover:bg-slate-700 dark:hover:bg-white transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-                </svg>
-                Tải file cho xưởng (.svg)
-            </a>
+            {{-- Mỗi vị trí in một file: xưởng ép mặt trước và mặt sau ở hai lượt riêng. --}}
+            @foreach ($design->positionKeys() as $position)
+                <a href="{{ route('print.designs.svg', [$design, $position]) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-slate-800 dark:bg-slate-200 dark:text-slate-900 rounded-xl hover:bg-slate-700 dark:hover:bg-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                    Tải file {{ \App\Services\PrintPositions::label($position) }} (.svg)
+                </a>
+            @endforeach
         </div>
     </div>
 
@@ -154,8 +163,9 @@
                 <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50">
                     <h2 class="text-sm font-bold text-slate-900 dark:text-white">Bảng toạ độ cho thợ in</h2>
                     <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        Gửi thợ <b>file .svg</b> ở nút trên cùng — nó giữ đúng toạ độ mm, ảnh gốc theo link và
-                        chữ ở dạng <b>text thật</b> (mở bằng Illustrator hoặc Corel, convert to outlines là in được).
+                        Gửi thợ các <b>file .svg</b> ở nút trên cùng, mỗi vị trí in một file — nó giữ đúng toạ độ mm,
+                        ảnh gốc theo link và chữ ở dạng <b>text thật</b>. Đầu file ghi tên và link tải phông: thợ cài
+                        phông đó rồi mở bằng Illustrator hoặc Corel, convert to outlines là in được.
                         Bảng dưới đây và ảnh ghép bên trái là để đối chiếu bằng mắt. Cột X/Y tính từ góc trên trái
                         khung ảnh phôi ({{ $design->frameSizeMm() ?? 'chưa hiệu chuẩn' }}), không phải từ mép hình.
                     </p>
@@ -187,7 +197,14 @@
                                         @else
                                             <span class="text-slate-500">{{ $row['asset_name'] ?? 'Hình' }}</span>
                                         @endif
-                                        <span class="block text-[10.5px] font-mono text-slate-400">{{ $row['source_px'] }} px</span>
+                                        @if ($row['kind'] === 'text')
+                                            <span class="block text-[10.5px] text-slate-500 dark:text-slate-400">
+                                                Phông: <b class="font-semibold text-slate-700 dark:text-slate-200">{{ $row['text_font_name'] ?? 'mặc định' }}</b>
+                                                · màu <span class="font-mono">{{ $row['text_color'] }}</span>
+                                            </span>
+                                        @else
+                                            <span class="block text-[10.5px] font-mono text-slate-400">{{ $row['source_px'] }} px</span>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-2.5 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
                                         {{ $row['x_mm'] }} / {{ $row['y_mm'] }} mm
@@ -212,6 +229,52 @@
                     </table>
                 </div>
             </section>
+            {{-- Phông chữ khách chọn: thợ phải cài đúng tệp này rồi mới convert to outlines. --}}
+            @if ($textLines)
+                <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white">Phông chữ trong thiết kế</h2>
+                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            Mỗi dòng chữ khách gõ, hiện bằng đúng phông khách chọn. Gửi thợ tệp phông kèm file .svg —
+                            Illustrator/Corel không đọc phông nhúng trong SVG.
+                        </p>
+                    </div>
+                    <ul class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @foreach ($textLines as $line)
+                            <li class="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ $line['position'] }}</p>
+                                    <p class="mt-1 truncate text-2xl leading-tight"
+                                        style="font-family: {{ $line['font_family'] }}; color: {{ $line['color'] }}">{{ $line['text'] }}</p>
+                                    <p class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                                        <span class="font-semibold">{{ $line['font_name'] ?? 'Phông mặc định' }}</span>
+                                        @if ($line['font']?->file_path)
+                                            <span class="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 font-mono text-[10.5px] uppercase">
+                                                tệp .{{ pathinfo($line['font']->file_path, PATHINFO_EXTENSION) }}
+                                            </span>
+                                        @else
+                                            <span class="px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 text-[10.5px]">
+                                                phông hệ thống — xưởng tự có
+                                            </span>
+                                        @endif
+                                        <span class="font-mono text-[10.5px] text-slate-400">màu {{ $line['color'] }}</span>
+                                    </p>
+                                </div>
+                                @if ($line['font']?->file_path)
+                                    <a href="{{ route('print.fonts.download', $line['font']) }}"
+                                        class="shrink-0 inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-950/70 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                                        </svg>
+                                        Tải phông
+                                    </a>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
+
             {{-- Bảng kê giá đã đóng băng --}}
             <section class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50">

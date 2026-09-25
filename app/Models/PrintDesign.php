@@ -6,6 +6,7 @@ use App\Services\PrintPositions;
 use App\Services\PrintPricing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -201,8 +202,10 @@ class PrintDesign extends Model
      * được DỜI VỀ GỐC KHUNG BAO của chính nó: một mảnh in phải nằm sát mép tệp
      * để thợ cắt, chứ không lạc giữa một tờ trống to bằng cả chiếc áo. Chỗ đặt
      * thật trên áo không mất đi — nó nằm trong nhãn ngay trên mỗi nhóm.
+     *
+     * Truyền `$position` để lấy riêng một vị trí — mỗi mặt áo một file cho xưởng.
      */
-    public function toSvg(): string
+    public function toSvg(?string $position = null): string
     {
         /** Khoảng hở giữa hai vị trí, đủ để thợ cắt rời mà không chạm nét. */
         $gap = 20;
@@ -210,7 +213,15 @@ class PrintDesign extends Model
         $totalHeight = 0;
         $groups = [];
 
-        foreach ($this->placementsByPosition() as $key => $placements) {
+        // Mỗi vị trí một file: thợ in mặt trước và mặt sau ở hai lượt ép riêng.
+        $byPosition = $this->placementsByPosition();
+        if ($position !== null) {
+            $byPosition = array_intersect_key($byPosition, [$position => true]);
+        }
+
+        $fonts = $this->textFonts(array_merge([], ...array_values($byPosition)));
+
+        foreach ($byPosition as $key => $placements) {
             $box = PrintPricing::boundingBox($placements);
             $width = max($box['w'], 1);
             $height = max($box['h'], 1);
@@ -243,12 +254,24 @@ class PrintDesign extends Model
         $width = max($offsetX - $gap, 10);
         $height = max($totalHeight, 10);
 
+        // Tên và link phông ghi thẳng vào file: Illustrator/Corel bỏ qua @font-face,
+        // nên thợ phải biết cài phông nào trước khi convert to outlines.
+        $fontBlock = $fonts->map(fn (PrintFont $font) => sprintf(
+            "<!-- Phông \"%s\": %s -->\n",
+            self::comment($font->name),
+            self::comment($font->url ?? 'phông hệ thống (' . $font->family . ')'),
+        ))->implode('');
+        $css = $this->fontFaceCss($fonts);
+        if ($css !== '') {
+            $fontBlock .= '<defs><style>' . self::xml($css) . "</style></defs>\n";
+        }
+
         return sprintf(
             '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
             . '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
             . 'width="%smm" height="%smm" viewBox="0 %s %s %s">' . "\n"
             . '<!-- %s · %s · %s · size %s · %d áo. Toạ độ tính bằng milimét, tỉ lệ 1:1. -->' . "\n"
-            . '%s' . "\n</svg>\n",
+            . '%s%s' . "\n</svg>\n",
             $width,
             $height + 8,
             -8,
@@ -259,8 +282,65 @@ class PrintDesign extends Model
             self::xml($this->color_name),
             self::xml($this->size),
             $this->qty,
+            $fontBlock,
             implode("\n", $groups),
         );
+    }
+
+    /**
+     * Phông mà các dòng chữ dùng — cả phông tải lên lẫn phông hệ thống — theo id.
+     *
+     * @param  array<int, array>|null  $placements  mặc định là cả mẫu
+     * @return Collection<int, PrintFont>
+     */
+    public function textFonts(?array $placements = null): Collection
+    {
+        $ids = collect($placements ?? (array) $this->placements)
+            ->filter(fn ($p) => ($p['kind'] ?? 'image') === 'text')
+            ->pluck('text_font_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $ids->isEmpty() ? collect() : PrintFont::whereIn('id', $ids)->get()->keyBy('id');
+    }
+
+    /** `@font-face` cho các phông tự tải lên mà mẫu này dùng — xem PrintFont::fontFace(). */
+    public function fontFaceCss(?Collection $fonts = null): string
+    {
+        return PrintFont::fontFaceCss($fonts ?? $this->textFonts());
+    }
+
+    /**
+     * Mỗi dòng chữ khách đặt, kèm phông của nó — để nhân viên thấy ngay khách
+     * chọn phông gì và tải đúng tệp phông về cho xưởng.
+     *
+     * @return array<int, array{position: string, text: string, color: string, font_name: ?string, font_family: string, font: ?PrintFont}>
+     */
+    public function textLines(?Collection $fonts = null): array
+    {
+        $fonts ??= $this->textFonts();
+
+        return collect((array) $this->placements)
+            ->filter(fn ($p) => ($p['kind'] ?? 'image') === 'text')
+            ->map(fn ($p) => [
+                'position' => PrintPositions::label($p['position'] ?? $p['zone'] ?? ''),
+                'text' => (string) ($p['text_content'] ?? ''),
+                'color' => (string) ($p['text_color'] ?? '#000000'),
+                // Tên chụp lúc khách chốt mẫu: phông có đổi tên sau này thì vẫn
+                // biết khách đã thấy tên gì.
+                'font_name' => $p['text_font_name'] ?? $fonts->get($p['text_font_id'] ?? 0)?->name,
+                'font_family' => (string) ($p['text_font_family'] ?? 'sans-serif'),
+                'font' => $fonts->get($p['text_font_id'] ?? 0),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** Các vị trí in có hình, theo thứ tự khách đặt — mỗi vị trí là một file cho xưởng. */
+    public function positionKeys(): array
+    {
+        return array_keys($this->placementsByPosition());
     }
 
     /**
@@ -292,7 +372,7 @@ class PrintDesign extends Model
                 . 'font-family="%s" font-size="44" fill="%s">%s</text></svg>',
                 $x, $y, $w, $h,
                 $transform,
-                self::xml($p['text_font_family'] ?? 'sans-serif'),
+                self::xml(self::svgFontFamily($p)),
                 self::xml($p['text_color'] ?? '#000000'),
                 self::xml($p['text_content'] ?? ''),
             );
@@ -308,8 +388,26 @@ class PrintDesign extends Model
         );
     }
 
+    /**
+     * Tên thật của phông đứng trước "print-font-{id}": Illustrator/Corel tìm phông
+     * đã cài theo đúng tên này, còn trình duyệt không có thì đi tiếp tới @font-face.
+     */
+    private static function svgFontFamily(array $p): string
+    {
+        $family = $p['text_font_family'] ?? 'sans-serif';
+        $name = trim(str_replace(['"', '\\'], '', (string) ($p['text_font_name'] ?? '')));
+
+        return $name === '' ? $family : '"' . $name . '", ' . $family;
+    }
+
     private static function xml(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+    }
+
+    /** "--" không được phép nằm trong chú thích XML. */
+    private static function comment(string $value): string
+    {
+        return str_replace('--', '- -', $value);
     }
 }

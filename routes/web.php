@@ -96,7 +96,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/designs', [PrintDesignController::class, 'index'])->name('designs');
         Route::get('/designs/{design}', [PrintDesignController::class, 'show'])->name('designs.show');
-        Route::get('/designs/{design}/svg', [PrintDesignController::class, 'svg'])->name('designs.svg');
+        // Có {position} là file của riêng vị trí đó (mặt trước, mặt sau…).
+        Route::get('/designs/{design}/svg/{position?}', [PrintDesignController::class, 'svg'])
+            ->where('position', '[a-z_]+')
+            ->name('designs.svg');
         Route::post('/designs/{design}/review', [PrintDesignController::class, 'review'])->name('designs.review');
 
         Route::get('/library', [PrintAssetController::class, 'index'])->name('library');
@@ -107,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/fonts', [PrintAssetController::class, 'storeFont'])->name('fonts.store');
         Route::post('/fonts/{font}', [PrintAssetController::class, 'updateFont'])->name('fonts.update');
         Route::post('/fonts/{font}/toggle', [PrintAssetController::class, 'toggleFont'])->name('fonts.toggle');
+        Route::get('/fonts/{font}/download', [PrintAssetController::class, 'downloadFont'])->name('fonts.download');
 
         // Hàng đợi duyệt thiết kế — chốt chặn trước khi đưa vào xưởng.
         Route::get('/designs', [PrintDesignController::class, 'index'])->name('designs');
