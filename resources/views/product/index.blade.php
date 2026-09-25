@@ -1,6 +1,8 @@
 <x-app-layout>
     @php
-        $variantQuickSizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Freesize'];
+        // Size trẻ em theo bảng size TBC: Size 1 (<15kg) … Size 5 (<48kg).
+        $variantKidSizes = ['Size 1', 'Size 2', 'Size 3', 'Size 4', 'Size 5'];
+        $variantQuickSizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Freesize', ...$variantKidSizes];
         $variantQuickColors = ['Trắng', 'Kem', 'Đỏ Tươi', 'Đỏ Đô', 'Hồng Pastel', 'Đen', 'Nâu', 'Xanh Lá Đậm'];
         $variantCombinationPresets = [
             [
@@ -17,6 +19,16 @@
                 'label' => 'Freesize nhiều màu',
                 'count' => '8 biến thể',
                 'value' => 'Freesize | Trắng/Kem/Đỏ Tươi/Đỏ Đô/Hồng Pastel/Đen/Nâu/Xanh Lá Đậm',
+            ],
+            [
+                'label' => 'Trẻ em nhiều màu Size 1-5',
+                'count' => '40 biến thể',
+                'value' => implode(',', $variantKidSizes) . ' | Trắng/Kem/Đỏ Tươi/Đỏ Đô/Hồng Pastel/Đen/Nâu/Xanh Lá Đậm',
+            ],
+            [
+                'label' => 'Trẻ em basic Size 1-5',
+                'count' => '15 biến thể',
+                'value' => implode(',', $variantKidSizes) . ' | Trắng/Kem/Đen',
             ],
         ];
     @endphp
