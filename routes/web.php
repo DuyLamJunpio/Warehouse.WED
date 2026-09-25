@@ -20,6 +20,18 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\VoucherController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+/*
+ * Render dùng endpoint này để chỉ chuyển traffic sang container đã sẵn sàng.
+ * Kiểm tra cả kết nối DB vì checkout không thể hoạt động nếu ứng dụng chỉ mới
+ * mở cổng HTTP nhưng PostgreSQL chưa kết nối xong.
+ */
+Route::get('/healthz', function () {
+    DB::select('select 1');
+
+    return response()->json(['status' => 'ok']);
+});
 
 Route::get('/', function () {
     return view('auth.login');
