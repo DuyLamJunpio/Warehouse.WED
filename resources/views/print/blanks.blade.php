@@ -34,6 +34,9 @@
                             <h2 class="text-sm font-bold text-slate-900 dark:text-white">{{ $blank->name }}</h2>
                             <p class="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
                                 {{ number_format($blank->effectiveBasePrice(), 0, ',', '.') }} ₫ ·
+                                @if ($blank->discountLabel())
+                                    <span class="font-semibold text-rose-600 dark:text-rose-400">giảm {{ str_replace('−', '', $blank->discountLabel()) }}</span> ·
+                                @endif
                                 {{ $blank->colors->count() }} màu ·
                                 {{ count($blank->positionKeys()) }} vị trí in ·
                                 {{ $blank->mockups->count() }} mockup ·
@@ -291,6 +294,7 @@
 
             const product = val('[data-f-product]');
             const category = val('[data-f-category]');
+            const discountType = val('[data-f-discount-type]');
 
             return {
                 name: val('[data-f-name]'),
@@ -300,6 +304,9 @@
                 // Cũng vậy: rỗng = chưa xếp danh mục, không phải danh mục số 0.
                 categories_id: category === '' ? null : parseInt(category, 10),
                 base_price: parseInt(val('[data-f-price]'), 10) || 0,
+                // Rỗng = không giảm; máy chủ lưu mức 0 thành "không giảm" luôn.
+                discount_type: discountType || null,
+                discount_value: discountType ? (parseInt(val('[data-f-discount-value]'), 10) || 0) : null,
                 frame_width_mm: parseInt(val('[data-f-fw]'), 10) || 520,
                 frame_height_mm: parseInt(val('[data-f-fh]'), 10) || 700,
                 moq: parseInt(val('[data-f-moq]'), 10) || 1,
@@ -327,6 +334,43 @@
             template.querySelector('[data-color-hex]').value = '#cccccc';
             template.querySelector('[data-color-tone]').value = '';
             template.querySelector('[data-color-sizes]').value = '';
+
+            /*
+             * Câu xem trước giảm giá: một áo in MỘT vị trí bằng kỹ thuật đầu tiên
+             * đang tick. Cùng công thức với PrintPricing::blankDiscount() — mức
+             * giảm không vượt quá phôi + in, làm tròn đến đồng.
+             */
+            const discountPreview = form.querySelector('[data-discount-preview]');
+            const discountInput = form.querySelector('[data-f-discount-value]');
+            const money = n => n.toLocaleString('vi-VN') + ' ₫';
+            const renderDiscount = () => {
+                const type = form.querySelector('[data-f-discount-type]').value;
+                discountInput.disabled = !type;
+                if (!type) {
+                    discountPreview.textContent = 'Giảm tính trên giá phôi + tiền in của mỗi áo, không giảm phí sticker.';
+                    return;
+                }
+
+                const product = form.querySelector('[data-f-product]');
+                const base = product && product.value !== ''
+                    ? parseInt(product.selectedOptions[0]?.dataset.basePrice, 10) || 0
+                    : parseInt(form.querySelector('[data-f-price]').value, 10) || 0;
+                const tech = Array.from(form.querySelectorAll('[data-f-tech]:checked'))
+                    .find(cb => cb.dataset.price !== '');
+                const subtotal = base + (tech ? parseInt(tech.dataset.price, 10) : 0);
+                const value = Math.max(0, parseInt(discountInput.value, 10) || 0);
+                const cut = Math.round(Math.min(
+                    type === 'percent' ? subtotal * Math.min(value, 100) / 100 : value,
+                    subtotal,
+                ));
+
+                discountPreview.textContent = (tech ? 'Áo in 1 vị trí bằng ' + tech.dataset.name : 'Áo chưa in')
+                    + ': ' + money(subtotal) + ' → ' + money(subtotal - cut) + ' (giảm ' + money(cut) + ').'
+                    + ' Giảm tính trên giá phôi + tiền in của mỗi áo, không giảm phí sticker.';
+            };
+            form.addEventListener('input', renderDiscount);
+            form.addEventListener('change', renderDiscount);
+            renderDiscount();
 
             form.querySelector('[data-color-add]')?.addEventListener('click', () => {
                 list.appendChild(template.cloneNode(true));

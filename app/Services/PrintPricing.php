@@ -48,6 +48,10 @@ class PrintPricing
         self::PER_INK_COLOR => 'mỗi màu mực',
     ];
 
+    /** Hai kiểu giảm giá của một phôi. */
+    public const DISCOUNT_PERCENT = 'percent';
+    public const DISCOUNT_AMOUNT = 'amount';
+
     /** Ba đơn vị này tính riêng từng vị trí; hai đơn vị còn lại tính trên cả đơn. */
     private const PER_POSITION_SCOPED = [self::PER_POSITION, self::PER_PLACEMENT, self::PER_INK_COLOR];
 
@@ -258,6 +262,45 @@ class PrintPricing
         $prices = $active->map(fn ($technique) => (int) $technique['price'])->unique()->values();
 
         return $prices->count() === 1 ? (int) $prices->first() : null;
+    }
+
+    /**
+     * Số đồng được giảm trên MỘT áo, tính trên giá phôi + tiền in.
+     *
+     * Không bao giờ vượt quá chính số tiền đó: giảm 200.000 cho chiếc áo
+     * 150.000 là áo 0 đồng, không phải shop trả ngược tiền cho khách. Kiểu lạ
+     * hoặc giá trị 0 coi như không giảm. Web bán hàng có bản TypeScript của
+     * hàm này — sửa cách làm tròn ở đây là phải sửa cả bên đó.
+     */
+    public static function blankDiscount(?string $type, int|float|null $value, float $subtotal): int
+    {
+        $value = (float) ($value ?? 0);
+        if ($value <= 0 || $subtotal <= 0) {
+            return 0;
+        }
+
+        $reduction = match ($type) {
+            self::DISCOUNT_PERCENT => $subtotal * min($value, 100) / 100,
+            self::DISCOUNT_AMOUNT => $value,
+            default => 0,
+        };
+
+        return (int) round(min($reduction, $subtotal));
+    }
+
+    /** Chú thích cạnh dòng giảm giá, ví dụ "−10% phôi + in". */
+    public static function discountLabel(?string $type, int|float|null $value): ?string
+    {
+        $value = (float) ($value ?? 0);
+        if ($value <= 0) {
+            return null;
+        }
+
+        return match ($type) {
+            self::DISCOUNT_PERCENT => '−' . rtrim(rtrim(number_format(min($value, 100), 2, ',', '.'), '0'), ',') . '%',
+            self::DISCOUNT_AMOUNT => '−' . number_format($value, 0, ',', '.') . ' ₫',
+            default => null,
+        };
     }
 
     // ── Hình học ─────────────────────────────────────────────────────
@@ -524,6 +567,21 @@ class PrintPricing
                 'base' => (float) $cell,
                 'count' => count($placements),
             ];
+        }
+
+        /*
+         * Giảm giá của phôi — tính trên đúng phần "phôi + tiền in" vừa cộng ở
+         * hai bước trên, TRƯỚC phí sticker: phí bản quyền là tiền trả cho người
+         * vẽ, shop không có quyền giảm hộ.
+         */
+        $discount = self::blankDiscount($blank['discount_type'] ?? null, $blank['discount_value'] ?? null, $running);
+        if ($discount > 0) {
+            $lines[] = self::line(
+                'Giảm giá phôi',
+                -$discount,
+                self::discountLabel($blank['discount_type'], $blank['discount_value']) . ' trên phôi + in',
+            );
+            $running -= $discount;
         }
 
         // Sticker có bản quyền — phí gắn với tài nguyên, không gắn với vị trí.

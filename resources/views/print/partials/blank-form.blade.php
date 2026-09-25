@@ -54,14 +54,33 @@
             <input type="number" data-f-price min="0" step="1000" value="{{ $blank?->base_price ?? 0 }}"
                 class="w-full text-right tabular-nums rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
         </div>
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Giảm giá</label>
+            <div class="flex gap-1.5">
+                <select data-f-discount-type aria-label="Kiểu giảm giá"
+                    class="shrink-0 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm pr-7">
+                    <option value="">Không giảm</option>
+                    <option value="percent" @selected($blank?->discount_type === 'percent')>%</option>
+                    <option value="amount" @selected($blank?->discount_type === 'amount')>đồng</option>
+                </select>
+                <input type="number" data-f-discount-value min="0" value="{{ $blank?->discount_value }}"
+                    aria-label="Mức giảm" placeholder="0" @disabled(!$blank?->discount_type)
+                    class="w-full min-w-0 text-right tabular-nums rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm disabled:opacity-50">
+            </div>
+        </div>
     </div>
+    {{-- blanks.blade.php điền câu xem trước vào đây mỗi khi giá, mức giảm hay kỹ thuật đổi. --}}
+    <p data-discount-preview class="-mt-1.5 text-[11px] leading-relaxed text-slate-400">
+        Giảm tính trên <b>giá phôi + tiền in</b> của mỗi áo, không giảm phí sticker.
+    </p>
 
     <div>
         <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Kỹ thuật in được</label>
         <div class="flex flex-wrap gap-x-4 gap-y-1.5">
             @forelse ($techniques as $technique)
                 <label class="flex items-center gap-2 text-[13px] text-slate-700 dark:text-slate-300">
-                    <input type="checkbox" data-f-tech value="{{ $technique->id }}"
+                    <input type="checkbox" data-f-tech value="{{ $technique->id }}" data-price="{{ $technique->price }}"
+                        data-name="{{ $technique->name }}"
                         @checked($blank && $blank->techniques->contains('id', $technique->id))
                         class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
                     {{ $technique->name }} · {{ $technique->price === null ? 'chưa có giá' : number_format($technique->price, 0, ',', '.') . 'đ' }}
@@ -126,13 +145,15 @@
         <select data-f-product class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900/60 text-sm">
             <option value="">— không nối, phôi đứng riêng —</option>
             @foreach ($products as $product)
-                <option value="{{ $product->id }}" @selected($blank?->product_id === $product->id)>
+                <option value="{{ $product->id }}" @selected($blank?->product_id === $product->id)
+                    data-base-price="{{ (int) ($product->discount_price ?? $product->sell_price ?? 0) }}">
                     {{ $product->product_name }}
                 </option>
             @endforeach
         </select>
         <p class="mt-1 text-[11px] text-slate-400">
-            Nối rồi thì giá và size lấy từ biến thể thật, ô giá bên dưới bị bỏ qua.
+            Nối rồi thì giá và size lấy từ biến thể thật, ô giá phôi bị bỏ qua. Mức giảm của phôi
+            vẫn áp dụng và cộng dồn lên giá khuyến mãi của sản phẩm (nếu có).
         </p>
     </div>
 

@@ -10,6 +10,7 @@ use App\Models\PrintMockup;
 use App\Models\PrintTechnique;
 use App\Models\Product;
 use App\Services\PrintPositions;
+use App\Services\PrintPricing;
 use App\Services\StorefrontNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,9 @@ class PrintBlankController extends Controller
                 ->orderBy('sort_order')->orderBy('id')->get(),
             'techniques' => PrintTechnique::where('is_active', true)->orderBy('sort_order')->get(),
             // Chỉ sản phẩm còn sống mới nối được; danh sách gọn để chọn nhanh.
-            'products' => Product::orderBy('product_name')->get(['id', 'product_name', 'sell_price']),
+            // Kèm giá khuyến mãi: ô xem trước giảm giá phải dùng đúng giá phôi
+            // mà effectiveBasePrice() sẽ lấy khi nối kho.
+            'products' => Product::orderBy('product_name')->get(['id', 'product_name', 'sell_price', 'discount_price']),
             // Cùng bảng danh mục với hàng bán sẵn — xem migration
             // add_category_to_print_blanks. Kèm parent_id để dựng nhóm cha-con
             // trong ô chọn; danh mục tắt không cho chọn mới.
@@ -187,6 +190,12 @@ class PrintBlankController extends Controller
             // không rơi vào chip lọc nào bên web.
             'categories_id' => 'nullable|exists:categories,id',
             'base_price' => 'required|integer|min:0',
+            // Giảm trên giá phôi + tiền in của mỗi áo. Kiểu rỗng = không giảm.
+            'discount_type' => 'nullable|in:' . PrintPricing::DISCOUNT_PERCENT . ',' . PrintPricing::DISCOUNT_AMOUNT,
+            'discount_value' => [
+                'nullable', 'required_with:discount_type', 'integer', 'min:0',
+                $request->input('discount_type') === PrintPricing::DISCOUNT_PERCENT ? 'max:100' : 'max:1000000000',
+            ],
             'frame_width_mm' => 'required|integer|min:50|max:2000',
             'frame_height_mm' => 'required|integer|min:50|max:2000',
             // Bốn vị trí in là hằng số trong mã nguồn; ở đây chỉ tick bật/tắt.
@@ -210,6 +219,10 @@ class PrintBlankController extends Controller
         ], [
             'positions.required' => 'Phôi phải bán được ít nhất một vị trí in.',
             'positions.min' => 'Phôi phải bán được ít nhất một vị trí in.',
+            'discount_value.required_with' => 'Nhập mức giảm hoặc chọn "Không giảm".',
+            'discount_value.max' => $request->input('discount_type') === PrintPricing::DISCOUNT_PERCENT
+                ? 'Giảm theo % chỉ được từ 0 đến 100.'
+                : 'Số tiền giảm quá lớn.',
         ]);
     }
 
@@ -221,12 +234,27 @@ class PrintBlankController extends Controller
             'product_id' => $data['product_id'] ?? null,
             'categories_id' => $data['categories_id'] ?? null,
             'base_price' => (int) $data['base_price'],
+            ...$this->discountAttributes($data),
             'frame_width_mm' => (int) $data['frame_width_mm'],
             'frame_height_mm' => (int) $data['frame_height_mm'],
             'positions' => PrintPositions::normalise($data['positions'] ?? null),
             'moq' => (int) $data['moq'],
             'lead_days' => (int) $data['lead_days'],
         ];
+    }
+
+    /**
+     * Mức giảm 0 lưu thành "không giảm" chứ không thành "giảm 0%": hai cột luôn
+     * cùng rỗng hoặc cùng có giá trị, nên không chỗ nào phải đoán nửa vời.
+     */
+    private function discountAttributes(array $data): array
+    {
+        $type = $data['discount_type'] ?? null;
+        $value = (int) ($data['discount_value'] ?? 0);
+
+        return $type && $value > 0
+            ? ['discount_type' => $type, 'discount_value' => $value]
+            : ['discount_type' => null, 'discount_value' => null];
     }
 
     private function uniqueSlug(string $name): string

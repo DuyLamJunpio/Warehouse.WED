@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\PrintPositions;
+use App\Services\PrintPricing;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,12 +22,13 @@ class PrintBlank extends Model
 {
     protected $fillable = [
         'product_id', 'categories_id', 'name', 'slug', 'description', 'base_price',
-        'frame_width_mm', 'frame_height_mm', 'positions', 'moq', 'lead_days',
+        'discount_type', 'discount_value', 'frame_width_mm', 'frame_height_mm', 'positions', 'moq', 'lead_days',
         'template_path', 'sort_order', 'is_active',
     ];
 
     protected $casts = [
         'base_price' => 'integer',
+        'discount_value' => 'integer',
         'frame_width_mm' => 'integer',
         'frame_height_mm' => 'integer',
         'positions' => 'array',
@@ -107,6 +109,23 @@ class PrintBlank extends Model
         }
 
         return (int) $this->base_price;
+    }
+
+    /**
+     * Số đồng giảm cho một áo có tổng "phôi + tiền in" là `$subtotal`.
+     *
+     * Phôi nối kho mà sản phẩm bên kia đang có giá khuyến mãi thì mức giảm này
+     * CỘNG DỒN lên giá khuyến mãi đó — đúng như ô nhập ở trang quản trị nói.
+     */
+    public function discountFor(int|float $subtotal): int
+    {
+        return PrintPricing::blankDiscount($this->discount_type, $this->discount_value, (float) $subtotal);
+    }
+
+    /** Nhãn ngắn cho mức giảm, ví dụ "−10%"; null khi phôi không giảm giá. */
+    public function discountLabel(): ?string
+    {
+        return PrintPricing::discountLabel($this->discount_type, $this->discount_value);
     }
 
     /**

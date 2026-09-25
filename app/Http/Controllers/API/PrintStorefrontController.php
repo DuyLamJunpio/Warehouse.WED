@@ -83,12 +83,16 @@ class PrintStorefrontController extends Controller
             ->unique()
             ->values()
             ->all();
-        $displayPrice = null;
-
+        /*
+         * Giá "Từ ..." trên thẻ phôi. Bật hiển thị gộp thì là phôi + một vị trí
+         * in, không thì chỉ tiền phôi — và mức giảm tính trên đúng con số đó,
+         * y như bộ máy giá sẽ tính khi khách chưa in thêm vị trí nào.
+         */
         $commonTechniquePrice = PrintPricing::commonTechniquePrice($pricing);
-        if ((bool) ($pricing['display_combined_price'] ?? false) && $commonTechniquePrice !== null) {
-            $displayPrice = (int) $blank->effectiveBasePrice() + $commonTechniquePrice;
-        }
+        $combined = (bool) ($pricing['display_combined_price'] ?? false) && $commonTechniquePrice !== null;
+        $fromPrice = $blank->effectiveBasePrice() + ($combined ? $commonTechniquePrice : 0);
+        $discount = $blank->discountFor($fromPrice);
+        $displayPrice = $combined || $discount > 0 ? $fromPrice - $discount : null;
 
         return [
             'id' => $blank->id,
@@ -97,6 +101,14 @@ class PrintStorefrontController extends Controller
             'description' => $blank->description,
             'base_price' => $blank->effectiveBasePrice(),
             'display_price' => $displayPrice,
+            // Giá trước giảm để web gạch ngang; null khi phôi không giảm giá.
+            'compare_price' => $discount > 0 ? $fromPrice : null,
+            // Bản TypeScript của quote() đọc cái này để xem trước đúng từng đồng.
+            'discount' => $blank->discountLabel() === null ? null : [
+                'type' => $blank->discount_type,
+                'value' => $blank->discount_value,
+                'label' => $blank->discountLabel(),
+            ],
             'product_id' => $blank->product_id,
             /*
              * Danh mục để web bán hàng dựng hàng nút lọc trên trang In áo.
@@ -253,6 +265,8 @@ class PrintStorefrontController extends Controller
                 'id' => $blank->id,
                 'name' => $blank->name,
                 'base_price' => $blank->effectiveBasePrice(),
+                'discount_type' => $blank->discount_type,
+                'discount_value' => $blank->discount_value,
                 'moq' => $blank->moq,
                 'product_id' => $blank->product_id,
             ],

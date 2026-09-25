@@ -140,6 +140,82 @@ class PrintPricingTest extends TestCase
         $this->assertNotEmpty(PrintPricing::quote($this->design([]), $pricing)['errors']);
     }
 
+    /** Phôi 120.000 kèm một mức giảm giá. */
+    private function discountedDesign(array $placements, ?string $type, ?int $value, array $overrides = []): array
+    {
+        $design = $this->design($placements, $overrides);
+        $design['blank'] += ['discount_type' => $type, 'discount_value' => $value];
+
+        return $design;
+    }
+
+    public function test_giam_phan_tram_tinh_tren_gia_phoi_cong_tien_in(): void
+    {
+        // (120.000 + 30.000 × 2 vị trí) × 10% = 18.000
+        $quote = PrintPricing::quote($this->discountedDesign([
+            $this->place('front', 0, 0, 100, 100),
+            $this->place('back', 0, 0, 100, 100),
+        ], 'percent', 10, ['qty' => 3]), $this->flatPricing());
+
+        $this->assertSame(162000, $quote['unit_price']);
+        $this->assertSame(486000, $quote['total']);
+        $this->assertSame(-18000, collect($quote['lines'])->firstWhere('label', 'Giảm giá phôi')['amount']);
+        $this->assertEmpty($quote['errors']);
+    }
+
+    public function test_giam_theo_so_tien_tru_thang_moi_ao(): void
+    {
+        $quote = PrintPricing::quote($this->discountedDesign(
+            [$this->place('front', 0, 0, 100, 100)],
+            'amount',
+            25000,
+            ['qty' => 2],
+        ), $this->flatPricing());
+
+        $this->assertSame(125000, $quote['unit_price']);
+        $this->assertSame(250000, $quote['total']);
+    }
+
+    public function test_giam_gia_khong_an_vao_phi_sticker(): void
+    {
+        $placement = $this->place('front', 0, 0, 100, 100) + ['asset_fee' => 20000, 'asset_name' => 'Mèo'];
+        $quote = PrintPricing::quote($this->discountedDesign([$placement], 'percent', 50), $this->flatPricing());
+
+        // (120.000 + 30.000) × 50% = 75.000, cộng sticker 20.000 nguyên giá.
+        $this->assertSame(95000, $quote['unit_price']);
+    }
+
+    public function test_giam_gia_khong_lam_am_gia_ao(): void
+    {
+        $design = [$this->place('front', 0, 0, 100, 100)];
+
+        $this->assertSame(0, PrintPricing::quote($this->discountedDesign($design, 'amount', 999999), $this->flatPricing())['unit_price']);
+        $this->assertSame(0, PrintPricing::quote($this->discountedDesign($design, 'percent', 150), $this->flatPricing())['unit_price']);
+    }
+
+    public function test_phan_tram_le_lam_tron_den_dong(): void
+    {
+        // 7% của (120.000 + 30.001) = 10.500,07 → giảm 10.500.
+        $quote = PrintPricing::quote($this->discountedDesign(
+            [$this->place('front', 0, 0, 100, 100)],
+            'percent',
+            7,
+        ), $this->flatPricing(30001));
+
+        $this->assertSame(139501, $quote['unit_price']);
+    }
+
+    public function test_khong_khai_giam_gia_thi_gia_giu_nguyen(): void
+    {
+        $placements = [$this->place('front', 0, 0, 100, 100)];
+
+        foreach ([[null, null], ['percent', 0], ['amount', null], ['khac', 5000]] as [$type, $value]) {
+            $quote = PrintPricing::quote($this->discountedDesign($placements, $type, $value), $this->flatPricing());
+            $this->assertSame(150000, $quote['unit_price']);
+            $this->assertNull(collect($quote['lines'])->firstWhere('label', 'Giảm giá phôi'));
+        }
+    }
+
     public function test_khong_co_hinh_thi_chi_tinh_tien_phoi(): void
     {
         $result = PrintPricing::quote($this->design([]), $this->pricing());
