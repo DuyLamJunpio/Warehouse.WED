@@ -84,7 +84,7 @@ class PrintStorefrontController extends Controller
             ->values()
             ->all();
         /*
-         * Giá "Từ ..." trên thẻ phôi. Bật hiển thị gộp thì là phôi + một vị trí
+         * Giá "Từ ..." trên thẻ phôi. Bật hiển thị gộp thì là phôi + phí kỹ thuật
          * in, không thì chỉ tiền phôi — và mức giảm tính trên đúng con số đó,
          * y như bộ máy giá sẽ tính khi khách chưa in thêm vị trí nào.
          */

@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="mb-6">
         <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Kỹ thuật in</h1>
-        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Nhập tên và giá in cho mỗi vị trí trên một áo. Lưu là áp dụng ngay.</p>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Nhập tên và giá kỹ thuật cho mỗi áo. In nhiều vị trí, hình hoặc chữ trên cùng áo vẫn chỉ tính một lần. Lưu là áp dụng ngay.</p>
     </div>
     @include('print.partials.tabs')
     <section class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3 dark:border-indigo-900/70 dark:bg-indigo-950/30">
@@ -123,7 +123,7 @@
                     });
                     window.showToast(result.success, 'success');
                     if (!form.dataset.techniqueForm) { location.reload(); return; }
-                    form.querySelector('[data-price-status]').textContent = Number(form.elements.price.value).toLocaleString('vi-VN') + 'đ / vị trí / áo';
+                    form.querySelector('[data-price-status]').textContent = Number(form.elements.price.value).toLocaleString('vi-VN') + 'đ / áo';
                 } catch (error) { window.showToast(error.message, 'error'); }
                 finally { restoreButton(); }
             });

@@ -111,15 +111,19 @@ class PrintPricingTest extends TestCase
         }
     }
 
-    public function test_flat_price_charges_each_position_and_multiplies_quantity(): void
+    public function test_flat_price_charges_once_for_all_positions_and_multiplies_quantity(): void
     {
         $quote = PrintPricing::quote($this->design([
             $this->place('front', 0, 0, 100, 100),
             $this->place('back', 0, 0, 100, 100),
         ], ['qty' => 10, 'tone' => 'dark']), $this->flatPricing());
-        $this->assertSame(180000, $quote['unit_price']);
-        $this->assertSame(1800000, $quote['total']);
+        $this->assertSame(150000, $quote['unit_price']);
+        $this->assertSame(1500000, $quote['total']);
         $this->assertEmpty($quote['errors']);
+
+        $printLine = collect($quote['lines'])->firstWhere('label', 'Decal · giá kỹ thuật / áo');
+        $this->assertNotNull($printLine);
+        $this->assertSame(30000, $printLine['amount']);
     }
 
     public function test_flat_price_distinguishes_missing_price_from_zero(): void
@@ -151,15 +155,16 @@ class PrintPricingTest extends TestCase
 
     public function test_giam_phan_tram_tinh_tren_gia_phoi_cong_tien_in(): void
     {
-        // (120.000 + 30.000 × 2 vị trí) × 10% = 18.000
+        // Phí kỹ thuật 30.000 chỉ tính một lần cho cả áo, kể cả in hai vị trí.
+        // (120.000 + 30.000) × 10% = 15.000
         $quote = PrintPricing::quote($this->discountedDesign([
             $this->place('front', 0, 0, 100, 100),
             $this->place('back', 0, 0, 100, 100),
         ], 'percent', 10, ['qty' => 3]), $this->flatPricing());
 
-        $this->assertSame(162000, $quote['unit_price']);
-        $this->assertSame(486000, $quote['total']);
-        $this->assertSame(-18000, collect($quote['lines'])->firstWhere('label', 'Giảm giá phôi')['amount']);
+        $this->assertSame(135000, $quote['unit_price']);
+        $this->assertSame(405000, $quote['total']);
+        $this->assertSame(-15000, collect($quote['lines'])->firstWhere('label', 'Giảm giá phôi')['amount']);
         $this->assertEmpty($quote['errors']);
     }
 

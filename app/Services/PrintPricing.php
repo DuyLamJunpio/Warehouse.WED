@@ -9,7 +9,7 @@ use App\Models\PrintTechnique;
 use App\Models\Setting;
 
 /**
- * Giá hiện tại: giá phôi + giá kỹ thuật cho mỗi vị trí có in.
+ * Giá hiện tại: giá phôi + một giá kỹ thuật cho cả áo có in.
  * Giữ bộ tính theo khổ để đọc lại các bảng giá lịch sử.
  */
 class PrintPricing
@@ -121,7 +121,7 @@ class PrintPricing
         $techniques = PrintTechnique::orderBy('sort_order')->orderBy('id')->get()
             ->map(fn (PrintTechnique $t) => $t->toPricingArray())->all();
 
-        // Một ô giá cố định để studio cũ vẫn xem trước đúng giá theo vị trí.
+        // Một ô giá cố định để studio cũ vẫn xem trước đúng giá kỹ thuật / áo.
         // Đây là dữ liệu tương thích API, không phải bậc khổ do shop cấu hình.
         $cells = [];
         foreach ($techniques as $technique) {
@@ -484,7 +484,7 @@ class PrintPricing
             $lines[] = self::line('phụ thu size ' . $design['size'], $surcharge, null, true);
         }
 
-        // ── BƯỚC 2 — giá in cơ bản, tính riêng từng vị trí ───────────
+        // ── BƯỚC 2 — kiểm tra từng vị trí, tính phí kỹ thuật một lần / áo ──
         $byPosition = [];
         foreach ((array) ($design['placements'] ?? []) as $p) {
             // `zone` là tên cũ của trường này trong các thiết kế lưu trước đây.
@@ -492,6 +492,8 @@ class PrintPricing
         }
 
         $positionContexts = [];
+        $flat = ($pricing['mode'] ?? null) === 'flat';
+        $flatPrintPrice = null;
         foreach ($byPosition as $positionKey => $placements) {
             $position = ($design['positions'] ?? [])[$positionKey] ?? null;
 
@@ -528,7 +530,6 @@ class PrintPricing
                 continue;
             }
 
-            $flat = ($pricing['mode'] ?? null) === 'flat';
             $tier = $flat ? ['id' => null, 'name' => 'Đồng giá'] : self::pickTier($bbox, $tiers);
 
             if (!$tier) {
@@ -552,13 +553,19 @@ class PrintPricing
                 continue;
             }
 
-            $lines[] = self::line(
-                $flat ? sprintf('%s · %s', $technique['name'], $position['label'])
-                    : sprintf('%s · %s · khổ %s', $technique['name'], $position['label'], $tier['name']),
-                (float) $cell,
-                sprintf('khung bao %s × %s mm · %d hình', round($bbox['w'], 1), round($bbox['h'], 1), count($placements)),
-            );
-            $running += (float) $cell;
+            if ($flat) {
+                // Giá kỹ thuật đã là mức giá cho CẢ ÁO. Mỗi vị trí vẫn phải qua
+                // kiểm tra giới hạn riêng, nhưng mặt sau hay thêm chữ không được
+                // làm phí kỹ thuật lặp lại.
+                $flatPrintPrice ??= (float) $cell;
+            } else {
+                $lines[] = self::line(
+                    sprintf('%s · %s · khổ %s', $technique['name'], $position['label'], $tier['name']),
+                    (float) $cell,
+                    sprintf('khung bao %s × %s mm · %d hình', round($bbox['w'], 1), round($bbox['h'], 1), count($placements)),
+                );
+                $running += (float) $cell;
+            }
 
             $positionContexts[] = [
                 'position_key' => $positionKey,
@@ -567,6 +574,15 @@ class PrintPricing
                 'base' => (float) $cell,
                 'count' => count($placements),
             ];
+        }
+
+        if ($flatPrintPrice !== null) {
+            $lines[] = self::line(
+                $technique['name'] . ' · giá kỹ thuật / áo',
+                $flatPrintPrice,
+                'áp dụng một lần cho toàn bộ nội dung in trên áo',
+            );
+            $running += $flatPrintPrice;
         }
 
         /*
