@@ -321,6 +321,15 @@ class CheckoutController extends Controller
             ], 422);
         }
 
+        // Đơn chuyển khoản chỉ được tạo khi đã đủ thông tin để dựng VietQR.
+        // Không để khách nhìn thấy một đơn chờ thanh toán nhưng không có mã QR.
+        if ($paymentMethod === 'bank_transfer' && $this->vietQrRecipient() === null) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Chưa cấu hình đủ tài khoản nhận chuyển khoản để tạo mã VietQR.',
+            ], 422);
+        }
+
         // Ngưỡng miễn phí giao hàng đếm theo số món trong đơn. Áo in cũng là món
         // phải giao, nên số lượng của nó được tính vào ngưỡng như mọi món khác.
         $itemCount = array_sum($wanted) + (int) $printDesigns->sum('qty');
@@ -503,18 +512,35 @@ class CheckoutController extends Controller
                 $invoice->save();
             }
 
+            // QR là điều kiện để hoàn tất đơn chuyển khoản, vì vậy phải dựng
+            // trước commit. Lỗi tạo ảnh sẽ rollback toàn bộ invoice, customer
+            // và dòng hàng vừa tạo thay vì để lại đơn chưa thể thanh toán.
+            $paymentQrDataUri = null;
+            if ($paymentMethod === 'bank_transfer') {
+                try {
+                    $paymentQrDataUri = $this->paymentQrDataUri($invoice);
+                } catch (\Throwable $e) {
+                    Log::error('Không thể dựng QR khi tạo đơn chuyển khoản.', [
+                        'order_code' => $invoice->order_code,
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    throw new \RuntimeException('Chưa thể tạo mã VietQR. Đơn chưa được ghi nhận.', previous: $e);
+                }
+                if ($paymentQrDataUri === null) {
+                    throw new \RuntimeException('Chưa thể tạo mã VietQR. Đơn chưa được ghi nhận.');
+                }
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'order_code' => $invoice->order_code,
                 'payment_reference' => $this->paymentReference((string) $invoice->order_code),
-                // Ảnh được dựng trong chính response tạo đơn. Nếu để landing gọi
-                // thêm endpoint QR, khách phải chờ thêm một vòng Render -> API
-                // dù tất cả dữ liệu tạo ảnh đã có ngay tại đây.
-                'payment_qr_data_uri' => $paymentMethod === 'bank_transfer'
-                    ? $this->paymentQrDataUri($invoice)
-                    : null,
+                // Ảnh được dựng trước commit và trả cùng đơn, không cần thêm
+                // một vòng Render -> API chỉ để tải QR.
+                'payment_qr_data_uri' => $paymentQrDataUri,
                 'subtotal' => $subtotal,
                 'print_fee' => $printFee,
                 'shipping_fee' => $shippingFee,
@@ -561,14 +587,31 @@ class CheckoutController extends Controller
 
         $invoice->loadMissing('productInvoices');
 
+        $paymentQrDataUri = null;
+        if (in_array($invoice->payment_method, ['bank_transfer', 'banking'], true)) {
+            try {
+                $paymentQrDataUri = $this->paymentQrDataUri($invoice);
+            } catch (\Throwable $e) {
+                Log::error('Không thể dựng lại QR cho đơn chuyển khoản.', [
+                    'order_code' => $invoice->order_code,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            if ($paymentQrDataUri === null) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Chưa thể tạo mã VietQR cho đơn này. Vui lòng thử lại sau ít phút.',
+                ], 503);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'already_created' => true,
             'order_code' => $invoice->order_code,
             'payment_reference' => $this->paymentReference((string) $invoice->order_code),
-            'payment_qr_data_uri' => $invoice->payment_method === 'bank_transfer'
-                ? $this->paymentQrDataUri($invoice)
-                : null,
+            'payment_qr_data_uri' => $paymentQrDataUri,
             'subtotal' => $invoice->subtotal,
             'print_fee' => (int) ($invoice->print_fee ?? 0),
             'shipping_fee' => (int) $invoice->shipping_fee,
@@ -639,13 +682,12 @@ class CheckoutController extends Controller
     /** Dựng PNG QR từ dữ liệu đã có trong đơn, không gọi một dịch vụ bên ngoài. */
     private function paymentQrImage(Invoice $invoice): ?string
     {
-        $bank = (array) data_get(Setting::sales(), 'bank_transfer.bank', []);
-        $bankBin = $this->vietQrBankBin((string) ($bank['code'] ?? ''));
-        $accountNumber = preg_replace('/\D+/', '', (string) ($bank['account_number'] ?? ''));
-
-        if ($bankBin === null || $accountNumber === '' || strlen($accountNumber) > 19) {
+        $recipient = $this->vietQrRecipient();
+        if ($recipient === null) {
             return null;
         }
+
+        [$bankBin, $accountNumber] = $recipient;
 
         $payload = $this->vietQrPayload(
             $bankBin,
@@ -660,6 +702,20 @@ class CheckoutController extends Controller
         $qrCode->setMargin(12);
 
         return (new PngWriter())->write($qrCode)->getString();
+    }
+
+    /** @return array{0: string, 1: string}|null [mã BIN NAPAS, số tài khoản] */
+    private function vietQrRecipient(): ?array
+    {
+        $bank = (array) data_get(Setting::sales(), 'bank_transfer.bank', []);
+        $bankBin = $this->vietQrBankBin((string) ($bank['code'] ?? ''));
+        $accountNumber = preg_replace('/\D+/', '', (string) ($bank['account_number'] ?? ''));
+
+        if ($bankBin === null || $accountNumber === '' || strlen($accountNumber) > 19) {
+            return null;
+        }
+
+        return [$bankBin, $accountNumber];
     }
 
     private function vietQrBankBin(string $code): ?string
