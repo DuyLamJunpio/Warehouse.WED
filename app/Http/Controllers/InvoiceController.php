@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\ProductInvoice;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use Exception;
@@ -250,38 +251,24 @@ class InvoiceController extends Controller
 
                     if ($request->invoice_type == 0) { // Nhập hàng: cộng tồn vào biến thể
                         $variant = $this->resolveVariant($productModel, $product);
+                        $before = (int) $variant->quantity;
                         $variant->quantity += $product['quantity'];
                         $variant->save();
-                    } else { // Xuất hàng: trừ tồn khỏi biến thể
-                        // Nếu đơn chỉ rõ biến thể thì chỉ trừ đúng biến thể đó,
-                        // ngược lại trừ lần lượt theo thứ tự hiển thị.
-                        $variants = isset($product['variant_id'])
-                            ? ProductVariant::where('id', $product['variant_id'])->get()
-                            : ProductVariant::where('product_id', $product['product_id'])
-                                ->orderBy('sort_order')
-                                ->get();
 
-                        $remainingQuantity = $product['quantity'];
-
-                        foreach ($variants as $variant) {
-                            if ($remainingQuantity <= 0) {
-                                break;
-                            }
-
-                            $deductQuantity = min($variant->quantity, $remainingQuantity);
-                            $variant->quantity -= $deductQuantity;
-                            $remainingQuantity -= $deductQuantity;
-                            // Khác với lô hạn dùng: biến thể hết hàng vẫn giữ lại
-                            // vì nó là một mục trong danh mục sản phẩm.
-                            $variant->save();
-                        }
-
-                        if ($remainingQuantity > 0) {
-                            throw new Exception(
-                                'Không đủ tồn kho cho sản phẩm "' . $productModel->product_name . '".'
-                            );
-                        }
+                        StockMovement::create([
+                            'variant_id' => $variant->id,
+                            'invoice_id' => $invoice->id,
+                            'user_id' => $request->user()?->id,
+                            'type' => StockMovement::TYPE_IMPORT,
+                            'quantity_before' => $before,
+                            'quantity_change' => (int) $product['quantity'],
+                            'quantity_after' => (int) $variant->quantity,
+                            'note' => 'Nhập kho theo phiếu #' . $invoice->id,
+                        ]);
                     }
+
+                    // Đơn bán được tạo ở trạng thái chờ xác nhận. Tồn chỉ bị trừ
+                    // tại OrderController::updateStatus khi chuyển sang confirmed.
 
                     $this->syncProductStatus($productModel);
                 }

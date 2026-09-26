@@ -115,17 +115,9 @@ class SepayWebhookController extends Controller
                             . 'CẦN XỬ LÝ: SePay ghi nhận tiền sau khi đơn đã hủy/hoàn.');
                         $result = 'paid_after_cancel';
                     } else {
-                        try {
-                            $order->deductStockLines();
-                            $result = 'paid';
-                        } catch (\RuntimeException $e) {
-                            // Khách đã trả tiền nhưng hàng đã được bán trong thời
-                            // gian chờ chuyển khoản: ghi nhận tiền và báo nhân
-                            // viên xử lý, tuyệt đối không trừ kho một phần.
-                            $order->note = trim(($order->note ? $order->note . "\n" : '')
-                                . 'CẦN XỬ LÝ: đã nhận chuyển khoản nhưng ' . $e->getMessage());
-                            $result = 'paid_stock_shortage';
-                        }
+                        // Nhận tiền không đồng nghĩa xác nhận xuất hàng. Nhân viên
+                        // sẽ xác nhận đơn sau, và lúc đó mới kiểm/trừ tồn kho.
+                        $result = 'paid';
                     }
                     $order->save();
                     if (in_array($result, ['paid', 'paid_stock_shortage'], true)) {

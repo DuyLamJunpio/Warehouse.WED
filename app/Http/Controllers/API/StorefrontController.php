@@ -10,6 +10,7 @@ use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\SiteText;
+use App\Services\StockAllocator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,6 +30,7 @@ class StorefrontController extends Controller
         $products = Product::with([
             'category',
             'variants.style',
+            'variants.comboComponents.componentVariant.product',
             'styles.image',
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
@@ -54,6 +56,7 @@ class StorefrontController extends Controller
         $product = Product::with([
             'category',
             'variants.style',
+            'variants.comboComponents.componentVariant.product',
             'styles.image',
             'productInvoices.invoice',
             'productImage' => fn($q) => $q->orderBy('sort_order'),
@@ -224,6 +227,24 @@ class StorefrontController extends Controller
 
         $price = (int) ($product->discount_price ?? $product->sell_price);
 
+        $allocator = app(StockAllocator::class);
+        $variants = $product->variants->map(function ($variant) use ($allocator, $price) {
+            $availableStock = $allocator->availableForVariant($variant);
+
+            return [
+                // Web bán hàng gửi id này lại khi đặt hàng, đừng đổi định dạng.
+                'id' => $variant->id,
+                'style_id' => $variant->product_style_id,
+                'size' => $variant->size,
+                'color' => $variant->color,
+                'sku' => $variant->sku,
+                'stock' => $availableStock,
+                // Có bán được dòng này không - đã tính cả công thức combo.
+                'available' => $availableStock === null || $availableStock > 0,
+                'price' => (int) ($variant->price_override ?? $price),
+            ];
+        })->values();
+
         return [
             'id' => $product->id,
             'slug' => $product->slug,
@@ -257,9 +278,11 @@ class StorefrontController extends Controller
             // Hàng không theo dõi tồn kho không bị chặn bởi số lượng, nhưng vẫn
             // cần ít nhất một biến thể vì checkout nhận variant_id bắt buộc.
             'manage_stock' => (bool) $product->manage_stock,
-            'in_stock' => $product->variants->isNotEmpty()
-                && (! $product->manage_stock || $product->variants->sum('quantity') > 0),
-            'total_stock' => (int) $product->variants->sum('quantity'),
+            'is_combo' => (bool) $product->is_combo,
+            'in_stock' => $variants->contains(fn ($variant) => $variant['available']),
+            // Tồn từng biến thể ở dưới là số combo thực bán được; tổng chỉ để
+            // hiển thị, checkout vẫn kiểm lại toàn bộ thành phần dưới khóa DB.
+            'total_stock' => (int) $variants->sum(fn ($variant) => $variant['stock'] ?? 0),
             // Web bán hàng dùng nhãn này để hiển thị đúng ngữ cảnh ngành hàng
             // (ví dụ Màu sắc/Kích thước hoặc Mùi hương/Quy cách).
             'variant_attribute_labels' => Product::normalizeVariantAttributeLabels(
@@ -276,18 +299,7 @@ class StorefrontController extends Controller
                     ? $this->url($style->image->path)
                     : ($pinned?->path ? $this->url($pinned->path) : null),
             ])->values()->all(),
-            'variants' => $product->variants->map(fn($v) => [
-                // Web bán hàng gửi id này lại khi đặt hàng, đừng đổi định dạng.
-                'id' => $v->id,
-                'style_id' => $v->product_style_id,
-                'size' => $v->size,
-                'color' => $v->color,
-                'sku' => $v->sku,
-                'stock' => (int) $v->quantity,
-                // Có bán được dòng này không - đã tính cả cờ theo dõi tồn kho.
-                'available' => ! $product->manage_stock || $v->quantity > 0,
-                'price' => (int) ($v->price_override ?? $price),
-            ])->values()->all(),
+            'variants' => $variants->all(),
         ];
     }
 

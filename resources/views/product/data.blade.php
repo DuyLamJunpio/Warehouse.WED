@@ -96,6 +96,14 @@
         {{-- Actions --}}
         <td class="p-4 whitespace-nowrap text-right">
             <div class="inline-flex items-center gap-1">
+                <button type="button" data-id-product="{{ $item->id }}" data-name-product="{{ $item->product_name }}"
+                    class="comboProductButton p-2 {{ $item->is_combo ? 'text-violet-600 bg-violet-50 dark:text-violet-300 dark:bg-violet-950/40' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50 dark:text-slate-400 dark:hover:text-violet-400 dark:hover:bg-slate-700' }} rounded-lg transition-colors"
+                    title="{{ $item->is_combo ? 'Cập nhật thành phần combo' : 'Thiết lập sản phẩm combo' }}">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                </button>
+
                 <button type="button" data-id-product="{{ $item->id }}"
                     class="editProductButton p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-700 rounded-lg transition-colors"
                     title="Chỉnh sửa sản phẩm">
@@ -129,4 +137,3 @@
         </div>
     </td>
 </tr>
-

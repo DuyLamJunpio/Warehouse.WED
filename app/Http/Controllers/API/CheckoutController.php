@@ -12,6 +12,7 @@ use App\Models\StorefrontPaymentSession;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\VoucherRedemption;
+use App\Services\StockAllocator;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
@@ -92,7 +93,11 @@ class CheckoutController extends Controller
             }
         }
 
-        $variants = ProductVariant::with('product')
+        $allocator = app(StockAllocator::class);
+        $variants = ProductVariant::with([
+            'product',
+            'comboComponents.componentVariant.product',
+        ])
             ->whereIn('id', array_keys($wanted))->get()->keyBy('id');
         $items = [];
         $subtotal = 0;
@@ -107,8 +112,8 @@ class CheckoutController extends Controller
                 ], 422);
             }
 
-            $available = (int) $variant->quantity;
-            if ($variant->product->manage_stock && $available < $quantity) {
+            $available = $allocator->availableForVariant($variant);
+            if ($available !== null && $available < $quantity) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Sản phẩm "' . $variant->product->product_name . '" ('
@@ -129,8 +134,19 @@ class CheckoutController extends Controller
                 'unit_price' => $price,
                 'line_total' => $lineTotal,
                 'available' => $available,
-                'manage_stock' => (bool) $variant->product->manage_stock,
+                'manage_stock' => $available !== null,
             ];
+        }
+
+        // Nhiều combo có thể cùng dùng một thành phần, nên cần kiểm lại tổng
+        // nhu cầu đã quy đổi thay vì chỉ so từng dòng combo riêng lẻ.
+        $requirements = $allocator->requirements($wanted)['requirements'];
+        $physicalVariants = ProductVariant::with('product')
+            ->whereIn('id', array_keys($requirements))->get()->keyBy('id');
+        try {
+            $allocator->assertSufficient($requirements, $physicalVariants);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
         }
 
         $shippingFee = Setting::shippingFeeFor($methodKey, array_sum($wanted), $settings);
@@ -345,14 +361,24 @@ class CheckoutController extends Controller
 
         DB::beginTransaction();
         try {
-            // Khoá các dòng biến thể để hai khách đặt cùng lúc không bán quá tồn.
-            $variants = ProductVariant::with([
-                'product' => fn ($query) => $query->storefrontVisible(),
-            ])
-                ->whereIn('id', array_keys($wanted))
+            /** @var StockAllocator $allocator */
+            $allocator = app(StockAllocator::class);
+            $requirements = $allocator->requirements($wanted)['requirements'];
+            // Luôn khóa theo id tăng dần, kể cả khi giỏ vừa có lẻ vừa có combo,
+            // để hai checkout không khóa chéo nhau.
+            $lockedVariants = ProductVariant::with('product')
+                ->whereIn('id', array_values(array_unique(array_merge(array_keys($wanted), array_keys($requirements)))))
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+            $physicalVariants = $lockedVariants->only(array_keys($requirements))->keyBy('id');
+            $allocator->assertSufficient($requirements, $physicalVariants);
+
+            $variants = ProductVariant::with([
+                'product' => fn ($query) => $query->storefrontVisible(),
+                'comboComponents.componentVariant.product',
+            ])->whereIn('id', array_keys($wanted))->get()->keyBy('id');
 
             $lines = [];
             $subtotal = 0;
@@ -374,11 +400,11 @@ class CheckoutController extends Controller
                     throw new \RuntimeException('Số lượng một mẫu sản phẩm không được vượt quá 100.');
                 }
 
-                // Hàng không theo dõi tồn kho vẫn bán được dù kho ghi 0.
-                if ($variant->product->manage_stock && $variant->quantity < $quantity) {
+                $available = $allocator->availableForVariant($variant);
+                if ($available !== null && $available < $quantity) {
                     throw new \RuntimeException(
                         'Sản phẩm "' . $variant->product->product_name . '" (' . $variant->label
-                        . ') chỉ còn ' . $variant->quantity . ' sản phẩm.'
+                        . ') chỉ còn ' . $available . ' sản phẩm.'
                     );
                 }
 
@@ -530,7 +556,8 @@ class CheckoutController extends Controller
                 'shipping_address' => implode(', ', [$data['address'], $data['ward'], $data['province']]),
                 'payment_method' => $paymentMethod,
                 // Chuyển khoản nhận qua SePay chỉ giữ trạng thái chờ trong một
-                // khoảng ngắn; chưa trừ tồn cho tới khi SePay xác nhận tiền về.
+                // khoảng ngắn; sau khi nhận tiền, đơn vẫn chờ nhân viên xác nhận
+                // trước khi chính thức trừ tồn.
                 'payment_expires_at' => $paymentMethod === 'bank_transfer'
                     ? now()->addMinutes((int) config('services.storefront.payment_window_minutes', 15))
                     : null,
@@ -576,12 +603,8 @@ class CheckoutController extends Controller
 
             }
 
-            // COD giữ hàng ngay lúc khách chốt đơn. Với chuyển khoản, mã QR chỉ
-            // tạo đơn chờ; webhook SePay sẽ gọi cùng hàm này sau khi nhận tiền.
-            if ($paymentMethod === 'cod') {
-                $invoice->deductStockLines();
-                $invoice->save();
-            }
+            // Cả COD lẫn chuyển khoản đều chỉ ghi đơn chờ. Tồn kho sẽ được trừ
+            // cùng transaction khi nhân viên chuyển đơn sang "Đã xác nhận".
 
             // QR là điều kiện để hoàn tất đơn chuyển khoản, vì vậy phải dựng
             // trước commit. Lỗi tạo ảnh sẽ rollback toàn bộ invoice, customer
@@ -1017,13 +1040,12 @@ class CheckoutController extends Controller
         }
 
         $printDesignCodes = array_values(array_unique((array) data_get($payload, 'print_design_codes', [])));
-        $isPrintOrder = $printDesignCodes !== [];
         $invoiceData = [
             'invoice_type' => Invoice::TYPE_ORDER,
             'order_code' => $session->payment_code,
             'checkout_ref' => $session->checkout_ref,
             'checkout_fingerprint' => $session->checkout_fingerprint,
-            'order_status' => $isPrintOrder ? Invoice::STATUS_PENDING : Invoice::STATUS_CONFIRMED,
+            'order_status' => Invoice::STATUS_PENDING,
             'customer_id' => $customer->id,
             'user_id' => $this->systemUserId(),
             'total_amount' => (int) $session->total_amount,
@@ -1083,18 +1105,6 @@ class CheckoutController extends Controller
             }
         }
 
-        $stockIssue = false;
-        try {
-            $invoice->deductStockLines();
-        } catch (\RuntimeException $e) {
-            // Tiền đã vào thật: vẫn lập đơn đã thanh toán để nhân viên xử lý,
-            // chỉ không được trừ kho dở dang.
-            $stockIssue = true;
-            $invoice->note = trim(($invoice->note ? $invoice->note . "\n" : '')
-                . 'CẦN XỬ LÝ: đã nhận chuyển khoản nhưng ' . $e->getMessage());
-            $invoice->save();
-        }
-
         app(VoucherRedemption::class)->recordPaidOrder($invoice);
         $session->forceFill([
             'status' => StorefrontPaymentSession::STATUS_PAID,
@@ -1102,7 +1112,7 @@ class CheckoutController extends Controller
             'invoice_id' => $invoice->id,
         ])->save();
 
-        return ['invoice' => $invoice, 'stock_issue' => $stockIssue];
+        return ['invoice' => $invoice, 'stock_issue' => false];
     }
 
     /**
@@ -1155,36 +1165,7 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            try {
-                $order->deductStockLines();
-            } catch (\RuntimeException $e) {
-                $order->payment_expires_at = null;
-                $order->note = trim(($order->note ? $order->note . "\n" : '')
-                    . 'CẦN XỬ LÝ: đã ghi nhận thanh toán nhưng ' . $e->getMessage());
-                $order->save();
-                app(VoucherRedemption::class)->recordPaidOrder($order);
-                DB::commit();
-
-                Log::critical('Đã nhận tiền nhưng không thể trừ tồn.', [
-                    'order_code' => $orderCode,
-                    'error' => $e->getMessage(),
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'stock_issue' => true,
-                    'message' => 'Đã ghi nhận thanh toán; nhân viên sẽ xử lý vì tồn kho vừa thay đổi.',
-                ]);
-            }
-
-            // Đơn thường được xác nhận ngay sau khi đã trả tiền. Riêng đơn in phải giữ
-            // "chờ xác nhận" cho tới khi nhân viên duyệt xong file; PrintDesignController sẽ
-            // chuyển nó sang confirmed khi tất cả mẫu đều được duyệt.
-            if ($order->order_status === Invoice::STATUS_PENDING && ! $order->printDesigns()->exists()) {
-                $order->order_status = Invoice::STATUS_CONFIRMED;
-            }
-
-            // Đã trả tiền thì hạn thanh toán hết ý nghĩa; xoá để lệnh quét bỏ qua đơn này.
+            // Đã trả tiền thì hạn thanh toán hết ý nghĩa; đơn vẫn chờ nhân viên xác nhận.
             $order->payment_expires_at = null;
             $order->save();
             app(VoucherRedemption::class)->recordPaidOrder($order);
@@ -1217,8 +1198,10 @@ class CheckoutController extends Controller
         // tồn khi tạo QR nên thao tác này chỉ đổi trạng thái đơn, không hoàn kho.
         Invoice::cancelExpiredHolds();
 
+        $allocator = app(StockAllocator::class);
         $variants = ProductVariant::with([
             'product' => fn ($query) => $query->storefrontVisible(),
+            'comboComponents.componentVariant.product',
         ])
             ->whereIn('id', array_column($data['items'], 'variant_id'))
             ->get()
@@ -1229,9 +1212,8 @@ class CheckoutController extends Controller
             $variant = $variants->get((int) $item['variant_id']);
             // Sản phẩm thuộc danh mục đã tắt cũng được coi là không còn bán,
             // kể cả khi khách giữ một giỏ cũ hoặc tự gọi API kiểm tra kho.
-            $available = $variant?->product ? $variant->quantity : 0;
-            // Hàng không theo dõi tồn kho luôn đủ: số tồn của nó chỉ để tham khảo.
-            $unlimited = (bool) $variant && ! $variant->product?->manage_stock;
+            $available = $variant?->product ? $allocator->availableForVariant($variant) : 0;
+            $unlimited = $available === null;
 
             $result[] = [
                 'variant_id' => (int) $item['variant_id'],
@@ -1243,8 +1225,23 @@ class CheckoutController extends Controller
             ];
         }
 
+        $wanted = [];
+        foreach ($data['items'] as $item) {
+            $variantId = (int) $item['variant_id'];
+            $wanted[$variantId] = ($wanted[$variantId] ?? 0) + (int) $item['quantity'];
+        }
+        $requirements = $allocator->requirements($wanted)['requirements'];
+        $physicalVariants = ProductVariant::with('product')
+            ->whereIn('id', array_keys($requirements))->get()->keyBy('id');
+        try {
+            $allocator->assertSufficient($requirements, $physicalVariants);
+            $aggregateEnough = true;
+        } catch (\RuntimeException) {
+            $aggregateEnough = false;
+        }
+
         return response()->json([
-            'ok' => collect($result)->every(fn($r) => $r['enough']),
+            'ok' => $aggregateEnough && collect($result)->every(fn($r) => $r['enough']),
             'items' => $result,
         ]);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\StockAllocator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -128,6 +129,12 @@ class Invoice extends Model
         return $this->hasMany(ProductInvoice::class);
     }
 
+    /** Các dòng sổ cái tồn kho phát sinh từ đơn này. */
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     /** Chỉ đơn hàng bán. */
     public function scopeOrders($query)
     {
@@ -199,32 +206,27 @@ class Invoice extends Model
 
         return $query->get();
     }
-    /**
-     * Trừ tồn đúng một lần sau khi đơn đã đủ điều kiện giữ hàng.
-     *
-     * Các biến thể được kiểm tra hết trước khi ghi bất cứ số lượng nào; nếu hàng
-     * vừa hết trong lúc khách chuyển khoản, đơn vẫn được ghi nhận tiền để nhân
-     * viên xử lý, nhưng kho không bị trừ dở dang.
-     */
+    /** Trừ tồn đúng một lần khi đơn được xác nhận hoặc hoàn thành tại quầy. */
     public function deductStockLines(): void
     {
         if ($this->stock_deducted_at !== null) {
             return;
         }
 
-        $lines = $this->productInvoices()->get();
-        $requested = [];
-        foreach ($lines as $line) {
+        $wanted = [];
+        foreach ($this->productInvoices()->get() as $line) {
             if (! $line->variant_id) {
                 throw new \RuntimeException("Dòng hàng #{$line->id} chưa có biến thể để trừ tồn.");
             }
 
-            $requested[$line->variant_id] = ($requested[$line->variant_id] ?? 0) + $line->quantity;
+            $wanted[$line->variant_id] = ($wanted[$line->variant_id] ?? 0) + (int) $line->quantity;
         }
 
-        // Phôi in cũng là hàng thật. Nó được cộng vào cùng danh sách trước khi
-        // kiểm tra để một đơn không thể trừ được sản phẩm thường rồi mới phát
-        // hiện phôi in đã hết.
+        /** @var StockAllocator $allocator */
+        $allocator = app(StockAllocator::class);
+        $requested = $allocator->requirements($wanted)['requirements'];
+
+        // Phôi in cũng là hàng thật: cộng vào cùng nhu cầu trước khi kiểm tồn.
         $printDesigns = $this->printDesigns()->with('blank')->get();
         foreach ($printDesigns as $printDesign) {
             if (! $printDesign->blank?->product_id) {
@@ -251,42 +253,53 @@ class Invoice extends Model
             $requested[$blankVariant->id] = ($requested[$blankVariant->id] ?? 0) + $printDesign->qty;
         }
 
-        $variantIds = array_keys($requested);
+        if ($requested === []) {
+            $this->stock_deducted_at = now();
+            return;
+        }
+
         $variants = ProductVariant::with('product')
-            ->whereIn('id', $variantIds)
+            ->whereIn('id', array_keys($requested))
             ->lockForUpdate()
             ->get()
             ->keyBy('id');
 
+        $allocator->assertSufficient($requested, $variants);
+
         $touchedProducts = [];
-        foreach ($requested as $variantId => $quantity) {
-            $variant = $variants->get($variantId);
-            if (! $variant || ! $variant->product) {
-                throw new \RuntimeException("Không tìm thấy biến thể #{$variantId} của đơn hàng.");
-            }
-
-            if ($variant->product->manage_stock && $variant->quantity < $quantity) {
-                throw new \RuntimeException(
-                    'Tồn kho không đủ cho ' . $variant->product->product_name . ' (' . $variant->label . ').'
-                );
-            }
-        }
-
         foreach ($requested as $variantId => $quantity) {
             $variant = $variants->get($variantId);
             if (! $variant->product->manage_stock) {
                 continue;
             }
 
+            $before = (int) $variant->quantity;
             $variant->quantity -= $quantity;
             $variant->save();
             $touchedProducts[$variant->product_id] = true;
+
+            StockMovement::create([
+                'variant_id' => $variant->id,
+                'invoice_id' => $this->id,
+                'user_id' => $this->user_id,
+                'type' => StockMovement::TYPE_SALE,
+                'quantity_before' => $before,
+                'quantity_change' => -$quantity,
+                'quantity_after' => (int) $variant->quantity,
+                'note' => 'Xuất kho theo đơn ' . ($this->order_code ?: '#' . $this->id),
+            ]);
         }
 
         foreach (array_keys($touchedProducts) as $productId) {
+            $product = Product::find($productId);
+            if ($product?->is_combo) {
+                $allocator->syncComboProductStatus($product);
+                continue;
+            }
             $total = ProductVariant::where('product_id', $productId)->sum('quantity');
             Product::where('id', $productId)->update(['status' => $total > 0 ? 1 : 2]);
         }
+        $allocator->syncAffectedComboStatuses(array_keys($requested));
 
         $this->stock_deducted_at = now();
     }
@@ -301,35 +314,77 @@ class Invoice extends Model
             return;
         }
 
+        /** @var StockAllocator $allocator */
+        $allocator = app(StockAllocator::class);
+        // Dùng đúng các dòng xuất kho đã ghi lúc xác nhận, đặc biệt quan trọng
+        // khi công thức combo đã được chỉnh sau đó. Đơn cũ chưa có sổ cái mới
+        // mới rơi về cách tính từ dòng hóa đơn như trước.
+        $requested = StockMovement::where('invoice_id', $this->id)
+            ->where('type', StockMovement::TYPE_SALE)
+            ->selectRaw('variant_id, SUM(ABS(quantity_change)) AS quantity')
+            ->groupBy('variant_id')
+            ->pluck('quantity', 'variant_id')
+            ->mapWithKeys(fn ($quantity, $variantId) => [(int) $variantId => (int) $quantity])
+            ->all();
+
+        if ($requested === []) {
+            $wanted = [];
+            foreach ($this->productInvoices()->get() as $line) {
+                if (! $line->variant_id) {
+                    Log::warning("Dòng hàng #{$line->id} của đơn #{$this->id} không có variant_id, bỏ qua khi hoàn kho.");
+                    continue;
+                }
+                $wanted[$line->variant_id] = ($wanted[$line->variant_id] ?? 0) + (int) $line->quantity;
+            }
+            $requested = $allocator->requirements($wanted)['requirements'];
+        }
+        if ($requested === []) {
+            return;
+        }
+
+        $variants = ProductVariant::with('product')
+            ->whereIn('id', array_keys($requested))
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
         $touchedProducts = [];
-
-        foreach ($this->productInvoices as $line) {
-            if (!$line->variant_id) {
-                // Đơn cũ chưa gắn biến thể thì không biết trả về size/màu nào,
-                // bỏ qua để không cộng nhầm kho.
-                Log::warning("Dòng hàng #{$line->id} của đơn #{$this->id} không có variant_id, bỏ qua khi hoàn kho.");
-                continue;
+        foreach ($requested as $variantId => $quantity) {
+            $variant = $variants->get($variantId);
+            if (! $variant) {
+                throw new \RuntimeException("Không tìm thấy biến thể #{$variantId} để hoàn kho.");
             }
-
-            $variant = ProductVariant::find($line->variant_id);
-            if (!$variant) {
-                continue;
-            }
-
             if (! $variant->product?->manage_stock) {
                 continue;
             }
 
-            $variant->quantity += $line->quantity;
+            $before = (int) $variant->quantity;
+            $variant->quantity += $quantity;
             $variant->save();
-
             $touchedProducts[$variant->product_id] = true;
+
+            StockMovement::create([
+                'variant_id' => $variant->id,
+                'invoice_id' => $this->id,
+                'user_id' => $this->user_id,
+                'type' => StockMovement::TYPE_RESTOCK,
+                'quantity_before' => $before,
+                'quantity_change' => $quantity,
+                'quantity_after' => (int) $variant->quantity,
+                'note' => 'Hoàn kho từ đơn ' . ($this->order_code ?: '#' . $this->id),
+            ]);
         }
 
         foreach (array_keys($touchedProducts) as $productId) {
+            $product = Product::find($productId);
+            if ($product?->is_combo) {
+                $allocator->syncComboProductStatus($product);
+                continue;
+            }
             $total = ProductVariant::where('product_id', $productId)->sum('quantity');
             Product::where('id', $productId)->update(['status' => $total > 0 ? 1 : 2]);
         }
+        $allocator->syncAffectedComboStatuses(array_keys($requested));
     }
     /**
      * Huỷ những đơn web quá hạn thanh toán. Chỉ hoàn kho nếu đơn đã từng trừ tồn.

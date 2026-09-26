@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/product/add', [ProductController::class, 'store'])->name('product.add');
     Route::get('/product/get-product/{id}', [ProductController::class, 'getProductById'])->name('product.getproduct');
     Route::post('/product/edit/{id}', [ProductController::class, 'edit'])->name('product.edit');
+    Route::get('/product/{id}/combo-components', [ProductController::class, 'comboComponents'])->name('product.combo-components');
+    Route::post('/product/{id}/combo-components', [ProductController::class, 'saveComboComponents'])->name('product.combo-components.save');
     Route::get('/get-image/{id}', [ProductController::class, 'getImageUrl']);
     Route::delete('/delete-image/{id}', [ProductController::class, 'deleteImageUrl']);
     Route::delete('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');

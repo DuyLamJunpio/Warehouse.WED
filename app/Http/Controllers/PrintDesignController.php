@@ -180,6 +180,9 @@ class PrintDesignController extends Controller
             }
 
             $order->order_status = Invoice::STATUS_CONFIRMED;
+            // Duyệt xong toàn bộ file là mốc xác nhận của đơn in; xuất kho cùng
+            // transaction để phôi và hàng thường không bị trừ trước đó.
+            $order->deductStockLines();
             $order->save();
 
             return 'Đơn ' . $order->order_code . ' đã chuyển sang "Đã xác nhận" và khách đã được báo.';

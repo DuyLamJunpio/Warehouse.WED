@@ -213,7 +213,7 @@
     </div>
 
     {{-- ========================================================================= --}}
-    {{-- DRAWER: LỊCH SỬ ĐIỀU CHỈNH TỒN KHO (STOCK HISTORY)                        --}}
+    {{-- DRAWER: LỊCH SỬ BIẾN ĐỘNG TỒN KHO (STOCK HISTORY)                         --}}
     {{-- ========================================================================= --}}
     <div id="drawer-stock-history" tabindex="-1" aria-hidden="true"
         class="fixed top-0 right-0 z-40 w-full sm:max-w-md h-screen overflow-y-auto transition-transform translate-x-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col">
@@ -226,7 +226,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white">Lịch sử kiểm kê</h3>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Lịch sử biến động tồn kho</h3>
             </div>
             <button type="button" id="closeDrawerHistory" data-drawer-dismiss="drawer-stock-history" data-drawer-hide="drawer-stock-history"
                 class="btn-close-drawer p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 rounded-lg">
@@ -345,7 +345,7 @@
             // Stock History Modal Trigger
             $(document).on('click', '.historyStockButton', function() {
                 $('#history-label').text($(this).data('label'));
-                $('#history-body').html('<div class="py-12 text-center text-slate-400 text-xs">Đang tải lịch sử điều chỉnh...</div>');
+                $('#history-body').html('<div class="py-12 text-center text-slate-400 text-xs">Đang tải lịch sử biến động...</div>');
                 openDrawer('drawer-stock-history');
 
                 $.ajax({
@@ -353,7 +353,7 @@
                     type: 'GET',
                     success: function(rows) {
                         if (!rows.length) {
-                            $('#history-body').html('<div class="p-6 text-center text-slate-400 text-xs">Chưa có lịch sử điều chỉnh nào cho biến thể này.</div>');
+                            $('#history-body').html('<div class="p-6 text-center text-slate-400 text-xs">Chưa có biến động tồn kho nào cho biến thể này.</div>');
                             return;
                         }
                         const html = rows.map(r => `

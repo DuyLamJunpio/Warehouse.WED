@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\ProductVariant;
 use App\Services\VoucherRedemption;
+use App\Services\StockAllocator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,8 +17,8 @@ use Illuminate\Validation\Rule;
  * Quản lý đơn hàng bán (invoices có invoice_type = 1): xem danh sách, đổi trạng
  * thái, in phiếu và lập đơn ngay tại quầy bằng bảng "Tạo đơn" của trang này.
  *
- * Đơn tại quầy giữ hàng ngay khi lập. Đơn chuyển khoản từ web chỉ trừ tồn sau
- * khi đã nhận tiền; khi hủy/hoàn chỉ cộng lại các đơn đã từng trừ tồn.
+ * Đơn chỉ xuất kho khi được xác nhận (hoặc hoàn thành ngay tại quầy). Khi
+ * hủy/hoàn, hệ thống chỉ cộng lại các đơn đã từng xuất kho.
  */
 class OrderController extends Controller
 {
@@ -173,19 +174,6 @@ class OrderController extends Controller
 
                 $order->pay_status = 1;
                 $order->payment_expires_at = null;
-                try {
-                    $order->deductStockLines();
-                } catch (\RuntimeException $e) {
-                    $order->note = trim(($order->note ? $order->note . "\n" : '')
-                        . 'CẦN XỬ LÝ: đã ghi nhận chuyển khoản nhưng ' . $e->getMessage());
-                    $order->save();
-                    app(VoucherRedemption::class)->recordPaidOrder($order);
-
-                    return ['status' => 409, 'body' => [
-                        'error' => 'Đã ghi nhận chuyển khoản, nhưng không thể trừ tồn: ' . $e->getMessage(),
-                        'pay_status' => 1,
-                    ]];
-                }
                 $order->save();
                 app(VoucherRedemption::class)->recordPaidOrder($order);
 
@@ -196,7 +184,7 @@ class OrderController extends Controller
                 ]);
 
                 return ['status' => 200, 'body' => [
-                    'success' => 'Đã ghi nhận chuyển khoản. Hãy xác nhận đơn khi sẵn sàng xử lý.',
+                    'success' => 'Đã ghi nhận chuyển khoản. Tồn kho sẽ được trừ khi xác nhận đơn.',
                     'pay_status' => 1,
                     'order_status' => $order->order_status,
                 ]];
@@ -259,6 +247,11 @@ class OrderController extends Controller
             }
 
             $order->order_status = $newStatus;
+            if ($newStatus === Invoice::STATUS_CONFIRMED) {
+                // Mốc duy nhất xuất kho cho mọi đơn giao: kiểm tồn và ghi sổ cái
+                // nằm trong cùng transaction với lần xác nhận này.
+                $order->deductStockLines();
+            }
             $order->save();
 
             DB::commit();
@@ -299,9 +292,10 @@ class OrderController extends Controller
     {
         $keyword = trim((string) $request->input('keyword'));
 
-        $query = ProductVariant::with('product')
-            ->whereHas('product', fn($q) => $q->where('status', '!=', 0))
-            ->where('quantity', '>', 0);
+        $query = ProductVariant::with([
+            'product',
+            'comboComponents.componentVariant.product',
+        ])->whereHas('product', fn($q) => $q->where('status', '!=', 0));
 
         if ($keyword !== '') {
             $query->where(function ($q) use ($keyword) {
@@ -310,14 +304,19 @@ class OrderController extends Controller
             });
         }
 
-        $variants = $query->orderByDesc('quantity')->limit(30)->get();
+        $allocator = app(StockAllocator::class);
+        $variants = $query->orderByDesc('quantity')->limit(100)->get()
+            ->filter(fn(ProductVariant $variant) => ($available = $allocator->availableForVariant($variant)) === null || $available > 0)
+            ->take(30);
 
-        return response()->json($variants->map(fn($v) => [
+        return response()->json($variants->map(fn(ProductVariant $v) => [
             'id' => $v->id,
             'product' => $v->product->product_name,
             'label' => $v->label,
             'sku' => $v->sku,
-            'stock' => (int) $v->quantity,
+            'stock' => $allocator->availableForVariant($v),
+            'manage_stock' => $allocator->availableForVariant($v) !== null,
+            'is_combo' => $v->comboComponents->isNotEmpty(),
             'price' => (int) ($v->price_override ?? $v->product->discount_price ?? $v->product->sell_price),
         ])->values());
     }
@@ -356,12 +355,22 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            // Khoá dòng biến thể: quầy và web có thể bán trùng một món cùng lúc.
-            $variants = ProductVariant::with('product')
-                ->whereIn('id', array_keys($wanted))
+            /** @var StockAllocator $allocator */
+            $allocator = app(StockAllocator::class);
+            $requirements = $allocator->requirements($wanted)['requirements'];
+
+            // Khóa theo id tăng dần để không khóa chéo với luồng web.
+            $lockedVariants = ProductVariant::with('product')
+                ->whereIn('id', array_values(array_unique(array_merge(array_keys($wanted), array_keys($requirements)))))
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+            $physicalVariants = $lockedVariants->only(array_keys($requirements))->keyBy('id');
+            $allocator->assertSufficient($requirements, $physicalVariants);
+
+            $variants = ProductVariant::with(['product', 'comboComponents.componentVariant.product'])
+                ->whereIn('id', array_keys($wanted))->get()->keyBy('id');
 
             $lines = [];
             $subtotal = 0;
@@ -373,11 +382,11 @@ class OrderController extends Controller
                     throw new \RuntimeException('Sản phẩm không còn tồn tại.');
                 }
 
-                // Hàng không theo dõi tồn kho vẫn bán được dù kho ghi 0.
-                if ($variant->product->manage_stock && $variant->quantity < $quantity) {
+                $available = $allocator->availableForVariant($variant);
+                if ($available !== null && $available < $quantity) {
                     throw new \RuntimeException(
                         $variant->product->product_name . ' (' . $variant->label
-                        . ') chỉ còn ' . $variant->quantity . ' sản phẩm.'
+                        . ') chỉ còn ' . $available . ' sản phẩm.'
                     );
                 }
 

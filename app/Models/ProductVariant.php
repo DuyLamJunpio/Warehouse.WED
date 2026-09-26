@@ -51,6 +51,18 @@ class ProductVariant extends Model
         return $this->hasMany(ProductInvoice::class, 'variant_id');
     }
 
+    /** Các thành phần bị trừ khi bán một đơn vị biến thể combo này. */
+    public function comboComponents()
+    {
+        return $this->hasMany(ProductComboItem::class, 'combo_variant_id');
+    }
+
+    /** Những combo đang dùng biến thể này làm thành phần. */
+    public function usedInCombos()
+    {
+        return $this->hasMany(ProductComboItem::class, 'component_variant_id');
+    }
+
     /**
      * Nhãn hiển thị: "Trống đồng / Đen / M". Bỏ qua phần rỗng.
      */

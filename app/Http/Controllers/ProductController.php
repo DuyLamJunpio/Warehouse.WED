@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Categories;
 use App\Models\ProductStyle;
 use App\Models\ProductVariant;
+use App\Models\ProductComboItem;
 use App\Models\ImageModel;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\ProductMediaService;
+use App\Services\StockAllocator;
 use App\Support\ProductPricing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -115,6 +117,116 @@ class ProductController extends Controller
             ->get();
 
         return $products;
+    }
+
+    /** Dữ liệu để cấu hình định mức thành phần của các biến thể combo. */
+    public function comboComponents(string $id)
+    {
+        $product = Product::with([
+            'variants.style',
+            'variants.comboComponents.componentVariant.product',
+        ])->findOrFail($id);
+
+        $componentOptions = ProductVariant::with(['product', 'style'])
+            ->whereHas('product', fn ($query) => $query->whereNull('deleted_at')->where('status', '!=', 0))
+            ->whereDoesntHave('comboComponents')
+            ->orderBy('product_id')
+            ->orderBy('sku')
+            ->get()
+            ->map(fn (ProductVariant $variant) => [
+                'id' => $variant->id,
+                'label' => $variant->product->product_name . ' — ' . $variant->label . ' [' . $variant->sku . ']',
+                'stock' => (int) $variant->quantity,
+            ]);
+
+        return response()->json([
+            'product_id' => $product->id,
+            'product_name' => $product->product_name,
+            'variants' => $product->variants->map(fn (ProductVariant $variant) => [
+                'id' => $variant->id,
+                'label' => $variant->label,
+                'sku' => $variant->sku,
+                'components' => $variant->comboComponents->map(fn (ProductComboItem $component) => [
+                    'component_variant_id' => $component->component_variant_id,
+                    'quantity' => $component->quantity,
+                    'label' => $component->componentVariant?->product?->product_name
+                        . ' — ' . ($component->componentVariant?->label ?? 'Biến thể đã xóa'),
+                ])->values(),
+            ])->values(),
+            'component_options' => $componentOptions->values(),
+        ]);
+    }
+
+    /** Lưu công thức: một combo hiển thị 1, nhưng xuất kho theo từng thành phần. */
+    public function saveComboComponents(Request $request, string $id)
+    {
+        $data = $request->validate([
+            'components' => 'nullable|array',
+            'components.*.combo_variant_id' => 'required|integer|exists:product_variants,id',
+            'components.*.component_variant_id' => 'required|integer|exists:product_variants,id',
+            'components.*.quantity' => 'required|integer|min:1|max:100000',
+        ]);
+
+        DB::transaction(function () use ($id, $data): void {
+            $product = Product::lockForUpdate()->findOrFail($id);
+            $ownVariantIds = $product->variants()->lockForUpdate()->pluck('id')->map(fn ($value) => (int) $value);
+            $ownLookup = $ownVariantIds->flip();
+            $rows = collect($data['components'] ?? []);
+            $duplicates = $rows->groupBy(fn (array $row) => $row['combo_variant_id'] . ':' . $row['component_variant_id'])
+                ->filter(fn ($group) => $group->count() > 1);
+
+            if ($duplicates->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'components' => 'Một thành phần chỉ được khai báo một lần trong mỗi biến thể combo.',
+                ]);
+            }
+
+            foreach ($rows as $index => $row) {
+                $comboId = (int) $row['combo_variant_id'];
+                $componentId = (int) $row['component_variant_id'];
+                if (! $ownLookup->has($comboId)) {
+                    throw ValidationException::withMessages([
+                        "components.$index.combo_variant_id" => 'Biến thể combo không thuộc sản phẩm đang cấu hình.',
+                    ]);
+                }
+                if ($comboId === $componentId) {
+                    throw ValidationException::withMessages([
+                        "components.$index.component_variant_id" => 'Một combo không thể tự chứa chính nó.',
+                    ]);
+                }
+            }
+
+            $componentIds = $rows->pluck('component_variant_id')->map(fn ($value) => (int) $value)->unique()->values();
+            $comboIds = $rows->pluck('combo_variant_id')->map(fn ($value) => (int) $value)->unique()->values();
+            if ($componentIds->intersect($comboIds)->isNotEmpty()
+                || ProductComboItem::whereIn('combo_variant_id', $componentIds)->exists()) {
+                throw ValidationException::withMessages([
+                    'components' => 'Không thể dùng một combo khác làm thành phần. Hãy dùng biến thể hàng vật lý để tránh quy đổi lồng nhau.',
+                ]);
+            }
+
+            // Chỉ thay thế công thức của các biến thể thuộc đúng sản phẩm đang mở.
+            ProductComboItem::whereIn('combo_variant_id', $ownVariantIds)->delete();
+            foreach ($rows as $row) {
+                ProductComboItem::create([
+                    'combo_variant_id' => (int) $row['combo_variant_id'],
+                    'component_variant_id' => (int) $row['component_variant_id'],
+                    'quantity' => (int) $row['quantity'],
+                ]);
+            }
+
+            $product->is_combo = $rows->isNotEmpty();
+            $product->save();
+            $product = $product->fresh();
+            if ($product->is_combo) {
+                app(StockAllocator::class)->syncComboProductStatus($product);
+            } else {
+                $total = $product->variants()->sum('quantity');
+                $product->update(['status' => $total > 0 || ! $product->manage_stock ? 1 : 2]);
+            }
+        });
+
+        return response()->json(['success' => 'Đã lưu công thức combo. Tồn combo được tính từ tồn các thành phần.']);
     }
 
     public function getImageUrl(string $id)
@@ -732,6 +844,11 @@ class ProductController extends Controller
      */
     private function syncProductStatus(Product $product, int $totalQuantity): void
     {
+        if ($product->is_combo) {
+            app(StockAllocator::class)->syncComboProductStatus($product);
+            return;
+        }
+
         // Hàng không theo dõi tồn kho thì luôn ở trạng thái bán được: số tồn của
         // nó không phản ánh gì, để nó tự nhảy sang "hết hàng" là chặn nhầm.
         $status = ($totalQuantity > 0 || !$product->manage_stock) ? 1 : 2;

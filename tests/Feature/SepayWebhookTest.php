@@ -97,7 +97,7 @@ class SepayWebhookTest extends TestCase
         $this->assertTrue($session->expires_at->between(now()->addMinutes(14), now()->addMinutes(16)));
     }
 
-    public function test_sepay_creates_a_paid_admin_order_and_redeems_stock_and_voucher_only_after_payment(): void
+    public function test_sepay_creates_a_paid_pending_order_and_redeems_voucher_but_not_stock(): void
     {
         $variant = $this->variant(5);
         $voucher = Voucher::create([
@@ -156,8 +156,8 @@ class SepayWebhookTest extends TestCase
 
         $order = Invoice::orders()->where('order_code', $session->payment_code)->firstOrFail();
         $this->assertSame(1, (int) $order->pay_status);
-        $this->assertSame(Invoice::STATUS_CONFIRMED, $order->order_status);
-        $this->assertSame(3, (int) $variant->fresh()->quantity);
+        $this->assertSame(Invoice::STATUS_PENDING, $order->order_status);
+        $this->assertSame(5, (int) $variant->fresh()->quantity);
         $this->assertSame(1, (int) $voucher->fresh()->used_count);
         $this->assertSame(StorefrontPaymentSession::STATUS_PAID, $session->fresh()->status);
 

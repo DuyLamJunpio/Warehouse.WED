@@ -718,6 +718,29 @@
     {{-- Modal Confirm Delete Product --}}
     <x-modal-confirm id="modal-delete-product" title="Xóa sản phẩm" message="Bạn có chắc chắn muốn xóa sản phẩm này không? Dữ liệu tồn kho và hình ảnh liên quan sẽ bị xóa." confirmText="Xóa vĩnh viễn" />
 
+    {{-- Công thức combo: giữ dòng bán là 1 combo, tồn kho xuất theo thành phần. --}}
+    <div id="modal-combo-components" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 p-4 sm:p-8">
+        <div class="mx-auto my-4 w-full max-w-3xl rounded-2xl bg-white shadow-2xl dark:bg-slate-800">
+            <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-slate-700">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Thiết lập thành phần combo</h3>
+                    <p id="combo-product-name" class="mt-1 text-xs text-slate-500 dark:text-slate-400"></p>
+                </div>
+                <button type="button" class="close-combo-modal rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700">✕</button>
+            </div>
+            <div class="p-5">
+                <p class="mb-4 rounded-xl border border-violet-100 bg-violet-50 px-3 py-2 text-xs leading-5 text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
+                    Mỗi dòng bán vẫn là <strong>1 combo</strong>. Ví dụ thêm “Thanh gỗ — Mặc định” với số lượng <strong>5</strong> thì khi xác nhận bán 1 combo, kho sẽ trừ 5 thanh gỗ.
+                </p>
+                <div id="combo-variants" class="space-y-4"></div>
+            </div>
+            <div class="flex justify-end gap-3 border-t border-slate-200 p-5 dark:border-slate-700">
+                <button type="button" class="close-combo-modal rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">Hủy</button>
+                <button type="button" id="save-combo-components" class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">Lưu công thức combo</button>
+            </div>
+        </div>
+    </div>
+
     {{-- Scripts --}}
     <script>
         $(document).ready(function() {
@@ -1662,6 +1685,121 @@
 
             $('.btn-cancel-modal, [data-modal-hide]').on('click', function() {
                 $('#modal-delete-product').addClass('hidden').removeClass('flex');
+            });
+
+            let comboState = { productId: null, componentOptions: [] };
+            const escapeHtml = (value) => $('<div>').text(value ?? '').html();
+            const comboComponentRow = (component = {}) => {
+                const selectedId = String(component.component_variant_id || '');
+                const options = comboState.componentOptions.map(option => `
+                    <option value="${option.id}" ${String(option.id) === selectedId ? 'selected' : ''}>
+                        ${escapeHtml(option.label)} · tồn ${option.stock}
+                    </option>
+                `).join('');
+
+                return `
+                    <div class="combo-component-row grid grid-cols-[1fr_90px_32px] items-center gap-2">
+                        <select class="combo-component-id rounded-lg border-slate-200 bg-white px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                            <option value="">Chọn biến thể hàng vật lý</option>${options}
+                        </select>
+                        <input type="number" min="1" max="100000" value="${Number(component.quantity || 1)}" class="combo-component-quantity rounded-lg border-slate-200 px-2.5 py-2 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-white" aria-label="Số lượng thành phần">
+                        <button type="button" class="remove-combo-component rounded-lg p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30" title="Bỏ thành phần">✕</button>
+                    </div>`;
+            };
+
+            const renderComboVariants = (variants) => {
+                $('#combo-variants').html(variants.map(variant => `
+                    <section class="combo-variant-card rounded-xl border border-slate-200 p-4 dark:border-slate-700" data-combo-variant-id="${variant.id}">
+                        <div class="mb-3 flex items-start justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900 dark:text-white">${escapeHtml(variant.label || 'Mặc định')}</h4>
+                                <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">SKU: ${escapeHtml(variant.sku)}</p>
+                            </div>
+                            <button type="button" class="add-combo-component rounded-lg border border-violet-200 px-2.5 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300">+ Thành phần</button>
+                        </div>
+                        <div class="combo-component-rows space-y-2">
+                            ${(variant.components || []).map(component => comboComponentRow(component)).join('')}
+                        </div>
+                        <p class="combo-empty ${(variant.components || []).length ? 'hidden' : ''} mt-2 text-xs text-slate-400">Chưa có thành phần: biến thể này vẫn được tính là hàng bán lẻ.</p>
+                    </section>
+                `).join(''));
+            };
+
+            $(document).on('click', '.comboProductButton', function() {
+                const productId = $(this).data('id-product');
+                $('#combo-variants').html('<div class="py-10 text-center text-xs text-slate-400">Đang tải biến thể và công thức combo...</div>');
+                $('#modal-combo-components').removeClass('hidden');
+
+                $.ajax({
+                    url: '/product/' + productId + '/combo-components',
+                    type: 'GET',
+                    success: function(data) {
+                        comboState = { productId: data.product_id, componentOptions: data.component_options || [] };
+                        $('#combo-product-name').text(data.product_name + ' · Chọn từng biến thể combo và định mức thành phần');
+                        renderComboVariants(data.variants || []);
+                    },
+                    error: function(xhr) {
+                        $('#modal-combo-components').addClass('hidden');
+                        window.showAjaxError(xhr);
+                    }
+                });
+            });
+
+            $(document).on('click', '.close-combo-modal', function() {
+                $('#modal-combo-components').addClass('hidden');
+            });
+
+            $(document).on('click', '.add-combo-component', function() {
+                const card = $(this).closest('.combo-variant-card');
+                card.find('.combo-component-rows').append(comboComponentRow());
+                card.find('.combo-empty').addClass('hidden');
+            });
+
+            $(document).on('click', '.remove-combo-component', function() {
+                const card = $(this).closest('.combo-variant-card');
+                $(this).closest('.combo-component-row').remove();
+                card.find('.combo-empty').toggleClass('hidden', card.find('.combo-component-row').length > 0);
+            });
+
+            $('#save-combo-components').on('click', function() {
+                if (!comboState.productId) return;
+                const components = [];
+                let invalid = false;
+                $('.combo-variant-card').each(function() {
+                    const comboVariantId = $(this).data('combo-variant-id');
+                    $(this).find('.combo-component-row').each(function() {
+                        const componentVariantId = $(this).find('.combo-component-id').val();
+                        const quantity = parseInt($(this).find('.combo-component-quantity').val() || '0', 10);
+                        if (!componentVariantId || quantity < 1) {
+                            invalid = true;
+                            return;
+                        }
+                        components.push({
+                            combo_variant_id: comboVariantId,
+                            component_variant_id: componentVariantId,
+                            quantity: quantity,
+                        });
+                    });
+                });
+                if (invalid) {
+                    window.showToast('Hãy chọn thành phần và nhập số lượng từ 1 trở lên.', 'warning');
+                    return;
+                }
+
+                const button = $(this).prop('disabled', true);
+                $.ajax({
+                    url: '/product/' + comboState.productId + '/combo-components',
+                    type: 'POST',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data: { components: components },
+                    success: function(response) {
+                        window.showToast(response.success, 'success');
+                        $('#modal-combo-components').addClass('hidden');
+                        reloadDataTable();
+                    },
+                    error: window.showAjaxError,
+                    complete: function() { button.prop('disabled', false); }
+                });
             });
         });
     </script>

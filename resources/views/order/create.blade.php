@@ -208,13 +208,13 @@
                             <div class="font-semibold text-slate-900 dark:text-white text-xs">${item.product}</div>
                             <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                                 <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 font-medium">${item.label}</span>
-                                <span>· Còn ${item.stock}</span>
+                                 <span>· ${item.manage_stock ? 'Còn ' + item.stock : 'Không giới hạn'}</span>
                             </div>
                         </td>
                         <td class="p-3">
                             <div class="flex items-center justify-center gap-1">
                                 <button type="button" class="btn-qty-minus w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold" data-id="${id}">-</button>
-                                <input type="number" min="1" max="${item.stock}" value="${item.qty}" data-id="${id}"
+                                 <input type="number" min="1" ${item.manage_stock ? `max="${item.stock}"` : ''} value="${item.qty}" data-id="${id}"
                                     class="co-qty w-12 text-center text-xs font-bold rounded border-slate-200 p-1 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
                                 <button type="button" class="btn-qty-plus w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold" data-id="${id}">+</button>
                             </div>
@@ -251,7 +251,7 @@
             const existing = cart.get(v.id);
             const qty = (existing ? existing.qty : 0) + 1;
 
-            if (qty > v.stock) {
+            if (v.manage_stock !== false && qty > v.stock) {
                 window.showToast(`${v.product} (${v.label}) chỉ còn ${v.stock} trong kho.`, 'danger');
                 return;
             }
@@ -283,7 +283,7 @@
                             <div>
                                 <div class="text-xs font-bold text-slate-900 dark:text-white">${v.product}</div>
                                 <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                                    ${v.label} · <span class="text-indigo-600 dark:text-indigo-400 font-medium">Còn ${v.stock}</span>
+                                    ${v.label} · <span class="text-indigo-600 dark:text-indigo-400 font-medium">${v.manage_stock ? 'Còn ' + v.stock : 'Không giới hạn'}</span>
                                 </div>
                             </div>
                             <div class="text-xs font-bold text-slate-900 dark:text-white">${money(v.price)}</div>
@@ -307,7 +307,7 @@
             const id = $(this).data('id');
             const item = cart.get(id);
             if (!item) return;
-            if (item.qty >= item.stock) {
+            if (item.manage_stock && item.qty >= item.stock) {
                 window.showToast(`Chỉ còn ${item.stock} sản phẩm.`, 'danger');
                 return;
             }
@@ -333,7 +333,7 @@
             if (!item) return;
 
             let qty = parseInt($(this).val() || '1', 10) || 1;
-            if (qty > item.stock) {
+            if (item.manage_stock && qty > item.stock) {
                 window.showToast(`Chỉ còn ${item.stock} sản phẩm.`, 'danger');
                 qty = item.stock;
             }
