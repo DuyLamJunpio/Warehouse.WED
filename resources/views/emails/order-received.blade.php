@@ -2,9 +2,17 @@
 <html lang="vi">
 <body style="margin:0;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif;line-height:1.6">
     <div style="max-width:640px;margin:24px auto;padding:28px;background:#fff;border:1px solid #e2e8f0;border-radius:14px">
-        <h1 style="margin:0 0 8px;color:#312e81;font-size:22px">RUNGU đã nhận đơn hàng</h1>
+        <h1 style="margin:0 0 8px;color:#312e81;font-size:22px">
+            {{ $order->payment_method === 'bank_transfer' && (int) $order->pay_status === 1
+                ? 'RUNGU đã xác nhận thanh toán'
+                : 'RUNGU đã nhận đơn hàng' }}
+        </h1>
         <p>Xin chào {{ $order->customer?->customer_name ?: 'bạn' }},</p>
-        <p>Cảm ơn bạn đã mua hàng. Đơn <strong>#{{ $order->order_code }}</strong> đã được ghi nhận.</p>
+        @if ($order->payment_method === 'bank_transfer' && (int) $order->pay_status === 1)
+            <p>RUNGU đã nhận đủ khoản chuyển khoản cho đơn <strong>#{{ $order->order_code }}</strong>. Shop sẽ tiếp tục xử lý đơn hàng cho bạn.</p>
+        @else
+            <p>Cảm ơn bạn đã mua hàng. Đơn <strong>#{{ $order->order_code }}</strong> đã được ghi nhận.</p>
+        @endif
 
         <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px">
             <thead>

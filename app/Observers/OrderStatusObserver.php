@@ -22,13 +22,7 @@ use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
  */
 class OrderStatusObserver implements ShouldHandleEventsAfterCommit
 {
-    /**
-     * Những bước chuyển không gửi thư.
-     *
-     * Đóng gói là việc nội bộ trong kho: khách không có gì để làm với tin đó, và
-     * một lá thư kẹp giữa "đã xác nhận" và "đang giao" chỉ làm loãng những lá thư
-     * có việc thật. Muốn tắt hay bật thêm bước nào thì sửa đúng dòng này.
-     */
+    /** Đóng gói là bước nội bộ, không gửi email cho khách. */
     private const SILENT_STATUSES = [Invoice::STATUS_PACKING];
 
     public function __construct(
@@ -55,16 +49,21 @@ class OrderStatusObserver implements ShouldHandleEventsAfterCommit
             return;
         }
 
+        // Bắt cả SePay webhook và nút đối soát thủ công: khi chuyển khoản thành
+        // công thì gửi mail xác nhận thanh toán ngay, dù đơn vẫn chờ shop duyệt.
+        if ($invoice->wasChanged('pay_status')
+            && (int) $invoice->pay_status === 1
+            && (int) $invoice->getOriginal('pay_status') !== 1
+            && $invoice->payment_method === 'bank_transfer') {
+            $this->customerMailer->queueOrderReceived($invoice);
+        }
+
         if (! $invoice->wasChanged('order_status')) {
             return;
         }
 
         $to = (string) $invoice->order_status;
-        if ($to === '') {
-            return;
-        }
-
-        if (in_array($to, self::SILENT_STATUSES, true)) {
+        if ($to === '' || in_array($to, self::SILENT_STATUSES, true)) {
             return;
         }
 
