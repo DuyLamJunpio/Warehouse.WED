@@ -27,5 +27,12 @@
     "Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.": "Khi xóa tài khoản, toàn bộ dữ liệu thuộc tài khoản sẽ bị xóa vĩnh viễn. Hãy sao lưu thông tin cần giữ trước khi tiếp tục.",
     "Are you sure you want to delete your account?": "Bạn có chắc muốn xóa tài khoản này?",
     "Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.": "Thao tác này xóa vĩnh viễn dữ liệu thuộc tài khoản. Nhập mật khẩu để xác nhận.",
-    "Cancel": "Hủy"
+    "Cancel": "Hủy",
+    "Verify Email Address": "Xác minh địa chỉ email",
+    "Please click the button below to verify your email address.": "Vui lòng bấm nút bên dưới để xác minh địa chỉ email của bạn.",
+    "If you did not create an account, no further action is required.": "Nếu bạn không tạo tài khoản này, bạn không cần thực hiện thêm thao tác nào.",
+    "Reset Password Notification": "Thông báo đặt lại mật khẩu",
+    "You are receiving this email because we received a password reset request for your account.": "Bạn nhận được email này vì chúng tôi đã nhận yêu cầu đặt lại mật khẩu cho tài khoản của bạn.",
+    "This password reset link will expire in :count minutes.": "Liên kết đặt lại mật khẩu này sẽ hết hạn sau :count phút.",
+    "If you did not request a password reset, no further action is required.": "Nếu bạn không yêu cầu đặt lại mật khẩu, bạn không cần thực hiện thêm thao tác nào."
 }

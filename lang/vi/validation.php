@@ -78,7 +78,7 @@ return [
     'mac_address' => ':attribute phải là địa chỉ MAC hợp lệ.',
     'max' => [
         'array' => ':attribute không được có nhiều hơn :max mục.',
-        'file' => ':attribute không được lớn hơn :max KB.',
+        'file' => ':attribute có dung lượng vượt quá giới hạn :max KB. Vui lòng chọn tệp nhỏ hơn rồi thử lại.',
         'numeric' => ':attribute không được lớn hơn :max.',
         'string' => ':attribute không được dài quá :max ký tự.',
     ],
@@ -133,6 +133,23 @@ return [
     'url' => ':attribute phải là đường dẫn hợp lệ.',
     'ulid' => ':attribute phải là ULID hợp lệ.',
     'uuid' => ':attribute phải là UUID hợp lệ.',
+
+    'custom' => [
+        'styles.*.image' => [
+            'file' => 'Tệp ảnh của mẫu sản phẩm số :position không hợp lệ. Vui lòng chọn lại một tệp ảnh.',
+            'image' => 'Tệp đã chọn cho mẫu sản phẩm số :position không phải là ảnh hợp lệ. Vui lòng chọn lại.',
+            'max' => 'Ảnh của mẫu sản phẩm số :position có dung lượng vượt quá 5 MB. Vui lòng chọn ảnh không lớn hơn 5 MB rồi tải lên lại.',
+        ],
+        'media.*' => [
+            'file' => 'Tệp tải lên thứ :position không hợp lệ. Vui lòng chọn lại tệp.',
+            'max' => 'Tệp tải lên thứ :position có dung lượng vượt quá 50 MB. Vui lòng chọn tệp không lớn hơn 50 MB rồi tải lên lại.',
+            'mimetypes' => 'Tệp tải lên thứ :position không đúng định dạng. Chỉ chấp nhận ảnh JPG, PNG, WebP, GIF hoặc video MP4, MOV, WebM.',
+        ],
+        'images.*' => [
+            'image' => 'Tệp ảnh thứ :position không hợp lệ. Vui lòng chọn một tệp hình ảnh.',
+            'max' => 'Tệp ảnh thứ :position có dung lượng vượt quá 2 MB. Vui lòng chọn ảnh nhỏ hơn rồi tải lên lại.',
+        ],
+    ],
 
     'attributes' => [
         'name' => 'tên',

@@ -162,7 +162,8 @@
                 const lines = Object.values(data.errors).flat();
                 if (lines.length) return lines.join('\n');
             }
-            return (data && data.message) || 'HTTP ' + status;
+            return (data && (data.error || data.message)) ||
+                'Không thể hoàn tất thao tác (mã phản hồi ' + status + '). Vui lòng thử lại.';
         };
 
         const request = async (url, method, body, isForm = false) => {

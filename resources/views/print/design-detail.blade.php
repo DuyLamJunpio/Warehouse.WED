@@ -332,7 +332,12 @@
                         body: JSON.stringify({ decision: decision, note: note || null }),
                     });
                     const data = await res.json().catch(() => ({}));
-                    if (!res.ok) throw new Error(data.error || data.message || 'HTTP ' + res.status);
+                    if (!res.ok) {
+                        throw new Error(
+                            data.error || data.message ||
+                            'Không thể lưu kết quả duyệt thiết kế (mã phản hồi ' + res.status + '). Vui lòng thử lại.'
+                        );
+                    }
 
                     window.showToast(data.success, 'success');
                     setTimeout(() => location.reload(), 1200);
