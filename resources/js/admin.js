@@ -161,16 +161,35 @@ function setupAdminHelpers($) {
      * chạy, hoặc phiên đăng nhập hết hạn nên bị đẩy về trang đăng nhập. Thiếu
      * bước này thì người dùng chỉ nhận được một thông báo trống rỗng.
      */
-    const docThanPhanHoi = function (xhr) {
-        const raw = (xhr && xhr.responseText) || '';
-        if (!raw) return '';
+    const loiMacDinhTheoTrangThai = function (xhr) {
+        const status = xhr && xhr.status;
 
-        const warning = raw.match(/(?:Warning|Fatal error)[^<]*/i);
-        if (warning) return warning[0].trim();
+        const messages = {
+            400: 'Dữ liệu gửi lên chưa hợp lệ. Vui lòng kiểm tra lại các ô đã nhập rồi thử lại.',
+            403: 'Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.',
+            404: 'Không tìm thấy dữ liệu cần thao tác. Dữ liệu có thể đã bị thay đổi hoặc không còn tồn tại.',
+            405: 'Thao tác này hiện không được hỗ trợ. Vui lòng tải lại trang rồi thử lại.',
+            422: 'Một hoặc nhiều thông tin chưa hợp lệ. Vui lòng kiểm tra các thông báo chi tiết và thử lại.',
+            429: 'Bạn thao tác quá nhanh. Vui lòng chờ ít phút rồi thử lại.',
+            500: 'Máy chủ gặp sự cố khi xử lý yêu cầu. Dữ liệu chưa được lưu; vui lòng thử lại sau ít phút.',
+            502: 'Không thể kết nối đến máy chủ xử lý. Vui lòng thử lại sau ít phút.',
+            503: 'Hệ thống đang tạm thời bảo trì hoặc quá tải. Vui lòng thử lại sau ít phút.',
+            504: 'Máy chủ phản hồi quá lâu. Vui lòng thử lại; nếu vẫn lỗi, hãy liên hệ quản trị viên.',
+        };
 
-        // Bỏ thẻ HTML rồi lấy phần đầu, tránh đổ cả trang lỗi vào thông báo.
-        const text = raw.replace(/<[^>]*>/g, ' ').replace(/[ \t\r\n]+/g, ' ').trim();
-        return text.length > 300 ? text.slice(0, 300) + '…' : text;
+        return messages[status] || 'Không thể hoàn tất thao tác. Dữ liệu chưa được lưu; vui lòng kiểm tra kết nối rồi thử lại.';
+    };
+
+    const dinhDangDanhSachLoi = function (errors) {
+        if (!errors || typeof errors !== 'object') return '';
+
+        const messages = Object.values(errors).flatMap(function (value) {
+            return Array.isArray(value) ? value : [value];
+        }).filter(function (value) {
+            return typeof value === 'string' && value.trim() !== '';
+        });
+
+        return messages.join('\n');
     };
 
     /**
@@ -201,20 +220,21 @@ function setupAdminHelpers($) {
         }
 
         if (xhr && xhr.status === 413) {
-            window.showToast('Tệp tải lên vượt quá giới hạn của máy chủ.', 'error');
+            window.showToast(
+                'Tệp tải lên vượt quá giới hạn máy chủ. Vui lòng giảm dung lượng tệp hoặc chia nhỏ tệp rồi thử lại.',
+                'error'
+            );
             return;
         }
 
-        const message = res.errors
-            ? Object.keys(res.errors)
-                  .map(function (k) {
-                      return res.errors[k].join('\n');
-                  })
-                  .join('\n')
-            : res.error ||
-              res.message ||
-              docThanPhanHoi(xhr) ||
-              'Lỗi: ' + ((xhr && xhr.statusText) || 'không rõ');
+        const validationMessages = dinhDangDanhSachLoi(res.errors) ||
+            dinhDangDanhSachLoi(typeof res.error === 'object' ? res.error : null);
+        const serverMessage = typeof res.error === 'string'
+            ? res.error
+            : (typeof res.message === 'string' && res.message !== 'The given data was invalid.'
+                ? res.message
+                : '');
+        const message = validationMessages || serverMessage || loiMacDinhTheoTrangThai(xhr);
 
         window.showToast(message, 'error');
     };

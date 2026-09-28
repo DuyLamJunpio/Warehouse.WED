@@ -325,7 +325,7 @@
                     },
                     error: function(xhr) {
                         // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
+                        window.showAjaxError(xhr);
                     }
                 });
             });
@@ -372,7 +372,7 @@
                         },
                         error: function(xhr) {
                             // Xử lý lỗi
-                            alert('Error: ' + xhr.statusText);
+                            window.showAjaxError(xhr);
                         }
                     });
                 });
@@ -490,7 +490,7 @@
                     },
                     error: function(xhr) {
                         // Xử lý lỗi
-                        alert('Error: ' + xhr.statusText);
+                        window.showAjaxError(xhr);
                     }
                 });
             });

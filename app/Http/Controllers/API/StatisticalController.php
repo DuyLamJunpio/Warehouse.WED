@@ -476,7 +476,7 @@ class StatisticalController extends Controller
                 $endDate = Carbon::createFromFormat('Y-m-d', $request->end_date);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid date format. Please use Y-m-d format.'], 400);
+            return response()->json(['error' => 'Khoảng ngày không đúng định dạng. Vui lòng nhập theo dạng năm-tháng-ngày, ví dụ 2026-09-28.'], 400);
         }
 
         // Thống kê theo từng tháng
@@ -661,7 +661,7 @@ class StatisticalController extends Controller
                 $endDate = Carbon::createFromFormat('Y-m-d', $request->end_date);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid date format. Please use Y-m-d format.'], 400);
+            return response()->json(['error' => 'Khoảng ngày không đúng định dạng. Vui lòng nhập theo dạng năm-tháng-ngày, ví dụ 2026-09-28.'], 400);
         }
 
         // Thống kê theo từng tháng
