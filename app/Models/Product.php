@@ -13,6 +13,9 @@ class Product extends Model
     use HasFactory;
     use SoftDeletes;
 
+    public const VARIANT_MODE_SIMPLE = 'simple';
+    public const VARIANT_MODE_VARIABLE = 'variable';
+
     /**
      * Nhãn hiển thị của ba cấp biến thể. Dữ liệu tồn kho cũ vẫn giữ ở các cột
      * style/color/size; nhãn này chỉ giúp mỗi ngành gọi chúng đúng ngữ cảnh.
@@ -35,6 +38,7 @@ class Product extends Model
         'audience',
         'unit',
         'variant_attribute_labels',
+        'variant_mode',
         'import_price',
         'sell_price',
         'discount_price',
@@ -52,9 +56,16 @@ class Product extends Model
         'sell_price' => 'integer',
         'discount_price' => 'integer',
         'variant_attribute_labels' => 'array',
+        'manage_stock' => 'boolean',
+        'variant_mode' => 'string',
     ];
 
     protected $dates = ['deleted_at'];
+
+    public function getIsSimpleAttribute(): bool
+    {
+        return $this->variant_mode === self::VARIANT_MODE_SIMPLE;
+    }
 
     /** Chuẩn hóa nhãn do quản trị viên tự đặt trước khi lưu hoặc trả về API. */
     public static function normalizeVariantAttributeLabels(?array $labels): array

@@ -24,6 +24,7 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
@@ -499,6 +500,11 @@ class ProductController extends Controller
             'discount_price' => 'nullable|integer|min:0|lte:sell_price',
             'is_featured' => 'nullable|boolean',
             'manage_stock' => 'nullable|boolean',
+            'variant_mode' => ['nullable', Rule::in([
+                Product::VARIANT_MODE_SIMPLE,
+                Product::VARIANT_MODE_VARIABLE,
+            ])],
+            'stock_quantity' => 'nullable|integer|min:0',
             'variant_attribute_labels' => 'nullable|array',
             'variant_attribute_labels.style' => 'nullable|string|max:40',
             'variant_attribute_labels.color' => 'nullable|string|max:40',
@@ -550,6 +556,26 @@ class ProductController extends Controller
                 $data[$field] = null;
             }
         }
+
+        $variantMode = $data['variant_mode']
+            ?? $product?->variant_mode
+            ?? Product::VARIANT_MODE_VARIABLE;
+        $data['variant_mode'] = $variantMode;
+        if ($variantMode === Product::VARIANT_MODE_VARIABLE
+            && array_key_exists('stock_quantity', $input)
+            && filled($input['stock_quantity'])) {
+            throw ValidationException::withMessages([
+                'stock_quantity' => 'Sản phẩm có biến thể chỉ nhập tồn kho ở từng SKU.',
+            ]);
+        }
+
+        if ($variantMode === Product::VARIANT_MODE_SIMPLE && blank($data['stock_quantity'] ?? null)) {
+            $data['stock_quantity'] = 0;
+        }
+
+        // stock_quantity là ô nhập thuận tiện cho sản phẩm đơn, còn dữ liệu
+        // tồn kho thực tế vẫn nằm ở SKU nội bộ để không phá lịch sử hiện có.
+        unset($data['stock_quantity']);
 
         // Nhãn là dữ liệu hiển thị, còn giá trị và tồn kho tiếp tục dùng cấu
         // trúc biến thể hiện có. Nhờ vậy sản phẩm cũ không bị ảnh hưởng.
@@ -649,11 +675,15 @@ class ProductController extends Controller
     }
 
     /**
-     * Đồng bộ các nhóm mẫu và biến thể con. Không xóa dòng bị thiếu khỏi payload:
-     * variant_id đã có thể nằm trong giỏ/đơn cũ; muốn ngừng bán chỉ cần đưa tồn về 0.
+     * Đồng bộ các nhóm mẫu và biến thể con. Dòng bị thiếu khỏi payload được
+     * đưa vào thùng rác (không hard-delete) để giữ lịch sử và cho phép khôi phục.
      */
     private function syncStylesAndVariants(Product $product, Request $request, array $styles): int
     {
+        if ($request->input('variant_mode', Product::VARIANT_MODE_VARIABLE) === Product::VARIANT_MODE_SIMPLE) {
+            return $this->syncSimpleVariant($product, $request);
+        }
+
         if ($styles === []) {
             $fallback = $product->styles()->firstOrCreate(
                 ['name_key' => 'mẫu mặc định'],
@@ -673,6 +703,9 @@ class ProductController extends Controller
 
         $existingStyles = $product->styles()->get()->keyBy('id');
         $existingVariants = ProductVariant::where('product_id', $product->id)->get()->keyBy('id');
+        $manageStock = $request->boolean('manage_stock');
+        $seenStyleIds = [];
+        $seenVariantIds = [];
         $seenStyleNames = [];
         $seenCombinations = [];
         $variantSort = 0;
@@ -735,6 +768,7 @@ class ProductController extends Controller
                 'sort_order' => $styleSort++,
             ]);
             $style->save();
+            $seenStyleIds[$style->id] = true;
 
             // Tương tự, giữ key biến thể để thông báo validation trỏ đúng dòng
             // ngay cả khi một dòng mới đã bị xóa ở giữa danh sách.
@@ -807,7 +841,9 @@ class ProductController extends Controller
                     'product_style_id' => $style->id,
                     'size' => $size,
                     'color' => $color,
-                    'quantity' => max(0, (int) ($row['quantity'] ?? 0)),
+                    'quantity' => $manageStock
+                        ? max(0, (int) ($row['quantity'] ?? 0))
+                        : (int) ($variant?->quantity ?? 0),
                     'price_override' => ($rawPrice === null || $rawPrice === '') ? null : (int) $rawPrice,
                     'sort_order' => $variantSort++,
                 ];
@@ -819,10 +855,66 @@ class ProductController extends Controller
                     $variant->sku = $product->barcode . '-' . strtoupper(Str::random(5));
                 }
                 $variant->save();
+                $seenVariantIds[$variant->id] = true;
             }
         }
 
+        // Dòng bị bỏ khỏi form là thao tác xóa có chủ đích. Soft-delete để
+        // không mất lịch sử hóa đơn/tồn kho và cho phép khôi phục từ thùng rác.
+        $existingVariants
+            ->reject(fn (ProductVariant $variant): bool => isset($seenVariantIds[$variant->id]))
+            ->each(fn (ProductVariant $variant): ?bool => $variant->delete());
+        $existingStyles
+            ->reject(fn (ProductStyle $style): bool => isset($seenStyleIds[$style->id]))
+            ->each(fn (ProductStyle $style): ?bool => $style->delete());
+
         return (int) ProductVariant::where('product_id', $product->id)->sum('quantity');
+    }
+
+    /**
+     * Sản phẩm đơn vẫn có một SKU nội bộ để dùng chung luồng checkout/kho,
+     * nhưng không còn nhóm/màu/size giả hiển thị cho người dùng.
+     */
+    private function syncSimpleVariant(Product $product, Request $request): int
+    {
+        $existingVariants = ProductVariant::where('product_id', $product->id)->get();
+
+        if ($existingVariants->count() > 1) {
+            throw ValidationException::withMessages([
+                'variant_mode' => 'Sản phẩm đang có nhiều SKU. Hãy giữ chế độ có biến thể hoặc xử lý từng SKU trước khi chuyển thành sản phẩm đơn.',
+            ]);
+        }
+
+        $variant = $existingVariants->first() ?? new ProductVariant();
+        $hasExistingStock = $variant->exists;
+        $manageStock = $request->boolean('manage_stock');
+        $quantity = $manageStock
+            ? max(0, (int) $request->input('stock_quantity', $variant->quantity ?? 0))
+            : ($hasExistingStock ? (int) $variant->quantity : 0);
+
+        $variant->fill([
+            'product_id' => $product->id,
+            'product_style_id' => null,
+            'color' => null,
+            'size' => null,
+            'quantity' => $quantity,
+            'price_override' => null,
+            'sort_order' => 0,
+        ]);
+
+        if (! $variant->exists) {
+            $variant->sku = $product->barcode . '-BASE';
+        }
+        if ($this->supportsVariantPauseColumn()) {
+            $variant->is_paused = false;
+        }
+        $variant->save();
+
+        // Các nhóm cũ chỉ là cấu trúc của chế độ variable. Soft-delete để
+        // lịch sử có thể khôi phục, nhưng không để chúng quay lại UI simple.
+        $product->styles()->get()->each(fn (ProductStyle $style): ?bool => $style->delete());
+
+        return $quantity;
     }
 
     private function supportsVariantPauseColumn(): bool
@@ -982,6 +1074,22 @@ class ProductController extends Controller
         }
 
         return response()->json($variants);
+    }
+
+    /**
+     * Đưa một biến thể vào thùng rác nhưng giữ nguyên lịch sử bán/tồn kho.
+     */
+    public function destroyVariant(string $productId, string $variantId)
+    {
+        $variant = ProductVariant::where('product_id', $productId)->find($variantId);
+
+        if (! $variant) {
+            return response()->json(['error' => 'Biến thể không tồn tại.'], 404);
+        }
+
+        $variant->delete();
+
+        return response()->json(['success' => 'Biến thể đã được đưa vào thùng rác.']);
     }
 
     public function updateOrDeleteVariant(Request $request, $productId, $variantId)

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Một mẫu hình/kiểu của sản phẩm. Ảnh được giữ một lần ở đây rồi mọi biến thể
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductStyle extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'product_id',
@@ -27,7 +29,7 @@ class ProductStyle extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class)->withTrashed();
+        return $this->belongsTo(Product::class);
     }
 
     public function image()

@@ -12,6 +12,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // Dọn thùng rác mỗi ngày; mặc định chỉ xử lý bản ghi đã soft-delete
+        // quá 30 ngày. Có thể chạy kiểm tra trước bằng --dry-run.
+        $schedule->command('trash:purge')->dailyAt('02:30')->withoutOverlapping();
+
         // Không cần lịch nền: đơn quá hạn được thả ngay tại lúc có người cần hàng
         // (khách khác đặt / kiểm tồn) và lúc nhân viên mở trang Đơn hàng.
         // Vẫn chạy tay được: php artisan orders:cancel-expired

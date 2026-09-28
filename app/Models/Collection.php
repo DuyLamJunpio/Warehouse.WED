@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Bộ sưu tập trên trang chủ, sản phẩm do chủ shop tự tích.
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 class Collection extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'title', 'subtitle', 'image_path', 'cta_label', 'cta_link',

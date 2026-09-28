@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Media của sản phẩm: ảnh hoặc video.
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class ImageModel extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     public const TYPE_IMAGE = 'image';
     public const TYPE_VIDEO = 'video';

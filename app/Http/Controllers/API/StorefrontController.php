@@ -226,17 +226,18 @@ class StorefrontController extends Controller
             ->values();
 
         $price = (int) ($product->discount_price ?? $product->sell_price);
+        $isSimple = $product->is_simple;
 
         $allocator = app(StockAllocator::class);
-        $variants = $product->variants->map(function ($variant) use ($allocator, $price) {
+        $variants = $product->variants->map(function ($variant) use ($allocator, $price, $isSimple) {
             $availableStock = $allocator->availableForVariant($variant);
 
             return [
                 // Web bán hàng gửi id này lại khi đặt hàng, đừng đổi định dạng.
                 'id' => $variant->id,
-                'style_id' => $variant->product_style_id,
-                'size' => $variant->size,
-                'color' => $variant->color,
+                'style_id' => $isSimple ? null : $variant->product_style_id,
+                'size' => $isSimple ? null : $variant->size,
+                'color' => $isSimple ? null : $variant->color,
                 'sku' => $variant->sku,
                 'stock' => $availableStock,
                 // Có bán được dòng này không - đã tính cả công thức combo.
@@ -275,8 +276,14 @@ class StorefrontController extends Controller
             // người quản trị nhập mức giảm theo tiền hay theo phần trăm.
             'discount_percent' => $product->discount_percent,
             'is_featured' => (bool) $product->is_featured,
-            // Hàng không theo dõi tồn kho không bị chặn bởi số lượng, nhưng vẫn
-            // cần ít nhất một biến thể vì checkout nhận variant_id bắt buộc.
+            'variant_mode' => $isSimple
+                ? Product::VARIANT_MODE_SIMPLE
+                : Product::VARIANT_MODE_VARIABLE,
+            'has_variants' => ! $isSimple,
+            // Sản phẩm đơn vẫn trả về id SKU nội bộ để checkout cũ tiếp tục
+            // hoạt động; storefront dùng has_variants để ẩn bộ chọn.
+            'default_variant_id' => $isSimple ? ($variants->first()['id'] ?? null) : null,
+            // Hàng không theo dõi tồn kho không bị chặn bởi số lượng.
             'manage_stock' => (bool) $product->manage_stock,
             'is_combo' => (bool) $product->is_combo,
             'in_stock' => $variants->contains(fn ($variant) => $variant['available']),
@@ -292,7 +299,7 @@ class StorefrontController extends Controller
             'videos' => $videos->map(fn($v) => $this->url($v->path))->values()->all(),
             // Ảnh nằm một lần ở cấp mẫu; các biến thể chỉ trả style_id để tránh
             // lặp cùng URL hàng chục lần cho mọi tổ hợp màu/size.
-            'styles' => $product->styles->map(fn($style) => [
+            'styles' => $isSimple ? [] : $product->styles->map(fn($style) => [
                 'id' => $style->id,
                 'name' => $style->name,
                 'image' => $style->image?->path

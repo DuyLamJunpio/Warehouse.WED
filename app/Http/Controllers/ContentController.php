@@ -129,12 +129,6 @@ class ContentController extends Controller
     {
         $banner = Banner::findOrFail($id);
 
-        foreach (['media_path', 'poster_path', 'mobile_path'] as $col) {
-            if ($banner->$col) {
-                Storage::delete($banner->$col);
-            }
-        }
-
         $banner->delete();
         $this->notifier->markDirty();
 
@@ -467,12 +461,8 @@ class ContentController extends Controller
     {
         $collection = Collection::findOrFail($id);
         $ten = $collection->title;
-        $imagePath = $collection->image_path;
         // Bảng nối khai cascade nên sản phẩm trong bộ sưu tập tự rời theo.
         $collection->delete();
-        if ($imagePath) {
-            Storage::delete($imagePath);
-        }
         $this->notifier->markDirty();
 
         return response()->json(['success' => 'Đã xoá bộ sưu tập "' . $ten . '".']);

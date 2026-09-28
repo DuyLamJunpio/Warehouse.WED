@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 /**
- * Quản lý tồn kho theo từng biến thể size/màu.
+ * Quản lý tồn kho theo SKU nội bộ; sản phẩm đơn có một SKU ẩn, sản phẩm
+ * variable có nhiều SKU theo lựa chọn.
  */
 class InventoryController extends Controller
 {

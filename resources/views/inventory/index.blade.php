@@ -27,7 +27,7 @@
             <x-slot:icon>
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             </x-slot:icon>
-            <span class="text-xs text-slate-400 dark:text-slate-500">{{ $summary['total_variants'] }} biến thể</span>
+            <span class="text-xs text-slate-400 dark:text-slate-500">{{ $summary['total_variants'] }} SKU</span>
         </x-stat-card>
 
         <x-stat-card label="Sắp hết hàng (≤ {{ $threshold }})" :value="$summary['low_stock']" color="amber">
@@ -104,7 +104,7 @@
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th scope="col" class="p-4">Sản phẩm &amp; Danh mục</th>
-                        <th scope="col" class="p-4">Phân loại (Quy cách/Mùi)</th>
+                        <th scope="col" class="p-4">Biến thể / loại sản phẩm</th>
                         <th scope="col" class="p-4">Mã SKU</th>
                         <th scope="col" class="p-4">Số lượng tồn</th>
                         <th scope="col" class="p-4">Tình trạng</th>

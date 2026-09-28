@@ -139,7 +139,7 @@ class OrderController extends Controller
             'seller' => $order->user->name ?? null,
             'items' => $order->productInvoices->map(fn($line) => [
                 'product' => $line->product->product_name ?? 'Sản phẩm đã xóa',
-                'variant' => $line->variant->label ?? '—',
+                'variant' => $line->product?->is_simple ? null : ($line->variant->label ?? '—'),
                 'quantity' => $line->quantity,
                 'unit_price' => $line->unit_price,
                 'line_total' => $line->line_total,

@@ -18,6 +18,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatisticalController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\TrashController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,11 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/trash', [TrashController::class, 'index'])->name('trash');
+    Route::get('/trash/data', [TrashController::class, 'data'])->name('trash.data');
+    Route::post('/trash/{type}/{id}/restore', [TrashController::class, 'restore'])
+        ->whereNumber('id')
+        ->name('trash.restore');
 
     Route::get('/categories', [categoryController::class, 'index'])->name('categories');
     Route::get('/categories/data', [categoryController::class, 'getData'])->name('categories.data');
@@ -66,6 +72,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/get-image/{id}', [ProductController::class, 'getImageUrl']);
     Route::delete('/delete-image/{id}', [ProductController::class, 'deleteImageUrl']);
     Route::delete('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');
+    Route::delete('/product/{productId}/variant/{variantId}', [ProductController::class, 'destroyVariant'])
+        ->whereNumber(['productId', 'variantId'])
+        ->name('product.variant.delete');
     Route::get('/search-products', [ProductController::class, 'search'])->name('product.search');
 
     // Quản lý đơn hàng bán (invoices có invoice_type = 1)

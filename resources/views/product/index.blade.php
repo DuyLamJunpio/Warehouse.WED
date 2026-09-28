@@ -282,11 +282,33 @@
                         </div>
                     </div>
 
+                    <div class="rounded-xl border border-indigo-100 bg-indigo-50/40 p-3.5 dark:border-indigo-900/70 dark:bg-indigo-950/20">
+                        <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Cách bán sản phẩm</p>
+                        <div class="mt-2 flex flex-wrap gap-4 text-xs">
+                            <label class="inline-flex cursor-pointer items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                                <input type="radio" name="variant_mode" value="simple" checked class="variant-mode-radio text-indigo-600 focus:ring-indigo-500">
+                                Sản phẩm đơn (không có biến thể)
+                            </label>
+                            <label class="inline-flex cursor-pointer items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                                <input type="radio" name="variant_mode" value="variable" class="variant-mode-radio text-indigo-600 focus:ring-indigo-500">
+                                Sản phẩm có biến thể
+                            </label>
+                        </div>
+                        <p class="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">Sản phẩm đơn nhập một tồn kho chung; sản phẩm có biến thể nhập tồn riêng cho từng SKU.</p>
+                    </div>
+
+                    <div class="simple-stock-field hidden rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200" for="stock_quantity_add">Tồn kho sản phẩm</label>
+                        <input type="number" min="0" step="1" name="stock_quantity" id="stock_quantity_add" value="0" disabled
+                            class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold shadow-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                        <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Số lượng này được dùng chung cho sản phẩm, không chia theo màu/kích thước.</p>
+                    </div>
+
                     <div class="flex flex-wrap items-center gap-6 pt-2">
                         <label class="inline-flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="manage_stock" value="1" checked
                                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
-                            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">Quản lý tồn kho theo biến thể</span>
+                            <span class="manage-stock-label text-xs font-medium text-slate-800 dark:text-slate-200">Quản lý tồn kho sản phẩm</span>
                         </label>
 
                         <label class="inline-flex items-center gap-2 cursor-pointer">
@@ -298,7 +320,7 @@
                 </div>
 
                 {{-- SECTION 4: THUỘC TÍNH VÀ BIẾN THỂ --}}
-                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                <div class="variant-builder p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -576,11 +598,33 @@
                         </div>
                     </div>
 
+                    <div class="rounded-xl border border-indigo-100 bg-indigo-50/40 p-3.5 dark:border-indigo-900/70 dark:bg-indigo-950/20">
+                        <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Cách bán sản phẩm</p>
+                        <div class="mt-2 flex flex-wrap gap-4 text-xs">
+                            <label class="inline-flex cursor-pointer items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                                <input type="radio" name="variant_mode" value="simple" checked class="variant-mode-radio text-indigo-600 focus:ring-indigo-500">
+                                Sản phẩm đơn (không có biến thể)
+                            </label>
+                            <label class="inline-flex cursor-pointer items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                                <input type="radio" name="variant_mode" value="variable" class="variant-mode-radio text-indigo-600 focus:ring-indigo-500">
+                                Sản phẩm có biến thể
+                            </label>
+                        </div>
+                        <p class="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">Sản phẩm đơn nhập một tồn kho chung; sản phẩm có biến thể nhập tồn riêng cho từng SKU.</p>
+                    </div>
+
+                    <div class="simple-stock-field hidden rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200" for="stock_quantity_edit">Tồn kho sản phẩm</label>
+                        <input type="number" min="0" step="1" name="stock_quantity" id="stock_quantity_edit" value="0" disabled
+                            class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold shadow-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                        <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Số lượng này được dùng chung cho sản phẩm, không chia theo màu/kích thước.</p>
+                    </div>
+
                     <div class="flex flex-wrap items-center gap-6 pt-2">
                         <label class="inline-flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="manage_stock" id="manage_stock_edit" value="1"
                                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700">
-                            <span class="text-xs font-medium text-slate-800 dark:text-slate-200">Quản lý tồn kho theo biến thể</span>
+                            <span class="manage-stock-label text-xs font-medium text-slate-800 dark:text-slate-200">Quản lý tồn kho sản phẩm</span>
                         </label>
 
                         <label class="inline-flex items-center gap-2 cursor-pointer">
@@ -592,7 +636,7 @@
                 </div>
 
                 {{-- SECTION 4: THUỘC TÍNH VÀ BIẾN THỂ --}}
-                <div class="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                <div class="variant-builder p-4 rounded-xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -927,15 +971,42 @@
                 renderDiscountPreview(form);
             };
 
+            const syncVariantMode = (form) => {
+                const mode = form.find('[name="variant_mode"]:checked').val() || 'simple';
+                const isSimple = mode === 'simple';
+                const managesStock = form.find('[name="manage_stock"]').is(':checked');
+                const builder = form.find('.variant-builder');
+                const stockField = form.find('.simple-stock-field');
+
+                builder.toggleClass('hidden', isSimple);
+                stockField.toggleClass('hidden', !isSimple);
+                stockField.toggleClass('opacity-60', isSimple && !managesStock);
+                form.find('[name="stock_quantity"]').prop('disabled', !isSimple || !managesStock);
+                form.find('.manage-stock-label').text(
+                    isSimple ? 'Quản lý tồn kho sản phẩm' : 'Quản lý tồn kho theo biến thể',
+                );
+
+                // Chế độ simple không gửi bất kỳ ô biến thể nào. Ở chế độ
+                // variable vẫn cho sửa tên/giá trị, nhưng khóa riêng số lượng
+                // khi người dùng tắt quản lý tồn kho.
+                builder.find('input, select, textarea').prop('disabled', isSimple);
+                builder.find('.style-variant-quantity, .variant-row input[name$="[quantity]"]')
+                    .prop('disabled', isSimple || !managesStock);
+            };
+
             $('#formAdd, #formEdit').each(function() {
                 const form = $(this);
                 configureDiscountInput(form);
+                form.on('change', '[name="variant_mode"], [name="manage_stock"]', function() {
+                    syncVariantMode(form);
+                });
                 form.on('change', '[name="discount_type"]', function() {
                     configureDiscountInput(form, true);
                 });
                 form.on('input change', '[name="discount_value"], [name="sell_price"]', function() {
                     renderDiscountPreview(form);
                 });
+                syncVariantMode(form);
             });
 
             const variantRow = (data) => {
@@ -1346,6 +1417,7 @@
                     variants: [{ color: 'Mặc định', size: 'Mặc định', quantity: 0 }],
                 }, variantLabelsFor(form)));
                 refreshStyleNumbers('#styles-add');
+                syncVariantMode(form);
             };
 
             $(document).on('click', '.addStyleCard', function() {
@@ -1558,6 +1630,7 @@
                 disposeStyleCards('#styles-edit');
                 $('#variants-edit').empty();
                 currentProductImages = [];
+                syncVariantMode($('#formEdit'));
 
                 $.ajax({
                     url: '/product/get-product/' + product_id,
@@ -1580,6 +1653,12 @@
                         $('#description_edit').val(item.description);
                         $('#is_featured_edit').prop('checked', !!item.is_featured);
                         $('#manage_stock_edit').prop('checked', !!item.manage_stock);
+                        const variantMode = item.variant_mode
+                            || ((item.variants || []).length > 1 ? 'variable' : 'simple');
+                        $('#formEdit [name="variant_mode"]').prop('checked', false)
+                            .filter(`[value="${variantMode}"]`).prop('checked', true);
+                        const simpleVariant = (item.variants || [])[0] || {};
+                        $('#stock_quantity_edit').val(simpleVariant.quantity ?? 0);
                         $('#categories_edit').val(item.categories_id);
                         $('#supplier_edit').val(item.supplier_id);
 
@@ -1610,6 +1689,7 @@
 
                         styles.forEach(style => stylesBox.append(styleCard(style, variantLabelsFor($('#formEdit')))));
                         refreshStyleNumbers(stylesBox);
+                        syncVariantMode($('#formEdit'));
 
                         const previewEdit = $('#image-preview-edit');
                         const pinInput = $('#choose-image-edit');

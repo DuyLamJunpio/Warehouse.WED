@@ -17,6 +17,7 @@ use App\Http\Controllers\API\CustomerController;
 use App\Http\Controllers\API\InvoiceController;
 use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\StatisticalController;
+use App\Http\Controllers\TrashController;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -34,6 +35,9 @@ use Illuminate\Validation\ValidationException;
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/trash/{type}/{id}/restore', [TrashController::class, 'restore'])
+        ->whereNumber('id');
+
     //product
     Route::get('/products', [ProductController::class, 'index']);
     Route::post('/products/create', [ProductController::class, 'store']);
@@ -47,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/filter-status', [ProductController::class, 'filterByStatus']);
     Route::get('/products/variants/{id}', [ProductController::class, 'getProductVariants']);
     Route::delete('/products/variants/{productId}/{variantId}', [ProductController::class, 'updateOrDeleteVariant']);
+    Route::delete('/products/variants/{productId}/{variantId}/trash', [ProductController::class, 'destroyVariant']);
 
     //supplier
     Route::get('/suppliers', [SupplierController::class, 'index']);

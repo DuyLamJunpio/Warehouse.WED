@@ -31,24 +31,27 @@ class PausedProductVariantTest extends TestCase
             $table->string('name_key');
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
         Schema::create('image_models', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
-            $table->unsignedBigInteger('product_style_id');
-            $table->string('color')->default('');
-            $table->string('size')->default('');
+            $table->unsignedBigInteger('product_style_id')->nullable();
+            $table->string('color')->nullable();
+            $table->string('size')->nullable();
             $table->string('sku')->nullable();
             $table->unsignedInteger('quantity')->default(0);
             $table->unsignedBigInteger('price_override')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -120,6 +123,57 @@ class PausedProductVariantTest extends TestCase
                 'paused' => 0,
             ]],
         ]]);
+    }
+
+    public function test_simple_mode_stores_stock_on_one_internal_sku_without_placeholder_values(): void
+    {
+        DB::table('product_styles')->insert([
+            'id' => 1,
+            'product_id' => 1,
+            'name' => 'Mẫu mặc định',
+            'name_key' => 'mẫu mặc định',
+            'sort_order' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('product_variants')->insert([
+            'id' => 10,
+            'product_id' => 1,
+            'product_style_id' => 1,
+            'color' => 'Mặc định',
+            'size' => 'Mặc định',
+            'sku' => 'OLD-10',
+            'quantity' => 2,
+            'price_override' => null,
+            'sort_order' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $controller = app(ProductController::class);
+        $method = new ReflectionMethod(ProductController::class, 'syncStylesAndVariants');
+        $method->setAccessible(true);
+        $product = new Product();
+        $product->id = 1;
+        $product->barcode = 'BASE-1';
+
+        $result = $method->invoke(
+            $controller,
+            $product,
+            Request::create('/', 'POST', [
+                'variant_mode' => Product::VARIANT_MODE_SIMPLE,
+                'manage_stock' => 1,
+                'stock_quantity' => 12,
+            ]),
+            [],
+        );
+
+        $this->assertSame(12, $result);
+        $variant = DB::table('product_variants')->where('id', 10)->first();
+        $this->assertNull($variant->product_style_id);
+        $this->assertNull($variant->color);
+        $this->assertNull($variant->size);
+        $this->assertSame(12, $variant->quantity);
     }
 
     private function syncStyles(array $styles): int

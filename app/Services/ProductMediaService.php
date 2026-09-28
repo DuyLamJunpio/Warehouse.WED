@@ -81,8 +81,8 @@ class ProductMediaService
     }
 
     /**
-     * Xóa media chỉ khi không có mẫu nào dùng. Object chung trên bucket chỉ bị
-     * gỡ sau khi bản ghi cuối cùng tham chiếu đường dẫn đó đã biến mất.
+     * Đưa media vào thùng rác. Object storage được giữ nguyên cho tới khi
+     * lệnh trash:purge xác nhận bản ghi đã quá hạn và không còn tham chiếu.
      */
     public function delete(ImageModel $media): bool
     {
@@ -90,12 +90,7 @@ class ProductMediaService
             return false;
         }
 
-        $path = $media->path;
         $media->delete();
-
-        if (!ImageModel::where('path', $path)->exists()) {
-            Storage::delete($path);
-        }
 
         return true;
     }

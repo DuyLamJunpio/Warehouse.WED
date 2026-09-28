@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Dải thông báo trên cùng và tiêu đề các khối trên trang chủ.
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 class SiteText extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /** Dải chữ nhỏ chạy trên cùng, hiện ở MỌI trang chứ không riêng trang chủ. */
     public const GROUP_ANNOUNCEMENT = 'announcement';

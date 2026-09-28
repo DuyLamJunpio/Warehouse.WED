@@ -69,7 +69,9 @@
                 <x-badge :variant="$stockBadgeVariant" size="xs">
                     {{ $totalStock }} {{ $item->unit ?? 'cái' }}
                 </x-badge>
-                @if ($item->variants->isNotEmpty())
+                @if ($item->is_simple)
+                    <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Sản phẩm đơn</div>
+                @elseif ($item->variants->isNotEmpty())
                     <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
                         {{ $item->variants->count() }} biến thể
                     </div>

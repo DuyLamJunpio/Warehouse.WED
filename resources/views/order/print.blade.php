@@ -166,7 +166,7 @@
                 @foreach ($order->productInvoices as $line)
                     <tr>
                         <td>{{ $line->product->product_name ?? 'Sản phẩm đã xóa' }}</td>
-                        <td>{{ $line->variant->label ?? '—' }}</td>
+                        <td>{{ $line->product?->is_simple ? '—' : ($line->variant->label ?? '—') }}</td>
                         <td class="center">{{ $line->quantity }}</td>
                         <td class="right">{{ number_format($line->unit_price, 0, ',', '.') }} ₫</td>
                         <td class="right">{{ number_format($line->line_total, 0, ',', '.') }} ₫</td>

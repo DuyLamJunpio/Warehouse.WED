@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Biến thể sản phẩm (size x màu) - đơn vị giữ tồn kho.
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductVariant extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /** Nhãn biến thể ở đơn hàng/kho luôn có sẵn tên mẫu, không phát sinh N+1. */
     protected $with = ['style'];
@@ -38,7 +40,9 @@ class ProductVariant extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class)->withTrashed();
+        // Luồng bán/kho không được dùng biến thể của sản phẩm đã vào thùng
+        // rác. Các dòng lịch sử dùng ProductInvoice::product()->withTrashed().
+        return $this->belongsTo(Product::class);
     }
 
     public function style()
@@ -68,7 +72,17 @@ class ProductVariant extends Model
      */
     public function getLabelAttribute(): string
     {
-        return implode(' / ', array_filter([$this->style?->name, $this->color, $this->size])) ?: 'Mặc định';
+        if ($this->product?->is_simple) {
+            return 'Sản phẩm đơn';
+        }
+
+        $label = implode(' / ', array_filter([$this->style?->name, $this->color, $this->size]));
+
+        if ($label !== '') {
+            return $label;
+        }
+
+        return $this->product?->is_simple ? 'Sản phẩm đơn' : 'Mặc định';
     }
 
     /**
