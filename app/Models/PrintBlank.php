@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Phôi in — chiếc áo trắng trước khi có hình lên nó.
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PrintBlank extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'product_id', 'categories_id', 'name', 'slug', 'description', 'base_price',
         'discount_type', 'discount_value', 'frame_width_mm', 'frame_height_mm', 'positions', 'moq', 'lead_days',

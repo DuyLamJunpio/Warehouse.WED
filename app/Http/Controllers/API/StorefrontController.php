@@ -89,12 +89,17 @@ class StorefrontController extends Controller
             'media' => $this->url($b->media_path),
             'media_type' => $b->media_type,
             'poster' => $b->poster_path ? $this->url($b->poster_path) : null,
-            'mobile' => $b->mobile_path ? $this->url($b->mobile_path) : null,
+            'mobile' => $b->mobile_path ? $this->url($b->mobile_path) : $this->url($b->media_path),
+            'mobile_media_type' => $b->mobile_path ? ($b->mobile_media_type ?: Banner::TYPE_IMAGE) : $b->media_type,
             'alt' => $b->alt,
             'heading' => $b->heading,
             'subheading' => $b->subheading,
             'cta_label' => $b->cta_label,
             'cta_link' => $b->cta_link,
+            'content_blocks' => $b->content_blocks ?: $this->legacyHeroBlocks($b),
+            'ctas' => $b->ctas ?: $this->legacyHeroCtas($b),
+            'desktop_layout' => $b->desktop_layout ?: ['horizontal' => 'left', 'vertical' => 'center', 'text_align' => 'left', 'focal_point' => 'center', 'overlay_opacity' => 35],
+            'mobile_layout' => $b->mobile_layout ?: ['horizontal' => 'center', 'vertical' => 'center', 'text_align' => 'center', 'focal_point' => 'center', 'overlay_opacity' => 45],
         ])->values();
 
         // Mỗi bộ sưu tập đang hiện được dựng thành một khối riêng trên trang chủ.
@@ -127,6 +132,20 @@ class StorefrontController extends Controller
             // lại lúc đặt hàng - không tin con số đi qua trình duyệt.
             'sales' => $this->sales(),
         ]);
+    }
+
+    private function legacyHeroBlocks(Banner $banner): array
+    {
+        return ($banner->heading || $banner->subheading)
+            ? [['title' => $banner->heading ?? '', 'content' => $banner->subheading ?? '']]
+            : [];
+    }
+
+    private function legacyHeroCtas(Banner $banner): array
+    {
+        return ($banner->cta_label || $banner->cta_link)
+            ? [['label' => $banner->cta_label ?? '', 'link' => $banner->cta_link ?? '', 'style' => 'primary', 'new_tab' => false]]
+            : [];
     }
 
     /**

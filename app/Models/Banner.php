@@ -19,8 +19,9 @@ class Banner extends Model
     public const TYPE_VIDEO = 'video';
 
     protected $fillable = [
-        'media_path', 'media_type', 'poster_path', 'mobile_path', 'alt',
+        'media_path', 'media_type', 'poster_path', 'mobile_path', 'mobile_media_type', 'alt',
         'heading', 'subheading', 'cta_label', 'cta_link',
+        'content_blocks', 'ctas', 'desktop_layout', 'mobile_layout',
         'sort_order', 'status', 'starts_at', 'ends_at',
     ];
 
@@ -29,6 +30,10 @@ class Banner extends Model
         'sort_order' => 'integer',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'content_blocks' => 'array',
+        'ctas' => 'array',
+        'desktop_layout' => 'array',
+        'mobile_layout' => 'array',
     ];
 
     /**

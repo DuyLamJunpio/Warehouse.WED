@@ -6,27 +6,27 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Đẩy ảnh đang nằm trong storage/app lên kho ngoài (Supabase Storage).
+ * Sao chép media từ một disk sang disk khác, không xóa nguồn.
  *
- * Giữ nguyên đường dẫn, ví dụ "public/images/abc.jpg" ở máy thành đúng
- * "public/images/abc.jpg" trên bucket - nhờ vậy các link đã lưu trong cơ sở
- * dữ liệu vẫn đúng, không phải cập nhật bảng nào.
+ * Giữ nguyên object key, nhờ vậy các link/path đã lưu trong cơ sở dữ liệu
+ * vẫn đúng, không phải cập nhật bảng nào.
  *
  * Chạy một lần trên máy còn giữ ảnh gốc:
- *   php artisan storage:push --disk=supabase
+ *   php artisan storage:push --source=local --disk=r2
  */
 class PushStorageToCloud extends Command
 {
     protected $signature = 'storage:push
-        {--disk=supabase : Tên disk đích khai trong config/filesystems.php}
-        {--path=public : Thư mục gốc cần đẩy lên}
+        {--disk=r2 : Tên disk đích khai trong config/filesystems.php}
+        {--source=local : Tên disk nguồn khai trong config/filesystems.php}
+        {--path= : Chỉ đồng bộ prefix này; mặc định là toàn bộ disk}
         {--force : Ghi đè cả tệp đã có trên kho ngoài}';
 
-    protected $description = 'Đẩy ảnh trong storage/app lên kho lưu trữ ngoài';
+    protected $description = 'Sao chép media giữa hai filesystem disk mà không xóa nguồn';
 
     public function handle(): int
     {
-        $source = Storage::disk('local');
+        $source = Storage::disk($this->option('source'));
         $targetName = $this->option('disk');
         $target = Storage::disk($targetName);
 
@@ -34,7 +34,8 @@ class PushStorageToCloud extends Command
         // và đẩy lên kho ngoài chỉ tổ rác bucket.
         $ignored = ['.gitignore', '.gitkeep', 'Thumbs.db', '.DS_Store'];
 
-        $files = collect($source->allFiles($this->option('path')))
+        $path = $this->option('path');
+        $files = collect($path === null || $path === '' ? $source->allFiles() : $source->allFiles($path))
             ->reject(fn (string $file) => in_array(basename($file), $ignored, true))
             ->values()
             ->all();

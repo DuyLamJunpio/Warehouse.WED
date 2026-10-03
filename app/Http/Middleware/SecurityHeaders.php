@@ -28,7 +28,7 @@ class SecurityHeaders
         //   script  : jQuery + Swiper qua CDN
         //   style   : Tailwind sinh class nội tuyến nên cần 'unsafe-inline'
         //   img     : data: cho icon SVG nhúng, blob: cho ảnh/video xem trước
-        //   media   : kho ảnh/video ngoài (Supabase Storage) — video sản phẩm và
+        //   media   : kho ảnh/video ngoài (Cloudflare R2) — video sản phẩm và
         //             banner nằm ở đó, không khai thì trình duyệt chặn im lặng
         //   font    : Google Fonts
         // Chưa siết script-src về 'self' được vì các view còn nhiều <script> nội

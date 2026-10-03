@@ -22,14 +22,13 @@ use Illuminate\Validation\Rule;
  */
 class ContentController extends Controller
 {
+    public const MAX_HERO_SLIDES = 3;
     /**
      * Khuyến nghị kích thước. Vừa hiện trong giao diện cho người tải ảnh biết,
      * vừa là căn cứ cho các luật kiểm tra bên dưới.
      */
     public const ANH_RONG_TOI_THIEU = 2400;
     public const ANH_CAO_TOI_THIEU = 1350;
-    public const ANH_MB_TOI_DA = 2;
-    public const VIDEO_MB_TOI_DA = 6;
 
     public function __construct(private StorefrontNotifier $notifier)
     {
@@ -56,8 +55,6 @@ class ContentController extends Controller
             'limits' => [
                 'anh_rong' => self::ANH_RONG_TOI_THIEU,
                 'anh_cao' => self::ANH_CAO_TOI_THIEU,
-                'anh_mb' => self::ANH_MB_TOI_DA,
-                'video_mb' => self::VIDEO_MB_TOI_DA,
             ],
         ]);
     }
@@ -79,12 +76,18 @@ class ContentController extends Controller
 
     public function storeBanner(Request $request)
     {
+        if (Banner::count() >= self::MAX_HERO_SLIDES) {
+            return response()->json(['error' => 'Hero chỉ cho phép tối đa '.self::MAX_HERO_SLIDES.' slide. Hãy sửa, thay media hoặc xóa một slide cũ.'], 422);
+        }
+
         $data = $this->validateBanner($request);
 
         $data['media_path'] = $this->luuFile($request, 'media');
         $data['media_type'] = $this->laVideo($request) ? Banner::TYPE_VIDEO : Banner::TYPE_IMAGE;
         $data['poster_path'] = $this->luuFile($request, 'poster');
         $data['mobile_path'] = $this->luuFile($request, 'mobile');
+        $data['mobile_media_type'] = $request->hasFile('mobile') ? $this->mediaType($request, 'mobile') : null;
+        $data = $this->normaliseHeroContent($data);
         $data['sort_order'] = (int) Banner::max('sort_order') + 1;
         $data['status'] = $request->boolean('status', true);
 
@@ -108,6 +111,9 @@ class ContentController extends Controller
                 Storage::delete($banner->$col);
             }
             $data[$col] = $this->luuFile($request, $field);
+            if ($field === 'mobile') {
+                $data['mobile_media_type'] = $this->mediaType($request, 'mobile');
+            }
         }
 
         if ($request->hasFile('media')) {
@@ -115,6 +121,7 @@ class ContentController extends Controller
         }
 
         $data['status'] = $request->boolean('status', true);
+        $data = $this->normaliseHeroContent($data);
         $banner->update($data);
         $this->notifier->markDirty();
 
@@ -206,6 +213,10 @@ class ContentController extends Controller
      */
     public function duplicateBanner(string $id)
     {
+        if (Banner::count() >= self::MAX_HERO_SLIDES) {
+            return response()->json(['error' => 'Hero chỉ cho phép tối đa '.self::MAX_HERO_SLIDES.' slide.'], 422);
+        }
+
         $source = Banner::findOrFail($id);
         if (!Storage::exists($source->media_path)) {
             return response()->json(['error' => 'Không tìm thấy file banner gốc để nhân bản. Vui lòng tải lại ảnh hoặc video cho slide này.'], 422);
@@ -235,7 +246,14 @@ class ContentController extends Controller
 
     private function laVideo(Request $request): bool
     {
-        return str_starts_with((string) $request->file('media')->getMimeType(), 'video/');
+        return $this->mediaType($request, 'media') === Banner::TYPE_VIDEO;
+    }
+
+    private function mediaType(Request $request, string $field): string
+    {
+        return str_starts_with((string) $request->file($field)->getMimeType(), 'video/')
+            ? Banner::TYPE_VIDEO
+            : Banner::TYPE_IMAGE;
     }
 
     /**
@@ -251,13 +269,33 @@ class ContentController extends Controller
                 $banner ? ['nullable'] : ['required'],
                 ['file', 'mimetypes:image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm'],
             ),
-            'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'mobile' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:2048'],
+            'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'mobile' => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm'],
             'alt' => ['nullable', 'string', 'max:255'],
             'heading' => ['nullable', 'string', 'max:255'],
             'subheading' => ['nullable', 'string', 'max:500'],
             'cta_label' => ['nullable', 'string', 'max:60'],
             'cta_link' => ['nullable', 'string', 'max:255'],
+            'content_blocks' => ['nullable', 'array', 'max:8'],
+            'content_blocks.*.title' => ['nullable', 'string', 'max:255'],
+            'content_blocks.*.content' => ['nullable', 'string', 'max:500'],
+            'ctas' => ['nullable', 'array', 'max:4'],
+            'ctas.*.label' => ['nullable', 'string', 'max:60'],
+            'ctas.*.link' => ['nullable', 'string', 'max:255'],
+            'ctas.*.style' => ['nullable', Rule::in(['primary', 'secondary', 'ghost'])],
+            'ctas.*.new_tab' => ['nullable', 'boolean'],
+            'desktop_layout' => ['nullable', 'array'],
+            'desktop_layout.horizontal' => ['nullable', Rule::in(['left', 'center', 'right'])],
+            'desktop_layout.vertical' => ['nullable', Rule::in(['top', 'center', 'bottom'])],
+            'desktop_layout.text_align' => ['nullable', Rule::in(['left', 'center', 'right'])],
+            'desktop_layout.focal_point' => ['nullable', Rule::in(['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'])],
+            'desktop_layout.overlay_opacity' => ['nullable', 'integer', 'min:0', 'max:90'],
+            'mobile_layout' => ['nullable', 'array'],
+            'mobile_layout.horizontal' => ['nullable', Rule::in(['left', 'center', 'right'])],
+            'mobile_layout.vertical' => ['nullable', Rule::in(['top', 'center', 'bottom'])],
+            'mobile_layout.text_align' => ['nullable', Rule::in(['left', 'center', 'right'])],
+            'mobile_layout.focal_point' => ['nullable', Rule::in(['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'])],
+            'mobile_layout.overlay_opacity' => ['nullable', 'integer', 'min:0', 'max:90'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ], [
@@ -265,6 +303,49 @@ class ContentController extends Controller
             'media.mimetypes' => 'Chỉ nhận ảnh JPG/PNG/WebP/AVIF hoặc video MP4/WebM.',
             'ends_at.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu.',
         ]);
+    }
+
+    /** Chuẩn hoá khối nội dung/CTA và giữ cột cũ cho storefront chưa nâng cấp. */
+    private function normaliseHeroContent(array $data): array
+    {
+        $blocks = collect($data['content_blocks'] ?? [])
+            ->map(fn (array $block) => [
+                'title' => trim((string) ($block['title'] ?? '')),
+                'content' => trim((string) ($block['content'] ?? '')),
+            ])
+            ->filter(fn (array $block) => $block['title'] !== '' || $block['content'] !== '')
+            ->values();
+        $ctas = collect($data['ctas'] ?? [])
+            ->map(fn (array $cta) => [
+                'label' => trim((string) ($cta['label'] ?? '')),
+                'link' => trim((string) ($cta['link'] ?? '')),
+                'style' => $cta['style'] ?? 'primary',
+                'new_tab' => (bool) ($cta['new_tab'] ?? false),
+            ])
+            ->filter(fn (array $cta) => $cta['label'] !== '' || $cta['link'] !== '')
+            ->values();
+
+        $data['content_blocks'] = $blocks->all() ?: null;
+        $data['ctas'] = $ctas->all() ?: null;
+        $data['desktop_layout'] = $this->normaliseHeroLayout($data['desktop_layout'] ?? []);
+        $data['mobile_layout'] = $this->normaliseHeroLayout($data['mobile_layout'] ?? []);
+        $data['heading'] = $blocks->first()['title'] ?? ($data['heading'] ?? null);
+        $data['subheading'] = $blocks->first()['content'] ?? ($data['subheading'] ?? null);
+        $data['cta_label'] = $ctas->first()['label'] ?? ($data['cta_label'] ?? null);
+        $data['cta_link'] = $ctas->first()['link'] ?? ($data['cta_link'] ?? null);
+
+        return $data;
+    }
+
+    private function normaliseHeroLayout(array $layout): array
+    {
+        return [
+            'horizontal' => $layout['horizontal'] ?? 'left',
+            'vertical' => $layout['vertical'] ?? 'center',
+            'text_align' => $layout['text_align'] ?? ($layout['horizontal'] ?? 'left'),
+            'focal_point' => $layout['focal_point'] ?? 'center',
+            'overlay_opacity' => (int) ($layout['overlay_opacity'] ?? 35),
+        ];
     }
 
     private function luuFile(Request $request, string $field): ?string

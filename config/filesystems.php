@@ -44,22 +44,19 @@ return [
             'throw' => false,
         ],
 
-        /*
-         * Supabase Storage. Nói chuyện qua giao thức S3 nên vẫn dùng driver 's3',
-         * chỉ khác endpoint. 'url' là địa chỉ công khai để Storage::url() sinh link
-         * cho trình duyệt - KHÁC endpoint S3 dùng để tải file lên.
-         */
-        'supabase' => [
+        /* Cloudflare R2 dùng S3 API. R2_PUBLIC_URL nên là custom domain
+         * (ví dụ https://media.example.com), không phải S3 API endpoint. */
+        'r2' => [
             'driver' => 's3',
-            'key' => env('SUPABASE_S3_KEY'),
-            'secret' => env('SUPABASE_S3_SECRET'),
-            'region' => env('SUPABASE_S3_REGION', 'ap-south-1'),
-            'bucket' => env('SUPABASE_BUCKET', 'warehouse'),
-            'endpoint' => env('SUPABASE_S3_ENDPOINT'),
-            'url' => env('SUPABASE_PUBLIC_URL'),
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => env('R2_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'url' => env('R2_PUBLIC_URL'),
             'use_path_style_endpoint' => true,
             'visibility' => 'public',
-            'throw' => false,
+            'throw' => true,
         ],
 
         's3' => [

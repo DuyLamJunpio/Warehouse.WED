@@ -32,12 +32,12 @@
                     <h2 class="text-base font-bold text-slate-900 dark:text-white">Slide ảnh đầu trang (Hero Banner)</h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400">Ảnh/Video lớn chạy luân phiên ở đầu trang chủ · Kéo thẻ để đổi thứ tự</p>
                 </div>
-                <button type="button" id="btn-them-slide"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all">
+                <button type="button" id="btn-them-slide" {{ $banners->count() >= 3 ? 'disabled' : '' }}
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>Thêm slide mới</span>
+                    <span>Thêm slide ({{ $banners->count() }}/3)</span>
                 </button>
             </div>
 
@@ -45,10 +45,10 @@
             <div class="p-4 mx-5 mt-4 text-xs text-indigo-900 dark:text-indigo-200 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50">
                 <p class="font-bold text-indigo-950 dark:text-indigo-300 mb-1">💡 Khuyến nghị kích thước & chất lượng banner</p>
                 <ul class="space-y-0.5 list-disc list-inside text-[11px] text-slate-600 dark:text-slate-400">
-                    <li><strong>Ảnh:</strong> khuyến nghị từ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, xuất 2400×1600 (3:2) hoặc 2560×1440 (16:9), dung lượng dưới {{ $limits['anh_mb'] }}MB.</li>
-                    <li><strong>Bố cục:</strong> Giữ chủ thể người mẫu nằm ở 70–80% trung tâm khung hình để không bị che khi hiển thị trên mobile (4:5) và desktop (16:7).</li>
-                    <li><strong>Video:</strong> khuyến nghị 1920×1080 (16:9), MP4 dưới {{ $limits['video_mb'] }}MB, lặp 5–10s kèm ảnh bìa tĩnh.</li>
-                    <li class="font-semibold text-amber-700 dark:text-amber-300">Không đạt các mức trên vẫn được phép tải lên; hệ thống chỉ cảnh báo để tham khảo.</li>
+                    <li><strong>Ảnh:</strong> khuyến nghị từ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, xuất 2400×1600 (3:2) hoặc 2560×1440 (16:9).</li>
+                    <li><strong>Chống cắt chủ thể:</strong> tải media dọc riêng cho mobile và chọn <em>trọng tâm hiển thị</em> đúng nơi có người mẫu/sản phẩm.</li>
+                    <li><strong>Video:</strong> khuyến nghị 1920×1080 (16:9), lặp 5–10s kèm ảnh bìa tĩnh.</li>
+                    <li class="font-semibold text-amber-700 dark:text-amber-300">Hero không giới hạn dung lượng ở ứng dụng; vẫn nên tối ưu file để website tải nhanh.</li>
                 </ul>
             </div>
 
@@ -277,7 +277,7 @@
                         accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm"
                         class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-950 dark:file:text-indigo-300">
                     <p class="mt-1 text-[11px] text-slate-400">
-                        Khuyến nghị: ảnh ≥ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px, dưới {{ $limits['anh_mb'] }}MB · video MP4 dưới {{ $limits['video_mb'] }}MB. Không đạt vẫn được lưu.
+                        Không giới hạn dung lượng tại ứng dụng. Khuyến nghị: ảnh ≥ {{ $limits['anh_rong'] }}×{{ $limits['anh_cao'] }}px · video MP4/WebM 1920×1080 để tải nhanh hơn.
                     </p>
                     <p id="canh-bao-anh" class="hidden mt-1 text-xs font-medium text-rose-600"></p>
                 </div>
@@ -298,80 +298,43 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Ảnh riêng cho Mobile</label>
-                    <input type="file" name="mobile" accept="image/jpeg,image/png,image/webp,image/avif"
+                    <input type="file" name="mobile" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm"
                         class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-slate-100 dark:file:bg-slate-700 dark:file:text-slate-300">
-                    <p class="mt-1 text-[11px] text-slate-400">Tùy chọn cho cả ảnh lẫn video. Dùng ảnh dọc 4:5 để banner dễ đọc hơn trên điện thoại.</p>
+                    <p class="mt-1 text-[11px] text-slate-400">Hoàn toàn độc lập với desktop. Dùng media dọc 4:5 hoặc 9:16; nếu bỏ trống, website tự dùng media desktop.</p>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tiêu đề lớn</label>
-                    <input type="text" name="heading" maxlength="255" placeholder="Ví dụ: Bộ Sưu Tập Tết 2027"
-                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Dòng mô tả phụ</label>
-                    <textarea name="subheading" rows="2" maxlength="500" placeholder="Mô tả ưu đãi hoặc điểm nhấn..."
-                        class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Chữ trên nút CTA</label>
-                        <input type="text" name="cta_label" maxlength="60" placeholder="Mua ngay"
-                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                <section class="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                    <div class="flex items-center justify-between gap-3">
+                        <div><h4 class="text-xs font-bold text-slate-800 dark:text-white">Nội dung trên Hero</h4><p class="text-[11px] text-slate-500">Thêm nhiều cặp tiêu đề và nội dung cho slide này.</p></div>
+                        <button type="button" id="them-khoi-noi-dung" class="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">+ Thêm nội dung</button>
                     </div>
-                    <div>
-                        <label for="slide-cta-link-select" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nút sẽ đưa khách đến đâu?</label>
-                        <select id="slide-cta-link-select"
-                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            <option value="">Không gắn liên kết</option>
-                            <optgroup label="Trang chính">
-                                <option value="/">Trang chủ</option>
-                                <option value="/shop">Tất cả sản phẩm</option>
-                                <option value="/shop?new=1">Hàng mới về</option>
-                                <option value="/shop?sale=1">Sản phẩm đang giảm giá</option>
-                                <option value="/shop?audience=Nam">Thời trang nam</option>
-                                <option value="/shop?audience=N%E1%BB%AF">Thời trang nữ</option>
-                                <option value="/shop?audience=Tr%E1%BA%BB%20em">Thời trang trẻ em</option>
-                                <option value="/cart">Giỏ hàng</option>
-                                <option value="/checkout">Thanh toán</option>
-                                <option value="/in-ao">In áo theo yêu cầu</option>
-                            </optgroup>
-                            <optgroup label="Khu vực trên trang chủ">
-                                <option value="/#new-arrivals">Khối hàng mới</option>
-                                <option value="/#categories">Khối danh mục</option>
-                                <option value="/#seasonal-drop">Khối bộ sưu tập</option>
-                                <option value="/#newsletter">Khu vực đăng ký nhận tin</option>
-                            </optgroup>
-                            @if ($linkCategories->isNotEmpty())
-                                <optgroup label="Danh mục sản phẩm">
-                                    @foreach ($linkCategories as $category)
-                                        <option value="/shop?category={{ rawurlencode($category->name) }}">
-                                            Xem danh mục: {{ $category->name }}
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            @endif
-                            @if ($allProducts->isNotEmpty())
-                                <optgroup label="Sản phẩm đang bán">
-                                    @foreach ($allProducts as $product)
-                                        @if ($product->slug)
-                                            <option value="/products/{{ $product->slug }}">
-                                                Xem sản phẩm: {{ $product->product_name }}
-                                            </option>
-                                        @endif
-                                    @endforeach
-                                </optgroup>
-                            @endif
-                            <option value="__custom__">Tự nhập đường dẫn khác...</option>
-                        </select>
-                        <input type="text" name="cta_link" id="slide-cta-link" maxlength="255"
-                            placeholder="Chọn ở danh sách phía trên hoặc nhập /shop"
-                            class="block w-full text-sm rounded-xl border-slate-300 bg-white px-3.5 py-2 shadow-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                        <p class="mt-1 text-[11px] text-slate-400">
-                            Chọn một mục có sẵn để không cần nhớ URL. Nếu dẫn sang website khác, chọn “Tự nhập...” rồi nhập địa chỉ bắt đầu bằng <span class="font-mono">https://</span>.
-                        </p>
+                    <div id="danh-sach-khoi-noi-dung" class="space-y-2"></div>
+                </section>
+                <section class="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                    <div class="flex items-center justify-between gap-3">
+                        <div><h4 class="text-xs font-bold text-slate-800 dark:text-white">Nút CTA</h4><p class="text-[11px] text-slate-500">Mỗi Hero có thể có nhiều nút. Dùng dấu − để bớt nút.</p></div>
+                        <button type="button" id="them-cta-slide" class="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">+ Thêm CTA</button>
                     </div>
-                </div>
+                    <div id="danh-sach-cta-slide" class="space-y-2"></div>
+                </section>
+                <section class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-white">Vị trí nội dung trên Hero</h4>
+                    <p class="mt-0.5 text-[11px] text-slate-500">Thiết lập độc lập cho website màn rộng và mobile.</p>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                        @foreach (['desktop_layout' => 'Desktop', 'mobile_layout' => 'Mobile'] as $prefix => $device)
+                            <div class="space-y-2"><p class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ $device }}</p><div class="grid grid-cols-3 gap-2">
+                                <label class="text-[11px] text-slate-500">Ngang<select name="{{ $prefix }}[horizontal]" class="mt-1 block w-full rounded-lg border-slate-300 py-1.5 text-xs dark:bg-slate-700 dark:border-slate-600"><option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option></select></label>
+                                <label class="text-[11px] text-slate-500">Dọc<select name="{{ $prefix }}[vertical]" class="mt-1 block w-full rounded-lg border-slate-300 py-1.5 text-xs dark:bg-slate-700 dark:border-slate-600"><option value="top">Trên</option><option value="center">Giữa</option><option value="bottom">Dưới</option></select></label>
+                                <label class="text-[11px] text-slate-500">Chữ<select name="{{ $prefix }}[text_align]" class="mt-1 block w-full rounded-lg border-slate-300 py-1.5 text-xs dark:bg-slate-700 dark:border-slate-600"><option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option></select></label>
+                            </div>
+                            <div class="mt-2 grid grid-cols-2 gap-2"><label class="text-[11px] text-slate-500">Trọng tâm media<select name="{{ $prefix }}[focal_point]" class="mt-1 block w-full rounded-lg border-slate-300 py-1.5 text-xs dark:bg-slate-700 dark:border-slate-600"><option value="top-left">Trên trái</option><option value="top">Trên</option><option value="top-right">Trên phải</option><option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option><option value="bottom-left">Dưới trái</option><option value="bottom">Dưới</option><option value="bottom-right">Dưới phải</option></select></label><label class="text-[11px] text-slate-500">Lớp phủ tối <span data-overlay-value="{{ $prefix }}">35%</span><input type="range" name="{{ $prefix }}[overlay_opacity]" min="0" max="90" value="35" class="mt-2 w-full accent-indigo-600"></label></div></div>
+                        @endforeach
+                    </div>
+                </section>
+                <section class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                    <div class="flex items-center justify-between"><div><h4 class="text-xs font-bold text-slate-800 dark:text-white">Preview bố cục</h4><p class="text-[11px] text-slate-500">Xem vị trí khối chữ và lớp phủ trên Desktop/Mobile.</p></div><div class="inline-flex rounded-lg bg-slate-100 p-1 text-[11px] dark:bg-slate-700"><button type="button" data-hero-preview="desktop" class="hero-preview-mode rounded-md bg-white px-2 py-1 font-semibold text-slate-700 shadow-sm dark:bg-slate-600 dark:text-white">Desktop</button><button type="button" data-hero-preview="mobile" class="hero-preview-mode rounded-md px-2 py-1 text-slate-500 dark:text-slate-300">Mobile</button></div></div>
+                    <div id="hero-layout-preview" class="relative mt-3 flex min-h-36 overflow-hidden rounded-lg bg-slate-700 p-4 text-white transition-all"><div class="absolute inset-0 bg-black/35" data-hero-overlay></div><div class="relative z-10 max-w-[85%]" data-hero-preview-content><p class="text-lg font-bold">Tiêu đề Hero</p><p class="mt-1 text-xs opacity-90">Đoạn mô tả sẽ hiển thị ở đây.</p><span class="mt-3 inline-block rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900">CTA</span></div></div>
+                </section>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mô tả ảnh (Alt SEO)</label>
                     <input type="text" name="alt" maxlength="255" placeholder="Người mẫu mặc áo khoác dáng dài"
@@ -545,6 +508,70 @@
                 datXemTruocSlide();
                 window.closeDrawer('drawer-slide');
             };
+            const inputClass = 'block w-full rounded-lg border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:bg-slate-700 dark:border-slate-600 dark:text-white';
+            const themKhoiNoiDung = (block = {}) => {
+                const row = $('<div class="grid grid-cols-[1fr_auto] gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50"><div class="space-y-2"><input type="text" maxlength="255" placeholder="Tiêu đề" class="hero-block-title"><textarea rows="2" maxlength="500" placeholder="Nội dung / mô tả" class="hero-block-content"></textarea></div><button type="button" title="Bớt nội dung" class="bot-khoi-noi-dung self-start rounded-lg px-2 py-1 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">−</button></div>');
+                row.find('input').addClass(inputClass).attr('name', 'content_blocks[][title]').val(block.title || '');
+                row.find('textarea').addClass(inputClass).attr('name', 'content_blocks[][content]').val(block.content || '');
+                $('#danh-sach-khoi-noi-dung').append(row);
+            };
+            const themCtaSlide = (cta = {}) => {
+                const row = $('<div class="grid gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-700/50 sm:grid-cols-[1fr_1.35fr_.8fr_auto_auto]"><input type="text" maxlength="60" placeholder="Tên nút" class="hero-cta-label"><input type="text" maxlength="255" placeholder="Link /shop hoặc https://..." class="hero-cta-link"><select class="hero-cta-style"><option value="primary">Nút chính</option><option value="secondary">Nút phụ</option><option value="ghost">Viền trong suốt</option></select><label class="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300"><input type="checkbox" class="hero-cta-new-tab">Tab mới</label><button type="button" title="Bớt CTA" class="bot-cta-slide rounded-lg px-2 py-1 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">−</button></div>');
+                row.find('.hero-cta-label').addClass(inputClass).attr('name', 'ctas[][label]').val(cta.label || '');
+                row.find('.hero-cta-link').addClass(inputClass).attr('name', 'ctas[][link]').val(cta.link || '');
+                row.find('.hero-cta-style').addClass(inputClass).attr('name', 'ctas[][style]').val(cta.style || 'primary');
+                row.find('.hero-cta-new-tab').attr('name', 'ctas[][new_tab]').prop('checked', !!cta.new_tab);
+                $('#danh-sach-cta-slide').append(row);
+            };
+            let heroPreviewMode = 'desktop';
+            const capNhatPreviewHero = () => {
+                const prefix = heroPreviewMode === 'desktop' ? 'desktop_layout' : 'mobile_layout';
+                const layout = {
+                    horizontal: $(`[name="${prefix}[horizontal]"]`).val() || 'center',
+                    vertical: $(`[name="${prefix}[vertical]"]`).val() || 'center',
+                    textAlign: $(`[name="${prefix}[text_align]"]`).val() || 'center',
+                    overlay: Number($(`[name="${prefix}[overlay_opacity]"]`).val() || 35),
+                };
+                const horizontal = {left: 'justify-start', center: 'justify-center', right: 'justify-end'}[layout.horizontal];
+                const vertical = {top: 'items-start', center: 'items-center', bottom: 'items-end'}[layout.vertical];
+                const preview = $('#hero-layout-preview');
+                preview.removeClass('aspect-[16/7] max-w-none mx-auto w-48 aspect-[4/5]').addClass(heroPreviewMode === 'desktop' ? 'aspect-[16/7]' : 'mx-auto w-48 aspect-[4/5]');
+                preview.removeClass('justify-start justify-center justify-end items-start items-center items-end').addClass(`${horizontal} ${vertical}`);
+                preview.find('[data-hero-overlay]').css('opacity', layout.overlay / 100);
+                preview.find('[data-hero-preview-content]').css('text-align', layout.textAlign);
+                $(`[data-overlay-value="${prefix}"]`).text(`${layout.overlay}%`);
+            };
+            const datNoiDungHero = (blocks, ctas, desktop = {}, mobile = {}) => {
+                $('#danh-sach-khoi-noi-dung, #danh-sach-cta-slide').empty();
+                (blocks && blocks.length ? blocks : [{}]).forEach(themKhoiNoiDung);
+                (ctas && ctas.length ? ctas : [{}]).forEach(themCtaSlide);
+                ['desktop_layout', 'mobile_layout'].forEach(prefix => {
+                    const values = prefix === 'desktop_layout' ? desktop : mobile;
+                    const fallback = prefix === 'desktop_layout'
+                        ? {horizontal: 'left', vertical: 'center', text_align: 'left'}
+                        : {horizontal: 'center', vertical: 'center', text_align: 'center'};
+                    Object.entries(fallback).forEach(([key, value]) => {
+                        $(`[name="${prefix}[${key}]"]`).val(values[key] || value);
+                    });
+                    $(`[name="${prefix}[focal_point]"]`).val(values.focal_point || 'center');
+                    $(`[name="${prefix}[overlay_opacity]"]`).val(values.overlay_opacity ?? (prefix === 'desktop_layout' ? 35 : 45));
+                });
+                capNhatPreviewHero();
+            };
+            $('#them-khoi-noi-dung').on('click', () => themKhoiNoiDung());
+            $('#them-cta-slide').on('click', () => themCtaSlide());
+            $(document).on('click', '.bot-khoi-noi-dung, .bot-cta-slide', function() {
+                const list = $(this).hasClass('bot-khoi-noi-dung') ? $('#danh-sach-khoi-noi-dung') : $('#danh-sach-cta-slide');
+                if (list.children().length > 1) $(this).closest('div.grid').remove();
+                else $(this).closest('div.grid').find('input, textarea').val('');
+            });
+            $(document).on('input change', '#form-slide [name^="desktop_layout"], #form-slide [name^="mobile_layout"]', capNhatPreviewHero);
+            $(document).on('click', '.hero-preview-mode', function() {
+                heroPreviewMode = $(this).data('hero-preview');
+                $('.hero-preview-mode').removeClass('bg-white font-semibold text-slate-700 shadow-sm dark:bg-slate-600 dark:text-white').addClass('text-slate-500 dark:text-slate-300');
+                $(this).addClass('bg-white font-semibold text-slate-700 shadow-sm dark:bg-slate-600 dark:text-white').removeClass('text-slate-500 dark:text-slate-300');
+                capNhatPreviewHero();
+            });
             const slideCtaSelect = $('#slide-cta-link-select');
             const slideCtaInput = $('#slide-cta-link');
             let linkSlideDangChonSan = false;
@@ -578,7 +605,7 @@
                 idDangSua = null;
                 $('#tieu-de-drawer').text('Thêm slide');
                 $('#form-slide')[0].reset();
-                capNhatLinkSlide();
+                datNoiDungHero();
                 $('#vung-video, #canh-bao-anh').addClass('hidden');
                 datXemTruocSlide();
                 $('#slide-media').prop('required', true);
@@ -593,10 +620,11 @@
                 $('#form-slide')[0].reset();
 
                 const f = $('#form-slide');
-                f.find('[name=heading]').val(s.heading || '');
-                f.find('[name=subheading]').val(s.subheading || '');
-                f.find('[name=cta_label]').val(s.cta_label || '');
-                capNhatLinkSlide(s.cta_link || '');
+                datNoiDungHero(
+                    s.content_blocks || ((s.heading || s.subheading) ? [{title: s.heading || '', content: s.subheading || ''}] : []),
+                    s.ctas || ((s.cta_label || s.cta_link) ? [{label: s.cta_label || '', link: s.cta_link || ''}] : []),
+                    s.desktop_layout || {}, s.mobile_layout || {}
+                );
                 f.find('[name=alt]').val(s.alt || '');
                 f.find('[name=starts_at]').val(s.starts_at ? s.starts_at.slice(0, 16).replace(' ', 'T') : '');
                 f.find('[name=ends_at]').val(s.ends_at ? s.ends_at.slice(0, 16).replace(' ', 'T') : '');
@@ -629,12 +657,7 @@
                     true
                 );
 
-                const mbToiDa = laVideo ? {{ $limits['video_mb'] }} : {{ $limits['anh_mb'] }};
                 const canhBaos = [];
-                if (file.size > mbToiDa * 1024 * 1024) {
-                    canhBaos.push(`File nặng ${(file.size / 1048576).toFixed(1)}MB, vượt mức khuyến nghị ${mbToiDa}MB; vẫn có thể lưu.`);
-                }
-
                 if (laVideo) {
                     canhBao.toggleClass('hidden', canhBaos.length === 0).text(canhBaos.join(' '));
                     return;
@@ -674,6 +697,16 @@
 
             $('#form-slide').submit(function(e) {
                 e.preventDefault();
+                $('#danh-sach-khoi-noi-dung > div').each(function(index) {
+                    $(this).find('.hero-block-title').attr('name', `content_blocks[${index}][title]`);
+                    $(this).find('.hero-block-content').attr('name', `content_blocks[${index}][content]`);
+                });
+                $('#danh-sach-cta-slide > div').each(function(index) {
+                    $(this).find('.hero-cta-label').attr('name', `ctas[${index}][label]`);
+                    $(this).find('.hero-cta-link').attr('name', `ctas[${index}][link]`);
+                    $(this).find('.hero-cta-style').attr('name', `ctas[${index}][style]`);
+                    $(this).find('.hero-cta-new-tab').attr('name', `ctas[${index}][new_tab]`);
+                });
                 const url = idDangSua ? '/content/banner/' + idDangSua : '/content/banner';
                 window.submitFormWithProgress($(this), url, function(r) {
                     window.showToast(r.success);
